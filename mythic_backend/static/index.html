@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram-книга • Истории от первого лица</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --paper-cream: #faf8f3;
+            --text-charcoal: #2c2a26;
+            --text-soft: #5a5652;
+            --accent-rust: #b85450;
+            --accent-gold: #d4af8c;
+            --shadow-warm: rgba(60, 50, 40, 0.12);
+            --border-subtle: rgba(212, 175, 140, 0.3);
+        }
+        
+        body {
+            font-family: 'Crimson Text', serif;
+            background: var(--paper-cream);
+            color: var(--text-charcoal);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+        
+        /* Литературная обертка */
+        .literary-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #ffffff;
+            box-shadow: 0 8px 40px var(--shadow-warm);
+            border-radius: 12px;
+            margin-top: 40px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .literary-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-rust), var(--accent-gold));
+            border-radius: 12px 12px 0 0;
+        }
+        
+        /* Заголовок в стиле книги */
+        .book-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            text-align: center;
+            color: var(--text-charcoal);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+        
+        .book-subtitle {
+            font-family: 'Libre Baskerville', serif;
+            font-style: italic;
+            font-size: 1.1rem;
+            text-align: center;
+            color: var(--text-soft);
+            margin-bottom: 3rem;
+            padding: 0 2rem;
+        }
+        
+        /* Эпиграф */
+        .epigraph {
+            text-align: center;
+            font-style: italic;
+            color: var(--text-soft);
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 2rem 0;
+            margin: 3rem 0;
+            font-size: 1.05rem;
+            position: relative;
+        }
+        
+        .epigraph::before, .epigraph::after {
+            content: '❦';
+            color: var(--accent-gold);
+            font-size: 1.2rem;
+            position: absolute;
+        }
+        
+        .epigraph::before {
+            left: 50%;
+            top: -12px;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 15px;
+        }
+        
+        .epigraph::after {
+            left: 50%;
+            bottom: -12px;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 15px;
+        }
+        
+        /* Параграфы в литературном стиле */
+        .literary-text {
+            text-align: justify;
+            text-indent: 2rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+        
+        .literary-text:first-of-type {
+            text-indent: 0;
+            font-weight: 500;
+        }
+        
+        /* Диалоги */
+        .dialogue {
+            font-style: italic;
+            color: var(--text-soft);
+            margin: 1.5rem 0;
+            padding-left: 2rem;
+            border-left: 3px solid var(--accent-gold);
+            position: relative;
+        }
+        
+        .dialogue::before {
+            content: '—';
+            position: absolute;
+            left: -15px;
+            color: var(--accent-rust);
+            font-weight: bold;
+        }
+        
+        /* Форма ввода в литературном стиле */
+        .manuscript-form {
+            background: linear-gradient(135deg, #fefcf8 0%, #f7f4ed 100%);
+            padding: 3rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+            margin: 3rem 0;
+            position: relative;
+        }
+        
+        .manuscript-form::before {
+            content: '📖';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px var(--shadow-warm);
+            font-size: 1.5rem;
+        }
+        
+        .form-introduction {
+            text-align: center;
+            font-style: italic;
+            color: var(--text-soft);
+            margin-bottom: 2.5rem;
+            font-size: 1.05rem;
+        }
+        
+        .input-group {
+            margin-bottom: 2rem;
+        }
+        
+        .input-label {
+            display: block;
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            color: var(--text-charcoal);
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+        }
+        
+        .literary-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 2px solid var(--border-subtle);
+            border-radius: 8px;
+            font-family: 'Crimson Text', serif;
+            font-size: 1.05rem;
+            background: white;
+            color: var(--text-charcoal);
+            transition: all 0.3s ease;
+        }
+        
+        .literary-input:focus {
+            outline: none;
+            border-color: var(--accent-rust);
+            box-shadow: 0 0 0 3px rgba(184, 84, 80, 0.1);
+        }
+        
+        .literary-input::placeholder {
+            color: var(--text-soft);
+            font-style: italic;
+        }
+        
+        /* Кнопка в стиле старой книги */
+        .manuscript-btn {
+            width: 100%;
+            padding: 1.2rem 2rem;
+            background: linear-gradient(135deg, var(--accent-rust), #9d4a46);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(184, 84, 80, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .manuscript-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.6s ease;
+        }
+        
+        .manuscript-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(184, 84, 80, 0.4);
+        }
+        
+        .manuscript-btn:hover::before {
+            left: 100%;
+        }
+        
+        .manuscript-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Статус в литературном стиле */
+        .manuscript-status {
+            margin-top: 2rem;
+            padding: 2rem;
+            border-radius: 12px;
+            display: none;
+            font-size: 1.05rem;
+            position: relative;
+            border-left: 5px solid;
+        }
+        
+        .manuscript-status.writing {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        
+        .manuscript-status.complete {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border-color: #10b981;
+            color: #047857;
+        }
+        
+        .manuscript-status.error {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+        
+        .progress-indicator {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 3px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-rust), var(--accent-gold));
+            width: 0%;
+            transition: width 0.4s ease;
+            border-radius: 3px;
+        }
+        
+        /* Ссылки для скачивания */
+        .manuscript-downloads {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .download-link {
+            padding: 0.8rem 1.5rem;
+            background: white;
+            color: var(--accent-rust);
+            text-decoration: none;
+            border: 2px solid var(--accent-rust);
+            border-radius: 6px;
+            font-family: 'Crimson Text', serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        
+        .download-link:hover {
+            background: var(--accent-rust);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(184, 84, 80, 0.3);
+        }
+        
+        /* О книге */
+        .about-book {
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 4rem;
+            padding-top: 3rem;
+        }
+        
+        .about-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--text-charcoal);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .feature-card {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #fefcf8 0%, #f7f4ed 100%);
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            text-align: center;
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            color: var(--text-charcoal);
+            margin-bottom: 0.8rem;
+        }
+        
+        .feature-description {
+            color: var(--text-soft);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        /* Подпись автора */
+        .author-signature {
+            text-align: right;
+            margin-top: 4rem;
+            font-style: italic;
+            color: var(--text-soft);
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .literary-wrapper {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .book-title {
+                font-size: 2.2rem;
+            }
+            
+            .manuscript-form {
+                padding: 2rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="literary-wrapper">
+        <h1 class="book-title">Instagram-книга</h1>
+        <p class="book-subtitle">Создание литературных историй от первого лица по материалам профилей</p>
+        
+        <div class="epigraph">
+            «Каждая фотография — это остановленное мгновение чьей-то жизни»
+        </div>
+        
+        <p class="literary-text">
+            Я наткнулся на эту идею случайно, как натыкаются на неожиданные повороты в лабиринте старого города. Листая бесконечные ленты социальных сетей, я понял: за каждым профилем скрывается история, которую стоит рассказать от первого лица — честно, с эмоциями и без прикрас.
+        </p>
+        
+        <p class="literary-text">
+            Что если превратить чей-то Instagram в настоящую книгу? Не просто коллаж из фотографий, а литературное произведение, где я становлюсь наблюдателем, исследователем чужой жизни, рассказчиком историй, которые прячутся между строк подписей к постам.
+        </p>
+        
+        <p class="literary-text">
+            Каждая книга состоит из пролога, пяти глав и эпилога. В ней живут мои впечатления от знакомства с профилем, мои размышления о том, что я вижу, диалоги, которые возникают в моей голове при просмотре фотографий. Это документальная проза с элементами художественного осмысления.
+        </p>
+        
+        <div class="manuscript-form">
+            <div class="form-introduction">
+                Поделитесь ссылкой на Instagram-профиль, и я создам для вас персональную книгу от первого лица
+            </div>
+            
+            <form id="bookForm">
+                <div class="input-group">
+                    <label class="input-label">Ссылка на Instagram-профиль</label>
+                    <input 
+                        type="url" 
+                        id="instagram-url" 
+                        class="literary-input"
+                        placeholder="https://instagram.com/username или @username"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="manuscript-btn" id="generateBtn">
+                    Создать литературную Instagram-книгу
+                </button>
+            </form>
+            
+            <div id="status" class="manuscript-status">
+                <div id="statusMessage"></div>
+                <div class="progress-indicator">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div id="downloadLinks" class="manuscript-downloads"></div>
+            </div>
+        </div>
+        
+        <div class="about-book">
+            <h2 class="about-title">Что входит в вашу книгу</h2>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📖</div>
+                    <div class="feature-title">Обложка с эпиграфом</div>
+                    <div class="feature-description">
+                        Название книги, подзаголовок и короткий эпиграф, отражающий суть профиля
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">✍️</div>
+                    <div class="feature-title">Пролог от первого лица</div>
+                    <div class="feature-description">
+                        Мой рассказ о том, как я впервые наткнулся на профиль и что почувствовал
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <div class="feature-title">Пять литературных глав</div>
+                    <div class="feature-description">
+                        Каждая глава с эпиграфом, 8-12 абзацев живого текста и одной фотографией
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🖼️</div>
+                    <div class="feature-title">Встроенные фотографии</div>
+                    <div class="feature-description">
+                        Реальные фото из профиля с поэтичными описаниями и подписями
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💭</div>
+                    <div class="feature-title">Живые размышления</div>
+                    <div class="feature-description">
+                        30% атмосферных описаний, 20% внутренних размышлений, диалоги
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎭</div>
+                    <div class="feature-title">Эпилог-обращение</div>
+                    <div class="feature-description">
+                        Финальные размышления и обращение к читателю от первого лица
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dialogue">
+            Помните: каждая история уникальна. Алгоритм не создает шаблонные тексты — каждая книга пишется индивидуально, основываясь на реальном содержимом профиля.
+        </div>
+        
+        <div class="author-signature">
+            — Ваш цифровой рассказчик
+        </div>
+    </div>
+
+    <script>
+        let currentRunId = null;
+        let checkInterval = null;
+
+        document.getElementById('bookForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = document.getElementById('instagram-url').value;
+            const btn = document.getElementById('generateBtn');
+            
+            btn.disabled = true;
+            btn.innerHTML = 'Создаю вашу историю...';
+            
+            try {
+                // Запускаем сбор данных профиля
+                const scrapeResponse = await fetch(`/start-scrape?url=${encodeURIComponent(url)}`);
+                const scrapeData = await scrapeResponse.json();
+                
+                if (!scrapeResponse.ok) {
+                    throw new Error(scrapeData.detail || 'Ошибка при сборе данных профиля');
+                }
+                
+                currentRunId = scrapeData.runId;
+                showStatus('writing', 'Изучаю профиль и собираю материалы для книги...');
+                startProgress();
+                
+                // Создаем книгу после сбора данных
+                setTimeout(async () => {
+                    try {
+                        const bookResponse = await fetch('/create-book', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                runId: currentRunId,
+                                format: 'classic' // Всегда классический формат для литературной книги
+                            })
+                        });
+                        
+                        const bookData = await bookResponse.json();
+                        
+                        if (bookResponse.ok) {
+                            updateProgress(50, 'Пишу главы и встраиваю фотографии...');
+                            checkInterval = setInterval(checkStatus, 2000);
+                        } else {
+                            throw new Error(bookData.detail || 'Ошибка при создании книги');
+                        }
+                    } catch (error) {
+                        showStatus('error', `Ошибка создания: ${error.message}`);
+                        resetButton();
+                    }
+                }, 6000);
+                
+            } catch (error) {
+                showStatus('error', `Ошибка: ${error.message}`);
+                resetButton();
+            }
+        });
+
+        async function checkStatus() {
+            if (!currentRunId) return;
+            
+            try {
+                const response = await fetch(`/status/${currentRunId}`);
+                const data = await response.json();
+                
+                if (data.stages.data_collected) {
+                    updateProgress(33, 'Данные собраны, анализирую содержимое...');
+                }
+                
+                if (data.stages.images_downloaded) {
+                    updateProgress(66, 'Фотографии загружены, пишу литературный текст...');
+                }
+                
+                if (data.stages.book_generated) {
+                    updateProgress(100, 'Ваша Instagram-книга готова!');
+                    clearInterval(checkInterval);
+                    
+                    const profileInfo = data.profile ? 
+                        `Литературная книга по профилю @${data.profile.username} создана` : 
+                        'Ваша персональная Instagram-книга готова к чтению';
+                    
+                    showStatus('complete', profileInfo);
+                    
+                    const downloadHtml = `
+                        <a href="/view/${currentRunId}/book.html" class="download-link" target="_blank">📖 Читать книгу</a>
+                        <a href="/download/${currentRunId}/book.pdf" class="download-link">📄 Скачать PDF</a>
+                        <a href="/download/${currentRunId}/book.md" class="download-link">📝 Исходник</a>
+                    `;
+                    document.getElementById('downloadLinks').innerHTML = downloadHtml;
+                    
+                    resetButton();
+                }
+            } catch (error) {
+                console.error('Ошибка проверки статуса:', error);
+            }
+        }
+
+        function showStatus(type, message) {
+            const status = document.getElementById('status');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            status.className = `manuscript-status ${type}`;
+            status.style.display = 'block';
+            statusMessage.innerHTML = message;
+        }
+
+        function updateProgress(percent, message) {
+            document.getElementById('progressFill').style.width = `${percent}%`;
+            document.getElementById('statusMessage').innerHTML = message;
+        }
+
+        function startProgress() {
+            updateProgress(10, 'Начинаю работу над вашей книгой...');
+        }
+
+        function resetButton() {
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = false;
+            btn.innerHTML = 'Создать литературную Instagram-книгу';
+        }
+    </script>
+</body>
+</html> 
