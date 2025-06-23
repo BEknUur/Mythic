@@ -10,25 +10,32 @@ import './App.css'
 function App() {
   const [runId, setRunId] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isComplete, setIsComplete] = useState(false);
 
   const handleStartScrape = (id: string) => {
     setRunId(id)
     setIsProcessing(true)
+    setIsComplete(false);
   }
 
   const handleComplete = () => {
-    setIsProcessing(false)
+    setIsComplete(true);
   }
 
   const handleReset = () => {
     setRunId(null)
     setIsProcessing(false)
+    setIsComplete(false);
   }
 
-  if (runId && isProcessing) {
+  if (runId && (isProcessing || isComplete)) {
     return (
       <>
-        <ProgressTracker runId={runId} onComplete={handleComplete} onReset={handleReset} />
+        <ProgressTracker 
+          runId={runId} 
+          onComplete={handleComplete} 
+          onReset={handleReset} 
+        />
         <Toaster />
       </>
     )
