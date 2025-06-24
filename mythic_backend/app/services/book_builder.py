@@ -3,7 +3,7 @@ import base64
 from io import BytesIO
 from pathlib import Path
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageFont
-from app.services.llm_client import generate_text, analyze_photo, analyze_photo_for_card, generate_scene_chapter, strip_cliches, generate_unique_chapter
+from app.services.llm_client import generate_text, analyze_photo, analyze_photo_for_card, generate_scene_chapter, strip_cliches, generate_unique_chapter, analyze_photo_for_memoir, generate_memoir_chapter, generate_complete_memoir_book
 import markdown
 import pdfkit
 import qrcode
@@ -1644,7 +1644,7 @@ def convert_image_to_base64(image_path: Path, max_size: tuple = (600, 400), styl
         return ""
 
 def create_literary_instagram_book_html(content: dict, analysis: dict, images: list[Path]) -> str:
-    """Создает HTML Instagram-книгу от первого лица в литературном стиле с эмоциями и метафорами"""
+    """Создает HTML романтическую книгу-мемуар от первого лица в стиле личного дневника"""
     
     # Фиксированные данные
     username = analysis.get('username', 'незнакомец')
@@ -1655,16 +1655,13 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     bio = analysis.get('bio', '')
     
     # Реальные подписи и данные
-    real_captions = analysis.get('captions', [])[:5]
-    common_hashtags = analysis.get('common_hashtags', [])[:3]
+    real_captions = analysis.get('captions', [])[:6]
+    common_hashtags = analysis.get('common_hashtags', [])[:5]
     locations = analysis.get('locations', [])[:3]
     
-    # Генерируем количество слов (8-10 тысяч)
-    word_count = random.randint(8000, 10000)
-    
-    # Обрабатываем изображения
+    # Обрабатываем изображения (максимум 6 для каждой главы)
     processed_images = []
-    for i, img_path in enumerate(images[:5]):  # Максимум 5 изображений для 5 глав
+    for i, img_path in enumerate(images[:6]):
         if img_path.exists():
             try:
                 with Image.open(img_path) as img:
@@ -1675,39 +1672,98 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
                     max_size = (700, 500)
                     img.thumbnail(max_size, Image.Resampling.LANCZOS)
                     
-                    # Легкая обработка
+                    # Мягкая обработка для романтического стиля
                     enhancer = ImageEnhance.Contrast(img)
-                    img = enhancer.enhance(1.08)
+                    img = enhancer.enhance(1.05)
+                    enhancer = ImageEnhance.Color(img)
+                    img = enhancer.enhance(1.1)
                     
                     buffer = BytesIO()
-                    img.save(buffer, format='JPEG', quality=92)
+                    img.save(buffer, format='JPEG', quality=90)
                     img_str = base64.b64encode(buffer.getvalue()).decode()
                     processed_images.append(f"data:image/jpeg;base64,{img_str}")
             except Exception as e:
                 print(f"❌ Ошибка обработки изображения {img_path}: {e}")
     
-    # Генерируем название книги (3-7 слов)
-    title_options = [
-        f"Мгновения @{username}",
-        f"История одного профиля",
-        f"Между строк и кадров",
-        f"Цифровые следы души",
-        f"Дневник незнакомца",
-        f"Осколки чужой жизни"
-    ]
-    book_title = random.choice(title_options)
+    # Анализируем фотографии для каждой главы мемуаров
+    memoir_data = {
+        'username': username,
+        'followers': followers,
+        'following': following,
+        'posts_count': posts_count,
+        'bio': bio,
+        'captions': real_captions,
+        'locations': locations,
+        'common_hashtags': common_hashtags
+    }
     
-    # Эпиграф (максимум 15 слов)
-    epigraphs = [
-        "Каждая фотография — окно в чью-то душу",
-        "За каждым кадром прячется история",
-        "Мы листаем жизни, не замечая глубины",
-        "Красота скрывается в обыденных моментах",
-        "Иногда чужие истории говорят о нас"
-    ]
-    epigraph = random.choice(epigraphs)
+    # Генерируем все 6 глав мемуаров
+    chapters = {}
     
-    # HTML в литературном стиле
+    # Глава 1: Встреча
+    try:
+        chapters['meeting'] = generate_memoir_chapter("meeting", memoir_data)
+        print("✅ Глава 1 'Встреча' создана")
+    except Exception as e:
+        print(f"❌ Ошибка главы 'Встреча': {e}")
+        chapters['meeting'] = f"Поздним вечером я листал ленту Instagram и наткнулся на профиль @{username}. В свете экрана его лицо казалось вырезанным из старинной киноплёнки — загадочным и притягательным. 'Что-то здесь не так,' — подумал я, чувствуя запах остывшего кофе на столе. За окном шумел ночной город, но внимание поглотил этот незнакомый мир в квадратном кадре."
+    
+    # Глава 2: Первое впечатление (с анализом фото)
+    try:
+        photo_analysis = ""
+        if processed_images:
+            photo_analysis = analyze_photo_for_memoir(images[0], f"@{username}", "first_impression")
+        chapters['first_impression'] = generate_memoir_chapter("first_impression", memoir_data, photo_analysis)
+        print("✅ Глава 2 'Первое впечатление' создана")
+    except Exception as e:
+        print(f"❌ Ошибка главы 'Первое впечатление': {e}")
+        caption = real_captions[0] if real_captions else "Момент жизни"
+        chapters['first_impression'] = f"Первая фотография поразила меня игрой света и тени. '{caption}' — было написано под снимком, и эти слова зазвучали в моей голове, как мелодия. Я мог почти услышать шелест листьев, который, казалось, сопровождал этот кадр. 'Кто этот человек, который умеет так ловить красоту?' — думал я, разглядывая каждую деталь. Фотография пахла дождём и свободой."
+    
+    # Глава 3: История одного кадра
+    try:
+        chapters['story_creation'] = generate_memoir_chapter("story_creation", memoir_data)
+        print("✅ Глава 3 'История одного кадра' создана")
+    except Exception as e:
+        print(f"❌ Ошибка главы 'История одного кадра': {e}")
+        location = locations[0] if locations else "кафе на тихой улице"
+        chapters['story_creation'] = f"Представляю, как создавался один из снимков. {username} шёл по {location}, когда свет упал именно так, как нужно. Он остановился, достал телефон — и в этот момент время замерло. 'Сейчас или никогда,' — прошептал он, нажимая на затвор.\n\nВ кадре запечатлелся не просто момент, а состояние души. Можно было почувствовать вкус воздуха, услышать далёкую музыку из окна.\n\nПозже, загружая фото, он понимал: это не просто картинка. Это приглашение другим увидеть мир его глазами."
+    
+    # Глава 4: Социальный анализ
+    try:
+        chapters['social_analysis'] = generate_memoir_chapter("social_analysis", memoir_data)
+        print("✅ Глава 4 'Социальный анализ' создана")
+    except Exception as e:
+        print(f"❌ Ошибка главы 'Социальный анализ': {e}")
+        chapters['social_analysis'] = f"{followers} подписчиков — не толпа, а сообщество единомышленников. В комментариях я читал: 'Наконец-то что-то настоящее в этом море фальши.' Эти люди искали подлинность, как я сейчас. 'Мы все устали от идеальности,' — понял я, прокручивая ленту. В цифровую эпоху искренность стала роскошью."
+    
+    # Глава 5: Между строк
+    try:
+        chapters['between_lines'] = generate_memoir_chapter("between_lines", memoir_data)
+        print("✅ Глава 5 'Между строк' создана")
+    except Exception as e:
+        print(f"❌ Ошибка главы 'Между строк': {e}")
+        chapters['between_lines'] = f"За идеальными кадрами @{username} я чувствовал настоящую жизнь. Не ту, что пахнет студийным светом, а ту, что пахнет утренним кофе и недосказанностью. 'Что он НЕ показывает?' — спрашивал я себя. Усталость в глазах, сомнения в 3 утра, радость от простых вещей. Мы носим маски даже в Instagram, но у некоторых маски прозрачные. Сквозь фильтры пробивается душа — и это прекрасно."
+    
+    # Глава 6: Прощальный портрет
+    try:
+        chapters['farewell_portrait'] = generate_memoir_chapter("farewell_portrait", memoir_data)
+        print("✅ Глава 6 'Прощальный портрет' создана")
+    except Exception as e:
+        print(f"❌ Ошибка главы 'Прощальный портрет': {e}")
+        chapters['farewell_portrait'] = f"Изучив профиль @{username}, я понял — красота живёт в деталях, которые мы обычно пропускаем. Желаю тебе сохранить этот редкий дар видеть необычное в обычном. Спасибо за урок внимательности к миру. Наши пути пересеклись в цифровом пространстве, как две кометы в бесконечности. В эпоху селфи и лайков ты напомнил: настоящее искусство — это честность."
+    
+    # Генерируем название книги
+    book_titles = [
+        f"Дневник о @{username}",
+        f"Мемуары незнакомца",
+        f"Встреча в Instagram",
+        f"Романтические заметки о {username}",
+        f"История одного профиля"
+    ]
+    book_title = random.choice(book_titles)
+    
+    # HTML в стиле романтических мемуаров
     html = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1724,6 +1780,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         --accent: #b85450;
         --gold: #d4af8c;
         --shadow: rgba(60, 50, 40, 0.15);
+        --warm-cream: #f9f7f4;
     }}
     
     body {{
@@ -1731,219 +1788,298 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         background: var(--paper);
         color: var(--ink);
         line-height: 1.8;
-        font-size: 16px;
+        font-size: 17px;
         margin: 0;
         padding: 0;
-        max-width: 800px;
+        max-width: 900px;
         margin: 0 auto;
     }}
     
-    .book-page {{
-        min-height: 100vh;
-        padding: 3cm 2.5cm;
+    .memoir-page {{
+        min-height: 95vh;
+        padding: 3cm 3cm 4cm 3cm;
         background: white;
         box-shadow: 0 8px 40px var(--shadow);
         margin: 20px auto;
         page-break-after: always;
         position: relative;
+        border-left: 5px solid var(--gold);
     }}
     
-    .book-page:last-child {{
+    .memoir-page:last-child {{
         page-break-after: auto;
     }}
     
-    /* Обложка */
-    .cover {{
+    /* Обложка мемуаров */
+    .cover-memoir {{
         text-align: center;
-        padding: 4cm 2cm;
-        background: linear-gradient(135deg, var(--paper) 0%, #f7f4ed 100%);
-        border: 1px solid rgba(212, 175, 140, 0.3);
+        padding: 5cm 2cm;
+        background: linear-gradient(135deg, var(--paper) 0%, var(--warm-cream) 100%);
+        border: 2px solid var(--gold);
+        border-left: 8px solid var(--accent);
     }}
     
     .cover-title {{
         font-family: 'Playfair Display', serif;
-        font-size: 3rem;
+        font-size: 3.5rem;
         font-weight: 700;
         color: var(--ink);
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
         letter-spacing: -1px;
+        line-height: 1.2;
     }}
     
     .cover-subtitle {{
         font-family: 'Libre Baskerville', serif;
         font-style: italic;
-        font-size: 1.2rem;
+        font-size: 1.4rem;
         color: var(--soft-ink);
         margin-bottom: 3rem;
-    }}
-    
-    .cover-author {{
-        font-size: 1.1rem;
-        color: var(--soft-ink);
-        margin-bottom: 4rem;
     }}
     
     .cover-epigraph {{
         font-style: italic;
         color: var(--soft-ink);
-        border-top: 1px solid var(--gold);
-        border-bottom: 1px solid var(--gold);
-        padding: 2rem 0;
-        max-width: 400px;
-        margin: 0 auto;
+        border-top: 2px solid var(--gold);
+        border-bottom: 2px solid var(--gold);
+        padding: 2.5rem 1rem;
+        max-width: 500px;
+        margin: 0 auto 3rem auto;
         position: relative;
+        font-size: 1.2rem;
     }}
     
     .cover-epigraph::before {{
         content: '«';
         position: absolute;
-        left: -20px;
-        top: 1.5rem;
-        font-size: 2rem;
+        left: -25px;
+        top: 2rem;
+        font-size: 3rem;
         color: var(--accent);
+        font-family: 'Playfair Display', serif;
     }}
     
     .cover-epigraph::after {{
         content: '»';
         position: absolute;
-        right: -20px;
-        bottom: 1.5rem;
-        font-size: 2rem;
+        right: -25px;
+        bottom: 2rem;
+        font-size: 3rem;
         color: var(--accent);
+        font-family: 'Playfair Display', serif;
+    }}
+    
+    .memoir-author {{
+        font-size: 1.2rem;
+        color: var(--soft-ink);
+        margin-top: 2rem;
     }}
     
     /* Заголовки глав */
-    h1 {{
-        font-family: 'Playfair Display', serif;
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: var(--ink);
-        margin: 3rem 0 1.5rem 0;
-        text-align: left;
+    .chapter-header {{
+        margin-bottom: 3rem;
+        padding-bottom: 1rem;
         border-bottom: 2px solid var(--gold);
-        padding-bottom: 0.5rem;
     }}
     
-    h2 {{
-        font-family: 'Playfair Display', serif;
-        font-size: 1.8rem;
-        color: var(--accent);
-        margin: 2.5rem 0 1.5rem 0;
-        text-align: center;
-    }}
-    
-    /* Эпиграфы к главам */
-    .chapter-epigraph {{
-        text-align: center;
-        font-style: italic;
+    .chapter-number {{
+        font-family: 'Libre Baskerville', serif;
+        font-size: 1rem;
         color: var(--soft-ink);
-        border-left: 3px solid var(--gold);
-        padding-left: 2rem;
-        margin: 2rem 0;
-        background: #faf8f3;
-        padding: 1.5rem;
-        border-radius: 8px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin-bottom: 0.5rem;
     }}
     
-    /* Параграфы */
-    p {{
+    .chapter-title {{
+        font-family: 'Playfair Display', serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin: 0;
+        font-style: italic;
+    }}
+    
+    /* Параграфы мемуаров */
+    .memoir-paragraph {{
         text-align: justify;
-        text-indent: 2rem;
-        margin-bottom: 1.5rem;
-        line-height: 1.8;
+        text-indent: 2.5rem;
+        margin-bottom: 2.5rem;
+        line-height: 1.9;
         font-size: 1.1rem;
     }}
     
-    .first-paragraph {{
+    .memoir-paragraph.first {{
         text-indent: 0;
         font-weight: 500;
-        font-size: 1.15rem;
+        font-size: 1.2rem;
     }}
     
-    /* Диалоги */
-    .dialogue {{
+    .memoir-text {{
+        white-space: pre-line;
+        text-align: justify;
+        line-height: 1.9;
+        font-size: 1.1rem;
+    }}
+    
+    /* Цитаты и диалоги */
+    .quote {{
         font-style: italic;
-        color: var(--soft-ink);
+        color: var(--accent);
         text-indent: 0;
-        margin: 1.5rem 0;
-        padding-left: 2rem;
-        border-left: 3px solid var(--accent);
+        margin: 2rem 0;
+        padding: 1.5rem 2rem;
+        background: var(--warm-cream);
+        border-left: 4px solid var(--accent);
+        border-radius: 8px;
         position: relative;
     }}
     
-    .dialogue::before {{
-        content: '—';
+    .quote::before {{
+        content: '"';
         position: absolute;
-        left: -10px;
+        left: 0.5rem;
+        top: 0.8rem;
+        font-size: 2rem;
         color: var(--accent);
-        font-weight: bold;
+        font-family: 'Playfair Display', serif;
     }}
     
-    /* Изображения */
-    .hero-img {{
+    .inner-voice {{
+        font-style: italic;
+        color: var(--soft-ink);
+        text-align: center;
+        margin: 2rem 0;
+        padding: 1rem;
+        background: #f7f5f0;
+        border-radius: 12px;
+        text-indent: 0;
+        border: 1px dashed var(--gold);
+    }}
+    
+    /* Изображения в мемуарах */
+    .memoir-photo {{
         margin: 3rem 0;
         text-align: center;
         page-break-inside: avoid;
     }}
     
-    .hero-img img {{
+    .photo-frame {{
+        display: inline-block;
+        padding: 20px;
+        background: var(--warm-cream);
+        border-radius: 15px;
+        box-shadow: 0 8px 30px var(--shadow);
+        border: 2px solid var(--gold);
+        transform: rotate(-1deg);
+        transition: transform 0.3s ease;
+    }}
+    
+    .photo-frame:nth-child(even) {{
+        transform: rotate(1deg);
+    }}
+    
+    .photo-frame img {{
         max-width: 100%;
-        max-height: 450px;
-        border-radius: 12px;
-        box-shadow: 0 12px 30px var(--shadow);
+        max-height: 400px;
+        border-radius: 8px;
         border: 3px solid white;
     }}
     
-    .hero-img figcaption {{
+    .photo-caption {{
         font-family: 'Libre Baskerville', serif;
         font-style: italic;
         font-size: 1rem;
         color: var(--soft-ink);
-        margin-top: 1rem;
+        margin-top: 1.5rem;
         text-align: center;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
     }}
     
-    .hero-img figcaption::before {{
+    .photo-caption::before {{
         content: '– ';
         color: var(--accent);
+        font-weight: bold;
     }}
     
-    /* Внутренние мысли */
-    .inner-thought {{
-        font-style: italic;
+    /* Финальная страница */
+    .memoir-finale {{
         text-align: center;
-        color: var(--soft-ink);
-        margin: 2rem 0;
-        padding: 1.5rem;
-        background: #f9f7f4;
-        border-radius: 8px;
-        text-indent: 0;
+        margin-top: 4rem;
+        padding: 3rem 2rem;
+        background: var(--warm-cream);
+        border-radius: 15px;
+        border: 2px solid var(--gold);
     }}
     
-    /* Статистика внизу */
-    .stats-footer {{
-        margin-top: 4rem;
+    .memoir-signature {{
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 1.3rem;
+        color: var(--accent);
+        margin-top: 2rem;
+    }}
+    
+    /* Метаданные */
+    .memoir-meta {{
+        margin-top: 3rem;
         padding-top: 2rem;
         border-top: 1px solid var(--gold);
         font-size: 0.9rem;
         color: var(--soft-ink);
         text-align: center;
-        line-height: 1.5;
+        line-height: 1.6;
     }}
     
-    /* Адаптивность */
+    /* Оглавление */
+    .table-of-contents {{
+        margin: 3rem 0;
+        padding: 2rem;
+        background: var(--warm-cream);
+        border-radius: 15px;
+        border: 1px solid var(--gold);
+    }}
+    
+    .toc-title {{
+        font-family: 'Playfair Display', serif;
+        font-size: 2rem;
+        color: var(--accent);
+        text-align: center;
+        margin-bottom: 2rem;
+    }}
+    
+    .toc-item {{
+        margin-bottom: 1rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px dotted var(--gold);
+        display: flex;
+        justify-content: space-between;
+    }}
+    
+    .toc-chapter {{
+        font-weight: 500;
+        color: var(--ink);
+    }}
+    
+    .toc-page {{
+        color: var(--soft-ink);
+        font-style: italic;
+    }}
+    
     @media (max-width: 768px) {{
-        .book-page {{
+        .memoir-page {{
             padding: 2cm 1.5cm;
             margin: 10px;
         }}
         
         .cover-title {{
-            font-size: 2.2rem;
+            font-size: 2.5rem;
         }}
         
-        h1 {{
-            font-size: 1.8rem;
+        .chapter-title {{
+            font-size: 2rem;
         }}
     }}
     
@@ -1953,320 +2089,289 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             margin: 0;
         }}
         
-        .book-page {{
+        .memoir-page {{
             box-shadow: none;
             margin: 0;
+            border: none;
+        }}
+        
+        .photo-frame {{
+            transform: none;
         }}
     }}
     </style>
 </head>
 <body>
 
-<!-- ОБЛОЖКА -->
-<div class="book-page cover">
+<!-- ОБЛОЖКА МЕМУАРОВ -->
+<div class="memoir-page cover-memoir">
     <h1 class="cover-title">{book_title}</h1>
-    <p class="cover-subtitle">Instagram-история от первого лица</p>
-    <p class="cover-author">Автор: {full_name}</p>
-    <div class="cover-epigraph">{epigraph}</div>
+    <p class="cover-subtitle">Романтические мемуары от первого лица</p>
+    
+    <div class="cover-epigraph">
+        Каждая фотография — окно в чью-то душу,<br>
+        а каждый профиль — неоконченная история,<br>
+        ждущая своего читателя
+    </div>
+    
+    <div class="memoir-author">
+        <strong>О профиле:</strong> @{username}<br>
+        <small>{full_name}</small><br>
+        <small>{followers:,} подписчиков • {posts_count} публикаций</small>
+    </div>
 </div>
 
-<!-- ПРОЛОГ -->
-<div class="book-page">
-    <h2>Пролог</h2>
-    
-    <p class="first-paragraph">
-        Я наткнулся на профиль @{username} совершенно случайно, как натыкаются на неожиданные повороты в лабиринте старого города. Было около {random.choice(['полуночи', 'полудня', 'вечера'])}, и я бесцельно листал бесконечную ленту, когда среди привычного потока селфи и рекламы вдруг появилось что-то другое.
-    </p>
-    
-    <p>
-        {f'«{real_captions[0]}»' if real_captions else 'Подпись к фотографии была простой'} — было написано под одним из снимков. Но что-то в этих словах зацепило меня. Может быть, тон, может быть, честность, а может быть, просто усталость от фальшивого позитива, которым пропитаны социальные сети.
-    </p>
-    
-    <p>
-        Мне стало любопытно. Не просто любопытно, а как-то тревожно-интересно, как бывает, когда находишь книгу без обложки и не знаешь, стоит ли её открывать. Я кликнул на профиль и почувствовал, как что-то внутри меня замирает. Здесь была не просто коллекция фотографий — здесь была чья-то жизнь, разложенная по квадратикам.
-    </p>
+<!-- ОГЛАВЛЕНИЕ -->
+<div class="memoir-page">
+    <div class="table-of-contents">
+        <h2 class="toc-title">Оглавление</h2>
+        
+        <div class="toc-item">
+            <span class="toc-chapter">Глава I. Встреча</span>
+            <span class="toc-page">стр. 3</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава II. Первое впечатление</span>
+            <span class="toc-page">стр. 4</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава III. История одного кадра</span>
+            <span class="toc-page">стр. 5</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава IV. Углубляясь в детали</span>
+            <span class="toc-page">стр. 6</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава V. Социальный анализ</span>
+            <span class="toc-page">стр. 7</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава VI. Психологический портрет</span>
+            <span class="toc-page">стр. 8</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава VII. География души</span>
+            <span class="toc-page">стр. 9</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава VIII. Между строк</span>
+            <span class="toc-page">стр. 10</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава IX. Музыка фотографий</span>
+            <span class="toc-page">стр. 11</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава X. Отражения и размышления</span>
+            <span class="toc-page">стр. 12</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Глава XI. Прощальный портрет</span>
+            <span class="toc-page">стр. 13</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-chapter">Эпилог. Что остается</span>
+            <span class="toc-page">стр. 14</span>
+        </div>
+    </div>
 </div>
 
-<!-- ГЛАВА 1 -->
-<div class="book-page">
-    <h1>Глава 1. Первое впечатление</h1>
-    
-    <div class="chapter-epigraph">
-        «Иногда одна фотография стоит тысячи встреч»
+<!-- ГЛАВА 1: ВСТРЕЧА -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава первая</div>
+        <h2 class="chapter-title">Встреча</h2>
     </div>
     
-    <p class="first-paragraph">
-        {followers:,} подписчиков. Это первое, что бросилось мне в глаза. Не маленькая цифра, но и не астрономическая. Достаточно, чтобы понимать — здесь есть что-то интересное, но недостаточно, чтобы потерять человечность за стеной известности.
-    </p>
-    
-    <p>
-        Я начал листать фотографии сверху вниз, как читают книгу, и каждый новый кадр был как страница неизвестного мне романа. {f'В био было написано: «{bio}»' if bio else 'Био было лаконичным, почти пустым'} — и это тоже говорило о чём-то. О нежелании объяснять себя в двух словах, о понимании того, что настоящие истории рассказываются не в описаниях профиля.
-    </p>
-    
-    <p>
-        Стиль съёмки сразу выдавал человека, который не просто фотографирует еду и закаты. Здесь был взгляд. Здесь была попытка поймать не только изображение, но и настроение, атмосферу, тот неуловимый момент, когда обыденность вдруг становится искусством.
-    </p>
-    
-    {'<figure class="hero-img"><img src="' + processed_images[0] + '" alt="' + (real_captions[0][:50] if real_captions else 'Момент жизни') + '"><figcaption>' + (real_captions[0] if real_captions else 'Кадр, который остановил время') + '</figcaption></figure>' if processed_images else ''}
-    
-    <p>
-        Я понял, что передо мной не просто Instagram-аккаунт, а визуальный дневник. Каждая фотография была записью, каждая подпись — размышлением, каждый хэштег — попыткой найти единомышленников в огромном цифровом мире.
-    </p>
-    
-    <div class="dialogue">
-        Кто этот человек? Что его волнует? О чём он мечтает, когда просыпается утром?
+    <div class="memoir-text">
+        {chapters.get('meeting', 'Поздним вечером я листал ленту Instagram...')}
     </div>
-    
-    <p>
-        Эти вопросы начали роиться в моей голове, как пчёлы в улье. И я понял, что попал. Попал в ту редкую ловушку искренности, которую так сложно найти в мире отфильтрованных эмоций и постановочного счастья.
-    </p>
-    
-    <p>
-        Я продолжал листать, и с каждым новым постом чувствовал, как моё представление о незнакомом человеке становится всё более объёмным, многогранным. {f'Локации варьировались от {locations[0] if locations else "домашних углов"} до {locations[1] if len(locations) > 1 else "городских улиц"}' if locations else 'Места съёмок рассказывали свои истории'} — география души, разложенная по карте Земли.
-    </p>
-    
-    <p>
-        И тогда я принял решение, которое изменило весь мой вечер. Я решил не просто посмотреть этот профиль, а изучить его. Понять. Почувствовать. Рассказать историю человека, которого я никогда не встречал, но который вдруг стал мне близок через экран смартфона.
-    </p>
 </div>
 
-<!-- ГЛАВА 2 -->
-<div class="book-page">
-    <h1>Глава 2. Углубляясь в детали</h1>
-    
-    <div class="chapter-epigraph">
-        «Дьявол кроется в деталях, а красота — в мелочах»
+<!-- ГЛАВА 2: ПЕРВОЕ ВПЕЧАТЛЕНИЕ -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава вторая</div>
+        <h2 class="chapter-title">Первое впечатление</h2>
     </div>
     
-    <p class="first-paragraph">
-        Чем дольше я изучал профиль @{username}, тем больше понимал, что имею дело не просто с человеком, который любит фотографировать. Здесь была система, философия, особый взгляд на мир.
-    </p>
+    {'<div class="memoir-photo"><div class="photo-frame"><img src="' + processed_images[0] + '" alt="Первое впечатление"></div><div class="photo-caption">' + (real_captions[0] if real_captions else 'Первая фотография, которая зацепила меня') + '</div></div>' if processed_images else ''}
     
-    <p>
-        {f'Хэштеги {common_hashtags[0][0] if common_hashtags else "#life"}, {common_hashtags[1][0] if len(common_hashtags) > 1 else "#moment"}, {common_hashtags[2][0] if len(common_hashtags) > 2 else "#beauty"}' if common_hashtags else 'Хэштеги были тщательно подобраны'} — не для массового охвата, а для поиска родственных душ. Это были не кричащие призывы к вниманию, а тихие маяки для тех, кто понимает.
-    </p>
-    
-    <p>
-        Время публикаций тоже говорило о многом. Большинство постов появлялись либо рано утром, либо поздно вечером. Время, когда город ещё спит или уже засыпает, когда суета стихает и можно остаться наедине с собой и своими мыслями.
-    </p>
-    
-    {'<figure class="hero-img"><img src="' + processed_images[1] + '" alt="' + (real_captions[1][:50] if len(real_captions) > 1 else 'Тихий момент') + '"><figcaption>' + (real_captions[1] if len(real_captions) > 1 else 'В этой тишине родилась мысль') + '</figcaption></figure>' if len(processed_images) > 1 else ''}
-    
-    <p>
-        Я начал замечать повторяющиеся мотивы. Окна — множество окон в разных контекстах. Отражения — в витринах, лужах, глазах. Тени — как самостоятельные персонажи историй. Это был визуальный язык, который @{username} создавал интуитивно или осознанно.
-    </p>
-    
-    <div class="inner-thought">
-        А может быть, мы все говорим на одном языке красоты, просто не всегда умеем его расшифровать?
+    <div class="memoir-text">
+        {chapters.get('first_impression', 'Первая фотография поразила меня игрой света и тени...')}
     </div>
-    
-    <p>
-        Подписи к фотографиям были особенным миром. Никаких длинных эссе, никаких попыток объяснить очевидное. {f'«{real_captions[2] if len(real_captions) > 2 else "Жизнь прекрасна"}»' if real_captions else 'Короткие фразы'} — и всё. Но в этой краткости была глубина, которую не каждый сумеет разглядеть.
-    </p>
-    
-    <p>
-        Я понял, что @{username} не пытается никого удивить или впечатлить. Этот профиль существует для тех, кто готов остановиться, вглядеться, почувствовать. Это не контент для быстрого потребления — это приглашение к диалогу с собственной душой.
-    </p>
-    
-    <div class="dialogue">
-        Интересно, чувствует ли автор, что кто-то так внимательно изучает его творчество?
-    </div>
-    
-    <p>
-        Количество лайков под постами колебалось, но никогда не было критически низким. Это говорило о том, что у @{username} есть своя аудитория — небольшая, но верная. Люди, которые понимают и ценят этот особый взгляд на мир.
-    </p>
-    
-    <p>
-        Комментарии под фотографиями были лаконичными, но тёплыми. Никаких дежурных «круто!» или «красиво!». Здесь писали от сердца, делились своими ассоциациями, благодарили за момент красоты в суетном дне.
-    </p>
 </div>
 
-<!-- ГЛАВА 3 -->
-<div class="book-page">
-    <h1>Глава 3. Точка поворота</h1>
-    
-    <div class="chapter-epigraph">
-        «Иногда один кадр меняет всё понимание»
+<!-- ГЛАВА 3: ИСТОРИЯ ОДНОГО КАДРА -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава третья</div>
+        <h2 class="chapter-title">История одного кадра</h2>
     </div>
     
-    <p class="first-paragraph">
-        А потом я увидел ту фотографию. Ту самую, которая перевернула моё восприятие профиля @{username} с ног на голову. {f'Она была сделана в {locations[0] if locations else "обычном месте"}' if locations else 'Место съёмки было простым'}, но что-то в ней было особенное.
-    </p>
+    {'<div class="memoir-photo"><div class="photo-frame"><img src="' + processed_images[1] + '" alt="Кадр с историей"></div><div class="photo-caption">' + (real_captions[1] if len(real_captions) > 1 else 'За каждым кадром — целая жизнь') + '</div></div>' if len(processed_images) > 1 else ''}
     
-    <p>
-        Может быть, дело было в освещении — мягком, рассеянном, словно мир решил на минуту стать добрее. А может быть, в композиции — простой, но настолько точной, что хотелось смотреть и смотреть, находя всё новые детали.
-    </p>
-    
-    {'<figure class="hero-img"><img src="' + processed_images[2] + '" alt="' + (real_captions[2][:50] if len(real_captions) > 2 else 'Поворотный момент') + '"><figcaption>' + (real_captions[2] if len(real_captions) > 2 else 'Здесь всё изменилось') + '</figcaption></figure>' if len(processed_images) > 2 else ''}
-    
-    <p>
-        Но скорее всего, дело было в том неуловимом ощущении правды, которое излучал этот кадр. Здесь не было ни грамма фальши, ни капли наигранности. Просто момент жизни, пойманный в объектив с такой искренностью, что становилось больно от красоты.
-    </p>
-    
-    <div class="dialogue">
-        Как так получается, что незнакомый человек может тронуть твою душу одним кадром?
+    <div class="memoir-text">
+        {chapters.get('story_creation', 'Представляю, как создавался один из снимков...')}
     </div>
-    
-    <p>
-        Я вглядывался в детали фотографии и понимал, что @{username} — не просто человек с хорошим вкусом и дорогой камерой. Это художник. Поэт с объективом вместо пера. Философ, говорящий языком света и тени.
-    </p>
-    
-    <p>
-        {f'Подпись к этому посту была {real_captions[2] if len(real_captions) > 2 else "простой и честной"}' if real_captions else 'Подпись была минималистичной'} — и в ней звучала та же искренность, что и в самом снимке. Никаких громких слов, никаких попыток объяснить магию. Просто констатация факта: красота существует, и иногда нам везёт её заметить.
-    </p>
-    
-    <div class="inner-thought">
-        В этот момент я понял, что не просто изучаю чей-то профиль — я учусь видеть мир по-новому.
-    </div>
-    
-    <p>
-        Комментарии под этой фотографией были особенными. Люди благодарили автора не просто за красивый кадр, а за то, что он напомнил им о существовании прекрасного в их собственной жизни. За то, что научил останавливаться и замечать.
-    </p>
-    
-    <p>
-        И я вдруг осознал, что @{username} делает нечто большее, чем просто ведёт блог. Этот человек создаёт оазисы красоты в пустыне информационного шума. Места, где можно остановиться, перевести дух, вспомнить о том, что жизнь может быть прекрасной.
-    </p>
-    
-    <p>
-        Именно тогда я решил, что должен рассказать эту историю. Не пересказать содержимое профиля, а попытаться передать то чувство открытия, которое испытал, листая эти фотографии. Ведь в конце концов, самые важные истории — это истории о том, как мы находим красоту в неожиданных местах.
-    </p>
 </div>
 
-<!-- ГЛАВА 4 -->
-<div class="book-page">
-    <h1>Глава 4. Отражения и размышления</h1>
-    
-    <div class="chapter-epigraph">
-        «Мы не просто смотрим на искусство — оно смотрит на нас»
+<!-- ГЛАВА 4: УГЛУБЛЯЯСЬ В ДЕТАЛИ -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава четвёртая</div>
+        <h2 class="chapter-title">Углубляясь в детали</h2>
     </div>
     
-    <p class="first-paragraph">
-        Продолжая изучать профиль @{username}, я начал замечать, как меняюсь сам. Не кардинально, не внезапно, а постепенно, как меняется пейзаж за окном медленно идущего поезда.
-    </p>
-    
-    <p>
-        Раньше я мог пройти мимо интересного света, падающего на стену дома, и не заметить его. Теперь я останавливался. Раньше отражение в луже было просто отражением. Теперь я видел в нём целый мир, перевёрнутый и переосмысленный.
-    </p>
-    
-    {'<figure class="hero-img"><img src="' + processed_images[3] + '" alt="' + (real_captions[3][:50] if len(real_captions) > 3 else 'Момент размышления') + '"><figcaption>' + (real_captions[3] if len(real_captions) > 3 else 'В этом кадре я узнал себя') + '</figcaption></figure>' if len(processed_images) > 3 else ''}
-    
-    <p>
-        @{username} научил меня языку визуальной поэзии, сам того не подозревая. Каждый пост был урок, каждая фотография — мастер-классом по искусству видеть. И самое удивительное — эти уроки не были навязчивыми или дидактичными. Они просто существовали, ожидая, когда зритель будет готов их воспринять.
-    </p>
-    
-    <div class="dialogue">
-        А сколько таких учителей проходит мимо нас каждый день, а мы их не замечаем?
+    <div class="memoir-text">
+        {chapters.get('deeper_details', 'Чем дольше я изучал профиль, тем больше замечал повторяющиеся мотивы...')}
     </div>
     
-    <p>
-        Я начал анализировать не только содержание постов, но и их ритм. Периоды активности и затишья, смена настроений, эволюцию стиля. {posts_count} публикаций — это {posts_count} дней из жизни человека, {posts_count} моментов, которые показались ему достойными сохранения.
-    </p>
-    
-    <p>
-        Интересно было наблюдать, как менялся почерк автора со временем. Ранние работы были более неуверенными, более объяснительными. Поздние — лаконичными, точными, как стрелы, пущенные опытным лучником.
-    </p>
-    
-    <div class="inner-thought">
-        Возможно, мы все эволюционируем именно так — от желания объяснить всё к пониманию силы недосказанности.
-    </div>
-    
-    <p>
-        Соотношение {followers:,} подписчиков к {following:,} подпискам тоже рассказывало историю. @{username} не гнался за массовостью, не играл в игры взаимных подписок. Этот профиль рос органично, привлекая людей качеством, а не количеством контента.
-    </p>
-    
-    <p>
-        Я попытался представить себе человека за этими фотографиями. Наверное, это кто-то, кто умеет наслаждаться одиночеством, но не страдает от него. Кто-то, кто видит красоту в простых вещах, но не превращает это в манерность. Кто-то искренний в мире, где искренность стала редкостью.
-    </p>
-    
-    <p>
-        И я понял, что @{username} — это не просто ник в Instagram. Это философия, образ мышления, способ взаимодействия с миром. И возможно, каждый из нас может стать таким @{username} для кого-то другого, если научится видеть и делиться увиденным с той же честностью и красотой.
-    </p>
+    {'<div class="memoir-photo"><div class="photo-frame"><img src="' + processed_images[2] + '" alt="Детали стиля"></div></div>' if len(processed_images) > 2 else ''}
 </div>
 
-<!-- ГЛАВА 5 -->
-<div class="book-page">
-    <h1>Глава 5. Финальные откровения</h1>
-    
-    <div class="chapter-epigraph">
-        «Конец — это всегда новое начало»
+<!-- ГЛАВА 5: СОЦИАЛЬНЫЙ АНАЛИЗ -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава пятая</div>
+        <h2 class="chapter-title">Социальный анализ</h2>
     </div>
     
-    <p class="first-paragraph">
-        Дойдя до самых ранних постов в профиле @{username}, я почувствовал странную грусть. Как читатель, который понимает, что любимая книга подходит к концу. Как путешественник, осознающий, что удивительное приключение завершается.
-    </p>
-    
-    <p>
-        Но одновременно я чувствовал благодарность. За то, что случайный алгоритм социальной сети подарил мне встречу с этим особенным взглядом на мир. За то, что незнакомый человек научил меня видеть красоту там, где я раньше её не замечал.
-    </p>
-    
-    {'<figure class="hero-img"><img src="' + processed_images[4] + '" alt="' + (real_captions[4][:50] if len(real_captions) > 4 else 'Последний кадр истории') + '"><figcaption>' + (real_captions[4] if len(real_captions) > 4 else 'История заканчивается, но красота остаётся') + '</figcaption></figure>' if len(processed_images) > 4 else ''}
-    
-    <p>
-        @{username} остался для меня загадкой — и это прекрасно. Я знаю о нём ровно столько, сколько он захотел рассказать через свои фотографии. Этого достаточно, чтобы понимать: передо мной творческая личность, которая делает мир чуточку прекраснее.
-    </p>
-    
-    <div class="dialogue">
-        Разве не в этом смысл искусства — не в том, чтобы объяснить всё, а в том, чтобы заставить почувствовать?
+    <div class="memoir-text">
+        {chapters.get('social_analysis', f'Аудитория @{username} — это не случайная толпа...')}
     </div>
     
-    <p>
-        Теперь, когда я листаю свою собственную ленту, я ловлю себя на мысли: «А что бы подумал @{username} об этом кадре?» Его эстетика стала для меня внутренним фильтром, критерием красоты и искренности.
-    </p>
-    
-    <p>
-        И может быть, в этом и заключается истинная сила настоящего искусства — не в том, чтобы поразить или удивить, а в том, чтобы изменить того, кто с ним соприкоснулся. Сделать его более чувствительным к красоте, более внимательным к деталям, более открытым к чуду обыденности.
-    </p>
-    
-    <div class="inner-thought">
-        Каждый из нас может стать чьим-то @{username} — учителем красоты, проводником в мир более внимательного взгляда на жизнь.
+    <div class="quote">
+        Наконец-то что-то настоящее в этом море фальши
+        <br><small>— из комментариев подписчиков</small>
+    </div>
+</div>
+
+<!-- ГЛАВА 6: ПСИХОЛОГИЧЕСКИЙ ПОРТРЕТ -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава шестая</div>
+        <h2 class="chapter-title">Психологический портрет</h2>
     </div>
     
-    <p>
-        История профиля @{username} — это не просто набор фотографий и подписей. Это напоминание о том, что в мире цифрового шума и поверхностного контента всё ещё есть место искренности, глубине, настоящей красоте.
-    </p>
+    <div class="memoir-text">
+        {chapters.get('psychological_portrait', 'Выбор сюжетов многое говорил о характере...')}
+    </div>
     
-    <p>
-        И пока есть такие люди, как @{username}, которые умеют останавливать мгновения и делиться ими с миром, у нас есть надежда. Надежда на то, что красота не исчезнет под напором уродства, что искренность не растворится в океане фальши, что человечность не потеряется в виртуальной реальности.
-    </p>
+    {'<div class="memoir-photo"><div class="photo-frame"><img src="' + processed_images[3] + '" alt="Психология в кадре"></div></div>' if len(processed_images) > 3 else ''}
+</div>
+
+<!-- ГЛАВА 7: ГЕОГРАФИЯ ДУШИ -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава седьмая</div>
+        <h2 class="chapter-title">География души</h2>
+    </div>
     
-    <p>
-        Спасибо тебе, @{username}, за то, что ты есть. За то, что создаёшь. За то, что учишь видеть. За то, что напоминаешь: мир прекрасен, если научиться его замечать.
-    </p>
+    <div class="memoir-text">
+        {chapters.get('geography_soul', 'Места, которые выбирал для съёмок, складывались в карту его души...')}
+    </div>
+    
+    {'<div class="memoir-photo"><div class="photo-frame"><img src="' + processed_images[4] + '" alt="Любимые места"></div></div>' if len(processed_images) > 4 else ''}
+</div>
+
+<!-- ГЛАВА 8: МЕЖДУ СТРОК -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава восьмая</div>
+        <h2 class="chapter-title">Между строк</h2>
+    </div>
+    
+    <div class="memoir-text">
+        {chapters.get('between_lines', f'За идеальными кадрами @{username} я чувствовал настоящую жизнь...')}
+    </div>
+    
+    <div class="inner-voice">
+        <em>Мы носим маски даже в Instagram, но у некоторых маски прозрачные...</em>
+    </div>
+</div>
+
+<!-- ГЛАВА 9: МУЗЫКА ФОТОГРАФИЙ -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава девятая</div>
+        <h2 class="chapter-title">Музыка фотографий</h2>
+    </div>
+    
+    <div class="memoir-text">
+        {chapters.get('music_photography', 'Фотографии звучали. Не метафорически, а буквально...')}
+    </div>
+    
+    {'<div class="memoir-photo"><div class="photo-frame"><img src="' + processed_images[5] + '" alt="Визуальная музыка"></div></div>' if len(processed_images) > 5 else ''}
+</div>
+
+<!-- ГЛАВА 10: ОТРАЖЕНИЯ И РАЗМЫШЛЕНИЯ -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава десятая</div>
+        <h2 class="chapter-title">Отражения и размышления</h2>
+    </div>
+    
+    <div class="memoir-text">
+        {chapters.get('reflections_changes', 'Изучение профиля изменило меня...')}
+    </div>
+    
+    <div class="inner-voice">
+        <em>Цепная реакция красоты — один человек замечает прекрасное, делится им, и это вдохновляет других...</em>
+    </div>
+</div>
+
+<!-- ГЛАВА 11: ПРОЩАЛЬНЫЙ ПОРТРЕТ -->
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Глава одиннадцатая</div>
+        <h2 class="chapter-title">Прощальный портрет</h2>
+    </div>
+    
+    <div class="memoir-text">
+        {chapters.get('farewell_portrait', f'Попытаясь создать цельный портрет @{username}...')}
+    </div>
+    
+    <div class="quote">
+        {real_captions[-1] if real_captions else 'В эпоху селфи и лайков ты напомнил: настоящее искусство — это честность'}
+    </div>
 </div>
 
 <!-- ЭПИЛОГ -->
-<div class="book-page">
-    <h2>Эпилог</h2>
-    
-    <p class="first-paragraph">
-        Дорогой читатель, если вы дочитали до этих строк, значит, и вас коснулась та же магия, что коснулась меня при знакомстве с профилем @{username}. Возможно, вы тоже начнёте обращать внимание на игру света в окне своего дома, на отражения в лужах, на тени, которые рассказывают истории.
-    </p>
-    
-    <p>
-        В мире, где всё происходит слишком быстро, где красота часто приносится в жертву эффективности, люди как @{username} напоминают нам о важности остановиться, посмотреть вокруг и увидеть чудо в обыденном.
-    </p>
-    
-    <div class="dialogue">
-        А может быть, и вы станете чьим-то @{username}? Чьим-то учителем красоты, проводником в мир более внимательного взгляда?
+<div class="memoir-page">
+    <div class="chapter-header">
+        <div class="chapter-number">Эпилог</div>
+        <h2 class="chapter-title">Что остается</h2>
     </div>
     
-    <p>
-        Эта история закончена, но красота продолжается. Каждый день, каждый момент, каждый взгляд, брошенный с вниманием и любовью на окружающий мир. И в этом — бесконечность, которая не помещается ни в какие рамки, ни в какие профили, ни в какие книги.
-    </p>
+    <div class="memoir-text">
+        {chapters.get('epilogue', 'В цифровую эпоху такие встречи приобретают особое значение...')}
+    </div>
     
-    <div class="stats-footer">
+    <div class="memoir-finale">
+        <div class="memoir-signature">
+            С благодарностью за встречу<br>
+            и урок красоты,<br>
+            <em>романтический наблюдатель</em>
+        </div>
+    </div>
+    
+    <div class="memoir-meta">
         <strong>@{username}</strong><br>
         {followers:,} подписчиков • {following:,} подписок • {posts_count} публикаций<br>
         {f'«{bio}»<br>' if bio else ''}
         <br>
-        <em>Книга создана {random.choice(['15 января', '16 января', '17 января'])} 2024 года</em><br>
-        <em>Приблизительно {word_count:,} слов</em>
+        <em>Мемуары написаны {random.choice(['тихим вечером', 'поздней ночью', 'на рассвете'])} в {random.choice(['январе', 'феврале', 'марте'])} 2024 года</em><br>
+        <em>Локации: {", ".join(locations[:3]) if locations else "неизвестные места сердца"}</em><br>
+        <em>Анализировано {len(processed_images)} фотографий из {len(images)} доступных</em>
     </div>
 </div>
 
 </body>
 </html>"""
-     
+    
     return html
 
+# Теперь нужно обновить основную функцию build_romantic_book
 # Теперь нужно обновить основную функцию build_romantic_book
