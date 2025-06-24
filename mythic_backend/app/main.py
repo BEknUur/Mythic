@@ -3,6 +3,11 @@ from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+
+import asyncio
+from app.services.image_processor import process_folder
+from app.services.text_collector import collect_texts
+from app.services.book_builder import build_romantic_book
 from pydantic import AnyUrl
 from pathlib import Path
 import json, logging, anyio
@@ -14,12 +19,12 @@ from app.services.downloader import download_photos
 log = logging.getLogger("api")
 app = FastAPI(title="Романтическая Летопись Любви", description="Создает красивые романтические книги на основе Instagram профилей для ваших любимых")
 
-# Настройка CORS для фронтенда
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",  # Vite dev server
-        "http://localhost:3000",  # альтернативный порт
+        "http://localhost:5173", 
+        "http://localhost:3000",  
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
     ],
@@ -28,10 +33,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Подключаем статические файлы
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ───────────── /health (проверка работы API) ─────────────
 @app.get("/health")
 def health_check():
     """Простая проверка работы API"""
@@ -40,7 +44,7 @@ def health_check():
 # ───────────── /start-scrape ────────────────────────────────
 @app.get("/start-scrape")
 async def start_scrape(url: AnyUrl):
-    clean_url = str(url).rstrip("/")        # без закрывающего «/»
+    clean_url = str(url).rstrip("/")        
 
     run_input = {
         "directUrls":     [clean_url],
@@ -64,7 +68,6 @@ async def start_scrape(url: AnyUrl):
     return {"runId": run["id"], "message": "Создание романтической книги началось! ❤️"}
 
 
-# ───────────── /webhook/apify ───────────────────────────────
 @app.post("/webhook/apify")
 async def apify_webhook(request: Request, background: BackgroundTasks):
     try:
@@ -80,12 +83,11 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
     dataset_id = payload.get("datasetId")
     if not dataset_id:
         run = await fetch_run(run_id)
-        dataset_id = run.get("defaultDatasetId")          # fallback
+        dataset_id = run.get("defaultDatasetId")         
 
     if not dataset_id:
         raise HTTPException(500, "datasetId unresolved")
 
-    # --- сохраняем JSON -----------------------------------------------------------------
     items = await fetch_items(dataset_id)
     run_dir = Path("data") / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -97,10 +99,7 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
 
     # --- строим романтическую книгу (markdown + html) ---------------------------------
     async def _build():
-        import asyncio
-        from app.services.image_processor import process_folder
-        from app.services.text_collector import collect_texts
-        from app.services.book_builder import build_romantic_book
+        
 
         # Ждем несколько секунд для завершения загрузки изображений
         print("💕 Ожидаем завершения загрузки изображений...")
@@ -123,7 +122,6 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
     return {"status": "processing", "runId": run_id, "message": "Создание романтической книги началось! 💕"}
 
 
-# ───────────── /status/{run_id} ────────────────────────────
 @app.get("/status/{run_id}")
 def status(run_id: str):
     run_dir = Path("data") / run_id
@@ -196,7 +194,6 @@ def download_file(run_id: str, filename: str):
     )
 
 
-# ───────────── /view/{run_id}/book.html ─────────────────
 @app.get("/view/{run_id}/book.html")
 def view_book_html(run_id: str):
     """Просмотр HTML версии книги в браузере"""

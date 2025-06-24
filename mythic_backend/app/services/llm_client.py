@@ -454,69 +454,9 @@ def generate_memoir_chapter(chapter_type: str, data: dict, photo_analysis: str =
     
     prompt = chapter_prompts.get(chapter_type, "Напиши романтично и поэтично.")
     
-    result = generate_text(prompt, max_tokens=800, temperature=0.9)  # Увеличил лимит токенов
+    result = generate_text(prompt, max_tokens=800, temperature=0.9)  
     return strip_cliches(result)
 
-
-# Обратная совместимость
-def analyze_photo_for_card(image_path: Path, context: str = "", card_type: str = "micro") -> str:
-    """Обратная совместимость - теперь анализирует для мемуаров"""
-    focus_mapping = {
-        "micro": "first_impression",
-        "trigger": "story_creation", 
-        "sms": "hidden_emotions"
-    }
-    focus = focus_mapping.get(card_type, "first_impression")
-    return analyze_photo_for_memoir(image_path, context, focus)
-
-def generate_scene_chapter(scene_type: str, data: dict, all_images: list) -> str:
-    """Обратная совместимость - теперь создает главы мемуаров"""
-    scene_mapping = {
-        "hook": "meeting",
-        "conflict": "social_analysis",
-        "turn": "between_lines",
-        "climax": "story_creation",
-        "epilogue": "farewell_portrait"
-    }
-    
-    chapter_type = scene_mapping.get(scene_type, "meeting")
-    
-    # Для главы с фото добавляем анализ
-    photo_analysis = ""
-    if all_images and chapter_type in ["first_impression", "story_creation"]:
-        try:
-            first_image = all_images[0] if all_images else None
-            if first_image and hasattr(first_image, 'exists') and first_image.exists():
-                photo_analysis = analyze_photo_for_memoir(first_image, f"@{data.get('username', '')}", chapter_type)
-        except:
-            photo_analysis = "Фотография оставила неизгладимое впечатление..."
-    
-    return generate_memoir_chapter(chapter_type, data, photo_analysis)
-
-def analyze_photo(image_path: Path, context: str = "", photo_index: int = 0) -> str:
-    """Обратная совместимость - теперь создает мемуарный анализ"""
-    focus_types = ["first_impression", "story_creation", "hidden_emotions"]
-    focus = focus_types[photo_index % len(focus_types)]
-    return analyze_photo_for_memoir(image_path, context, focus)
-
-def generate_unique_chapter(chapter_type: str, data: dict, previous_texts: list = None) -> str:
-    """Обратная совместимость - теперь создает уникальные главы мемуаров"""
-    chapter_mapping = {
-        "intro": "meeting",
-        "emotions": "first_impression",
-        "places": "story_creation", 
-        "community": "social_analysis",
-        "legacy": "farewell_portrait"
-    }
-    
-    memoir_chapter = chapter_mapping.get(chapter_type, "meeting")
-    
-    # Добавляем анализ фото для соответствующих глав
-    photo_analysis = ""
-    if memoir_chapter in ["first_impression", "story_creation"] and data.get('photo_analyses'):
-        photo_analysis = data['photo_analyses'][0] if data['photo_analyses'] else ""
-    
-    return generate_memoir_chapter(memoir_chapter, data, photo_analysis)
 
 def generate_complete_memoir_book(data: dict, images: list) -> dict:
     """Генерирует все 12 глав мемуаров для полноценной книги"""
