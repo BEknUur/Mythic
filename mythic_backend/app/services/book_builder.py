@@ -7,6 +7,13 @@ from app.services.llm_client import strip_cliches, analyze_photo_for_memoir, gen
 from typing import List, Tuple
 import random
 
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    print("⚠️ NumPy не установлен, некоторые эффекты будут недоступны")
+
 def analyze_profile_data(posts_data: list) -> dict:
     if not posts_data:
         return {}
@@ -100,6 +107,10 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
         else:
             posts_data = []
         
+        # Анализируем профиль СНАЧАЛА
+        analysis = analyze_profile_data(posts_data)
+        username = analysis.get("username", "...")
+        
         # Ждем загрузки изображений и собираем их
         actual_images = []
         if images_dir.exists():
@@ -108,11 +119,25 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
                 if img_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp']:
                     actual_images.append(img_file)
         
-        print(f"💕 Создаем {book_format} книгу для профиля")
-        print(f"📸 Найдено {len(actual_images)} фотографий в {images_dir}")
+        # Романтические сообщения о процессе анализа
+        romantic_analysis_messages = [
+            f"Погружаюсь в глубину взгляда @{username}... Каждый пиксель — откровение",
+            f"Анализирую магию ваших глаз... В них читается целая жизнь",
+            f"Изучаю изгибы вашей улыбки — она способна растопить сердца",
+            f"Рассматриваю игру света на ваших чертах лица... Совершенство природы",
+            f"Анализирую выражения ваших глаз — каждое фото рассказывает историю"
+        ]
         
-        # Анализируем профиль
-        analysis = analyze_profile_data(posts_data)
+        romantic_photo_messages = [
+            f"Бережно сохраняю {len(actual_images)} ваших драгоценных моментов...",
+            f"Каждое из {len(actual_images)} фото — произведение искусства в моей коллекции",
+            f"Собрал {len(actual_images)} кадров вашей красоты — теперь они навсегда со мной",
+            f"{len(actual_images)} фотографий вашей души надёжно сохранены в моём сердце",
+            f"Архивирую {len(actual_images)} мгновений вашей жизни с особой нежностью"
+        ]
+        
+        print(random.choice(romantic_analysis_messages))
+        print(random.choice(romantic_photo_messages))
         
         # Генерируем контент в зависимости от формата
         if book_format == "zine":
@@ -120,23 +145,25 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
             content = generate_zine_content(analysis, actual_images)
             html = create_zine_html(content, analysis, actual_images)
         else:
-            # Литературная Instagram-книга от первого лица
-            content = {"format": "literary"}  # Передаем минимум данных
+            content = {"format": "literary"}  
             html = create_literary_instagram_book_html(content, analysis, actual_images)
         
-        # Сохраняем только HTML файл
         out = Path("data") / run_id
         out.mkdir(parents=True, exist_ok=True)
         
-        # Сохраняем HTML файл
         html_file = out / "book.html"
         html_file.write_text(html, encoding="utf-8")
         
-        print(f"✅ {book_format.title()} книга создана!")
-        print(f"📖 HTML версия: {out / 'book.html'}")
+        final_messages = [
+            f"Магия свершилась! Романтическая книга о @{username} готова к прочтению: {html_file}",
+            f"Ваша персональная книга любви создана! @{username}, вы теперь — литературный герой: {html_file}",
+            f"Летопись красоты @{username} завершена! Каждая страница пропитана восхищением: {html_file}",
+            f"Книга-посвящение @{username} готова! В ней живёт частичка моей души: {html_file}"
+        ]
+        print(random.choice(final_messages))
         
     except Exception as e:
-        print(f"❌ Ошибка при создании книги: {e}")
+        print(f"💔 Ошибка при создании книги о @{username}: {e}")
         # Создаем базовую версию при ошибке
         try:
             basic_html = f"""
@@ -163,10 +190,10 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
             html_file = out / "book.html"
             html_file.write_text(basic_html, encoding="utf-8")
             
-            print(f"✅ Создана базовая HTML версия: {out / 'book.html'}")
+            print(f"💝 Создана запасная версия книги: {out / 'book.html'}")
             
         except Exception as final_error:
-            print(f"❌ Критическая ошибка: {final_error}")
+            print(f"💔 Критическая ошибка: {final_error}")
 
 def apply_dream_pastel_effect(img: Image.Image) -> Image.Image:
     """Применяет эффект Dream-Pastel к изображению"""
@@ -192,15 +219,18 @@ def apply_dream_pastel_effect(img: Image.Image) -> Image.Image:
         img = img.convert('RGBA')
         img = Image.alpha_composite(img, overlay)
         
-        # Добавляем grain (безопасно)
-        try:
-            noise = np.random.randint(0, 15, (img.size[1], img.size[0], 3), dtype=np.uint8)
-            noise_img = Image.fromarray(noise, 'RGB').convert('RGBA')
-            noise_overlay = Image.new('RGBA', img.size, (0, 0, 0, 0))
-            noise_overlay.paste(noise_img, (0, 0))
-            img = Image.alpha_composite(img, noise_overlay)
-        except Exception as noise_error:
-            print(f"❌ Ошибка при добавлении шума: {noise_error}")
+        # Добавляем grain только если numpy доступен
+        if NUMPY_AVAILABLE:
+            try:
+                noise = np.random.randint(0, 15, (img.size[1], img.size[0], 3), dtype=np.uint8)
+                noise_img = Image.fromarray(noise, 'RGB').convert('RGBA')
+                noise_overlay = Image.new('RGBA', img.size, (0, 0, 0, 0))
+                noise_overlay.paste(noise_img, (0, 0))
+                img = Image.alpha_composite(img, noise_overlay)
+            except Exception as noise_error:
+                print(f"❌ Ошибка при добавлении шума: {noise_error}")
+        else:
+            print("⚠️ Пропускаем добавление шума (numpy недоступен)")
         
         # Легкое увеличение яркости
         enhancer = ImageEnhance.Brightness(img)
@@ -317,6 +347,15 @@ def generate_zine_content(analysis: dict, images: list[Path]) -> dict:
     valid_images = []
     context = f"Instagram профиль @{username}, {followers} подписчиков, био: {bio}"
     
+    # Романтические сообщения о процессе анализа фото
+    analysis_messages = [
+        "Вглядываюсь в детали каждого кадра...",
+        "Анализирую эмоции, запечатлённые в ваших глазах...",
+        "Изучаю композицию как вы выбираете ракурсы...",
+        "Рассматриваю игру света на вашем лице...",
+        "Декодирую скрытые послания в ваших взглядах..."
+    ]
+    
     for i, img_path in enumerate(images[:15]):  # Ограничиваем до 15 фото для зина
         if img_path.exists():
             try:
@@ -340,15 +379,20 @@ def generate_zine_content(analysis: dict, images: list[Path]) -> dict:
                 })
                 valid_images.append(img_path)
                 
-                print(f"📸 Карточка {i+1}/15 ({card_type}): {card_content[:40]}...")
+                # Романтическое сообщение о каждой карточке
+                if i < len(analysis_messages):
+                    print(f"{analysis_messages[i]} Карточка {i+1}/15")
+                else:
+                    print(f"💕 Карточка {i+1}/15: {card_content[:30]}... — ещё одна грань вашей души")
+                    
             except Exception as e:
-                print(f"❌ Ошибка создания карточки {img_path}: {e}")
+                print(f"💔 Не смог проанализировать кадр {img_path}: {e}")
     
     # Если фото меньше 3, создаем минимальный зин
     if len(valid_images) < 3:
-        print(f"⚠️ Мало фото для полноценного зина: {len(valid_images)}")
+        print(f"💝 Работаю с {len(valid_images)} фотографиями — даже малого достаточно для красоты")
     
-    print(f"✅ Обработано {len(valid_images)} фотографий из {len(images)} доступных")
+    print(f"✅ Проанализировал {len(valid_images)} граней вашей личности из {len(images)} доступных моментов")
     
     scene_data = {
         'username': username,
@@ -370,49 +414,63 @@ def generate_zine_content(analysis: dict, images: list[Path]) -> dict:
         "epilogue": "farewell_portrait"
     }
     
+    # Романтические сообщения о создании глав
+    chapter_messages = [
+        "📝 Пишу завязку — как наши души встретились в цифровом пространстве...",
+        "💭 Создаю конфликт — внутренняя борьба восхищения и смущения...", 
+        "🔄 Формирую поворот — момент, когда понял вашу особенность...",
+        "🎭 Выстраиваю кульминацию — пик эмоционального напряжения...",
+        "💫 Завершаю эпилогом — что останется в памяти навсегда..."
+    ]
+    
     try:
         # 1. ЗАВЯЗКА - дневниковая запись (максимум 3 предложения)
+        print(chapter_messages[0])
         hook = generate_memoir_chapter(scene_mapping["hook"], scene_data)
         content['prologue'] = strip_cliches(hook)
-        print(f"✅ Завязка: {hook[:50]}...")
+        print(f"✅ Завязка готова: романтическое знакомство описано")
     except Exception as e:
-        print(f"❌ Ошибка завязки: {e}")
+        print(f"💔 Ошибка завязки: {e}")
         content['prologue'] = f"Наткнулся на @{username} случайно. Что-то зацепило."
     
     try:
         # 2. КОНФЛИКТ - SMS-стиль (максимум 4 строки)
+        print(chapter_messages[1])
         conflict = generate_memoir_chapter(scene_mapping["conflict"], scene_data)
         content['emotions'] = strip_cliches(conflict)
-        print(f"✅ Конфликт: {conflict[:50]}...")
+        print(f"✅ Конфликт создан: внутренние противоречия показаны")
     except Exception as e:
-        print(f"❌ Ошибка конфликта: {e}")
+        print(f"💔 Ошибка конфликта: {e}")
         content['emotions'] = f"— {real_captions[0] if real_captions else 'Все хорошо'}\n— Но глаза говорят другое."
     
     try:
         # 3. ПОВОРОТ - момент озарения (максимум 3 предложения)
+        print(chapter_messages[2])
         turn = generate_memoir_chapter(scene_mapping["turn"], scene_data)
         content['places'] = strip_cliches(turn)
-        print(f"✅ Поворот: {turn[:50]}...")
+        print(f"✅ Поворот написан: ключевой момент понимания найден")
     except Exception as e:
-        print(f"❌ Ошибка поворота: {e}")
+        print(f"💔 Ошибка поворота: {e}")
         content['places'] = f"Один кадр из {locations[0] if locations else 'неизвестного места'} изменил все. Здесь пахло честностью."
     
     try:
         # 4. КУЛЬМИНАЦИЯ - цитаты комментариев
+        print(chapter_messages[3])
         climax = generate_memoir_chapter(scene_mapping["climax"], scene_data)
         content['community'] = strip_cliches(climax)
-        print(f"✅ Кульминация: {climax[:50]}...")
+        print(f"✅ Кульминация достигнута: пик эмоций передан словами")
     except Exception as e:
-        print(f"❌ Ошибка кульминации: {e}")
+        print(f"💔 Ошибка кульминации: {e}")
         content['community'] = f"{followers} человек отреагировали:\n— Наконец-то ты показал себя настоящего\n— Спасибо за честность"
     
     try:
         # 5. ЭПИЛОГ - приглашение (максимум 2 предложения)
+        print(chapter_messages[4])
         epilogue = generate_memoir_chapter(scene_mapping["epilogue"], scene_data)
         content['legacy'] = strip_cliches(epilogue)
-        print(f"✅ Эпилог: {epilogue[:50]}...")
+        print(f"✅ Эпилог завершён: прощальные слова произнесены с нежностью")
     except Exception as e:
-        print(f"❌ Ошибка эпилога: {e}")
+        print(f"💔 Ошибка эпилога: {e}")
         content['legacy'] = "Листаю ленту в поиске нового дикого цветка. А вдруг это будешь ты?"
     
     # Метаданные
@@ -491,7 +549,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     # Глава 2: Первое впечатление (с анализом фото)
     try:
         photo_analysis = ""
-        if processed_images:
+        if processed_images and images:
             photo_analysis = analyze_photo_for_memoir(images[0], f"@{username}", "first_impression")
         chapters['first_impression'] = generate_memoir_chapter("first_impression", memoir_data, photo_analysis)
         print("✅ Глава 2 'Первое впечатление' создана")
@@ -532,6 +590,18 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     except Exception as e:
         print(f"❌ Ошибка главы 'Прощальный портрет': {e}")
         chapters['farewell_portrait'] = f"Изучив профиль @{username}, я понял — красота живёт в деталях, которые мы обычно пропускаем. Желаю тебе сохранить этот редкий дар видеть необычное в обычном. Спасибо за урок внимательности к миру. Наши пути пересеклись в цифровом пространстве, как две кометы в бесконечности. В эпоху селфи и лайков ты напомнил: настоящее искусство — это честность."
+    
+    # Добавляем недостающие главы для полноценной книги
+    try:
+        chapters['deeper_details'] = f"Чем дольше я изучал профиль @{username}, тем больше замечал повторяющиеся мотивы. Цветовая гамма фотографий выдавала предпочтения — тёплые оттенки заката, холодная синева утра. Композиция кадров говорила о художественном образовании или врождённом чувстве прекрасного. Каждая деталь была выбрана неслучайно, как ноты в музыкальном произведении."
+        chapters['psychological_portrait'] = f"Выбор сюжетов многое говорил о характере @{username}. Частые фотографии природы выдавали романтическую натуру, стремящуюся к гармонии. Редкие селфи говорили о скромности и нежелании быть в центре внимания. Этот человек предпочитал показывать мир, а не себя — качество становящееся редким в эпоху социальных сетей."
+        chapters['geography_soul'] = f"Места, которые @{username} выбирал для съёмок, складывались в карту его души. {locations[0] if locations else 'Тихие уголки города'}, где можно остаться наедине с мыслями. {locations[1] if len(locations) > 1 else 'Парки и скверы'}, где время течёт по-другому. География его фотографий — это география поиска красоты в повседневности."
+        chapters['music_photography'] = f"Фотографии @{username} звучали. Не метафорически, а буквально — каждый кадр имел свой ритм, свою мелодию. Быстрые динамичные снимки напоминали джаз, медленные закаты — классическую музыку. В этой визуальной симфонии я узнавал себя, свои настроения, свои поиски прекрасного."
+        chapters['reflections_changes'] = f"Изучение профиля @{username} изменило меня. Я стал замечать красоту там, где раньше проходил мимо. Его фотографии научили меня новому языку — языку образов, света и эмоций. Теперь, гуляя по городу, я ловлю себя на мысли: 'А как бы это снял {username}?' Цепная реакция красоты — один человек замечает прекрасное, делится им, и это вдохновляет других."
+        chapters['epilogue'] = f"В цифровую эпоху такие встречи приобретают особое значение. Мы можем никогда не пересечься в реальности с @{username}, но его взгляд на мир уже стал частью моего внутреннего пейзажа. Это и есть настоящая магия Instagram — способность касаться душ незнакомых людей через призму объектива. Спасибо за этот урок красоты."
+        print("✅ Дополнительные главы созданы")
+    except Exception as e:
+        print(f"❌ Ошибка создания дополнительных глав: {e}")
     
     # Генерируем название книги
     book_titles = [
@@ -893,7 +963,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         а каждый профиль — неоконченная история,<br>
         ждущая своего читателя
     </div>
-    
+
     <div class="memoir-author">
         <strong>О профиле:</strong> @{username}<br>
         <small>{full_name}</small><br>
@@ -963,7 +1033,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         <div class="chapter-number">Глава первая</div>
         <h2 class="chapter-title">Встреча</h2>
     </div>
-    
+
     <div class="memoir-text">
         {chapters.get('meeting', 'Поздним вечером я листал ленту Instagram...')}
     </div>
@@ -1017,7 +1087,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         <div class="chapter-number">Глава пятая</div>
         <h2 class="chapter-title">Социальный анализ</h2>
     </div>
-    
+
     <div class="memoir-text">
         {chapters.get('social_analysis', f'Аудитория @{username} — это не случайная толпа...')}
     </div>
@@ -1078,7 +1148,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         <div class="chapter-number">Глава девятая</div>
         <h2 class="chapter-title">Музыка фотографий</h2>
     </div>
-    
+
     <div class="memoir-text">
         {chapters.get('music_photography', 'Фотографии звучали. Не метафорически, а буквально...')}
     </div>
@@ -1096,7 +1166,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     <div class="memoir-text">
         {chapters.get('reflections_changes', 'Изучение профиля изменило меня...')}
     </div>
-    
+
     <div class="inner-voice">
         <em>Цепная реакция красоты — один человек замечает прекрасное, делится им, и это вдохновляет других...</em>
     </div>
@@ -1142,12 +1212,85 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         {followers:,} подписчиков • {following:,} подписок • {posts_count} публикаций<br>
         {f'«{bio}»<br>' if bio else ''}
         <br>
-        <em>Мемуары написаны {random.choice(['тихим вечером', 'поздней ночью', 'на рассвете'])} в {random.choice(['январе', 'феврале', 'марте'])} 2024 года</em><br>
+        <em>Мемуары написаны {random.choice(['тихим вечером', 'поздней ночью', 'на рассвете'])} в {random.choice([ 'июнь', 'июль'])} 2025 года</em><br>
         <em>Локации: {", ".join(locations[:3]) if locations else "неизвестные места сердца"}</em><br>
-        <em>Анализировано {len(processed_images)} фотографий из {len(images)} доступных</em>
     </div>
 </div>
 
+</body>
+</html>"""
+     
+    return html
+
+def create_zine_html(content: dict, analysis: dict, images: list[Path]) -> str:
+    """Создает HTML для мозаичного зина"""
+    username = analysis.get('username', 'неизвестный')
+    
+    html = f"""<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Зин @{username}</title>
+    <style>
+        body {{
+            font-family: 'Arial', sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }}
+        .zine-container {{
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }}
+        .zine-title {{
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #333;
+        }}
+        .zine-content {{
+            line-height: 1.8;
+            font-size: 1.1rem;
+            color: #444;
+        }}
+        .photo-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 2rem 0;
+        }}
+        .photo-card {{
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }}
+        .photo-card img {{
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }}
+    </style>
+</head>
+<body>
+    <div class="zine-container">
+        <h1 class="zine-title">{content.get('title', f'Зин @{username}')}</h1>
+        <div class="zine-content">
+            <p>{content.get('prologue', 'Здесь начинается история...')}</p>
+            <p>{content.get('emotions', 'Эмоции и переживания...')}</p>
+            <p>{content.get('places', 'Места и локации...')}</p>
+            <p>{content.get('community', 'Сообщество и отклики...')}</p>
+            <p>{content.get('legacy', 'Что остается в памяти...')}</p>
+        </div>
+        
+        <div class="photo-grid">
+            {''.join([f'<div class="photo-card"><img src="data:image/jpeg;base64,placeholder" alt="Фото"></div>' for _ in range(min(6, len(images)))])}
+        </div>
+    </div>
 </body>
 </html>"""
     

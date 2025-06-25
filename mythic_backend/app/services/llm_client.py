@@ -492,7 +492,7 @@ def generate_complete_memoir_book(data: dict, images: list) -> dict:
     
     for chapter_type in chapter_types:
         try:
-            # Для глав с фото передаем анализ
+
             photo_analysis = ""
             if chapter_type in ["first_impression", "story_creation"] and photo_analyses:
                 photo_analysis = photo_analyses[0] if photo_analyses else ""

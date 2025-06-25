@@ -25,6 +25,7 @@ const StagesSchema = z.object({
 
 const StatusResponseSchema = z.object({
   runId: z.string(),
+  message: z.string(),
   stages: StagesSchema,
   profile: ProfileSchema.optional(),
   files: z.record(z.string()).default({}),

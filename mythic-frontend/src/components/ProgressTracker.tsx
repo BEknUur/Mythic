@@ -126,6 +126,12 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
   const getCurrentPhrase = () => {
     if (!status) return 'начинаем работу над вашей историей';
     
+    // Используем романтические сообщения от API
+    if (status.message) {
+      return status.message;
+    }
+    
+    // Fallback к статичным сообщениям
     if (status.stages.book_generated) return 'ваша романтическая книга готова';
     if (status.stages.images_downloaded) return 'пишем вашу уникальную историю';
     if (status.stages.data_collected) return 'анализируем ваши лучшие моменты';
@@ -182,6 +188,16 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               {status && (
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200 transition-all duration-500">
                   <h4 className="font-medium mb-4 text-blue-900">Сейчас происходит:</h4>
+                  
+                  {/* Романтическое сообщение от API */}
+                  {status.message && !status.stages.book_generated && (
+                    <div className="mb-4 p-3 bg-white rounded-lg border border-pink-200 shadow-sm">
+                      <p className="text-pink-700 italic text-sm leading-relaxed">
+                        {status.message}
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="space-y-3 text-sm">
                     <div className={`flex items-center justify-between transition-all duration-700 ${visibleSteps >= 1 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
                       <span className="text-blue-700 flex items-center gap-2">

@@ -129,21 +129,18 @@ def download_photos(items: List[Dict], folder: Path):
                 tasks = [download_with_semaphore(u, i) for i, u in enumerate(urls, 1)]
                 await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Проверяем, запущен ли уже event loop
+        
         try:
             loop = asyncio.get_running_loop()
-            # Если loop уже запущен, создаем задачу
             future = asyncio.run_coroutine_threadsafe(main(), loop)
-            future.result(timeout=120)  # Ждем максимум 2 минуты
+            future.result(timeout=120) 
         except RuntimeError:
-            # Если loop не запущен, запускаем обычно
             asyncio.run(main())
             
         log.info("download completed (%s urls processed)", len(urls))
         
     except Exception as e:
         log.error(f"Critical error in download_photos: {e}")
-        # Создаем хотя бы одну заглушку, чтобы процесс не провалился
         try:
             folder.mkdir(parents=True, exist_ok=True)
             _create_placeholder_image(folder, 1)
