@@ -4,8 +4,9 @@ from typing import Optional, Dict, Any
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.config import settings
+import json
+import base64
 
-# Получаем ключи Clerk из настроек
 CLERK_SECRET_KEY = settings.CLERK_SECRET_KEY
 CLERK_PUBLISHABLE_KEY = settings.CLERK_PUBLISHABLE_KEY
 
@@ -18,7 +19,6 @@ class ClerkAuth:
         self.enabled = bool(CLERK_SECRET_KEY and CLERK_PUBLISHABLE_KEY)
 
     def get_jwks(self):
-        """Получает JWKS от Clerk для верификации токенов"""
         if not self.enabled:
             return None
             
@@ -33,32 +33,26 @@ class ClerkAuth:
         return self._jwks
 
     def verify_token(self, token: str) -> Optional[Dict[str, Any]]:
-        """Верифицирует JWT токен от Clerk"""
+      
         if not self.enabled:
-            # Если Clerk не настроен, возвращаем фиктивного пользователя
             return {"sub": "anonymous", "clerk_disabled": True}
             
         try:
-            # Совместимость с разными версиями PyJWT
             if hasattr(jwt, 'decode'):
-                # Новая версия PyJWT (2.x)
                 payload = jwt.decode(token, options={"verify_signature": False})
             else:
-                # Старая версия или другая библиотека
-                import json
-                import base64
-                # Простая декодировка без проверки подписи
+                
+                
                 parts = token.split('.')
                 if len(parts) != 3:
                     return None
                 payload_part = parts[1]
-                # Добавляем padding если нужно
                 payload_part += '=' * (4 - len(payload_part) % 4)
                 payload_bytes = base64.urlsafe_b64decode(payload_part)
                 payload = json.loads(payload_bytes.decode('utf-8'))
             
-            # Проверяем базовые поля
-            if "sub" not in payload:  # subject (user ID)
+            
+            if "sub" not in payload: 
                 return None
                 
             return payload
@@ -66,13 +60,12 @@ class ClerkAuth:
             print(f"Ошибка верификации токена: {e}")
             return None
 
-# Глобальный экземпляр
+
 clerk_auth = ClerkAuth()
 
 def get_current_user(authorization: HTTPAuthorizationCredentials = security) -> Dict[str, Any]:
-    """Dependency для получения текущего пользователя"""
+   
     if not clerk_auth.enabled:
-        # Если Clerk не настроен, возвращаем анонимного пользователя
         return {"sub": "anonymous", "clerk_disabled": True}
         
     if not authorization:
@@ -89,7 +82,7 @@ def get_current_user(authorization: HTTPAuthorizationCredentials = security) -> 
 def get_optional_current_user(request: Request) -> Optional[Dict[str, Any]]:
     """Опциональная зависимость для получения пользователя"""
     if not clerk_auth.enabled:
-        # Если Clerk не настроен, возвращаем анонимного пользователя
+       
         return {"sub": "anonymous", "clerk_disabled": True}
         
     auth_header = request.headers.get("Authorization")

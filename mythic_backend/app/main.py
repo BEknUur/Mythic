@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from app.services.image_processor import process_folder
 from app.services.text_collector import collect_texts
-from app.services.book_builder import build_romantic_book
+from app.services.book_builder import build_romantic_book, create_pdf_from_html
 from app.auth import get_current_user, get_optional_current_user
 from pydantic import AnyUrl
 from pathlib import Path
@@ -16,6 +16,7 @@ import json, logging, anyio, random
 from app.config import settings
 from app.services.apify_client import run_actor, fetch_run, fetch_items
 from app.services.downloader import download_photos
+from app.auth import clerk_auth
 
 log = logging.getLogger("api")
 app = FastAPI(title="Романтическая Летопись Любви", description="Создает красивые романтические книги на основе Instagram профилей для ваших любимых")
@@ -76,7 +77,6 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
     except Exception:
         payload = {}
 
-    # --- run / dataset ------------------------------------------------------------------
     run_id = payload.get("runId") or request.headers.get("x-apify-run-id")
     if not run_id:
         raise HTTPException(400, "runId missing")
@@ -123,11 +123,11 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
 
 @app.get("/status/{run_id}")
 def status(run_id: str):
-    """Проверка статуса создания книги"""
     run_dir = Path("data") / run_id
     posts_json = run_dir / "posts.json"
     images_dir = run_dir / "images"
     html_file = run_dir / "book.html"
+    pdf_file = run_dir / "book.pdf"
     
     log.info(f"Status check for {run_id}")
     
@@ -135,7 +135,7 @@ def status(run_id: str):
     images_downloaded = images_dir.exists() and any(images_dir.glob("*"))
     book_generated = html_file.exists()
 
-    message = "⏳ Начинаю путешествие по вашему профилю..."
+    message = "Начинаю путешествие по вашему профилю..."
 
     if book_generated:
         message = " Ваша книга готова! Время окунуться в романтику."
@@ -197,6 +197,9 @@ def status(run_id: str):
     if html_file.exists():
         status_info["files"]["html"] = f"/view/{run_id}/book.html"
     
+    if pdf_file.exists():
+        status_info["files"]["pdf"] = f"/download/{run_id}/book.pdf"
+    
     # Добавляем информацию о профиле если есть
     if posts_json.exists():
         try:
@@ -218,19 +221,8 @@ def status(run_id: str):
 
 # ───────────── /download/{run_id}/{filename} ─────────────
 @app.get("/download/{run_id}/{filename}")
-def download_file(run_id: str, filename: str, request: Request, current_user: dict = Depends(get_optional_current_user)):
-    """Скачивание готовых файлов (PDF, HTML) - только для авторизованных пользователей"""
-    
-    # Проверяем токен из заголовков или query параметров
-    if not current_user:
-        # Пытаемся получить токен из query параметров
-        token = request.query_params.get("token")
-        if token:
-            from app.auth import clerk_auth
-            current_user = clerk_auth.verify_token(token)
-        
-        if not current_user:
-            raise HTTPException(401, "Для скачивания файла необходима авторизация")
+def download_file(run_id: str, filename: str):
+    """Скачивание готовых файлов (PDF, HTML)"""
     
     run_dir = Path("data") / run_id
     file_path = run_dir / filename
@@ -249,19 +241,8 @@ def download_file(run_id: str, filename: str, request: Request, current_user: di
 
 
 @app.get("/view/{run_id}/book.html")
-def view_book_html(run_id: str, request: Request, current_user: dict = Depends(get_optional_current_user)):
-    """Просмотр HTML версии книги в браузере - только для авторизованных пользователей"""
-    
-    # Проверяем токен из заголовков или query параметров
-    if not current_user:
-        # Пытаемся получить токен из query параметров (для iframe)
-        token = request.query_params.get("token")
-        if token:
-            from app.auth import clerk_auth
-            current_user = clerk_auth.verify_token(token)
-        
-        if not current_user:
-            raise HTTPException(401, "Для просмотра книги необходима авторизация")
+def view_book_html(run_id: str):
+    """Просмотр HTML версии книги в браузере"""
     
     run_dir = Path("data") / run_id
     html_file = run_dir / "book.html"
@@ -271,6 +252,34 @@ def view_book_html(run_id: str, request: Request, current_user: dict = Depends(g
     
     html_content = html_file.read_text(encoding="utf-8")
     return HTMLResponse(content=html_content)
+
+
+@app.post("/generate-pdf/{run_id}")
+async def generate_pdf(run_id: str):
+    """Генерирует PDF версию книги из HTML"""
+    
+    run_dir = Path("data") / run_id
+    html_file = run_dir / "book.html"
+    pdf_file = run_dir / "book.pdf"
+    
+    if not html_file.exists():
+        raise HTTPException(404, "HTML версия книги не найдена")
+    
+    try:
+        # Читаем HTML контент
+        html_content = html_file.read_text(encoding="utf-8")
+        
+        # Генерируем PDF
+        create_pdf_from_html(html_content, pdf_file)
+        
+        if pdf_file.exists():
+            return {"status": "success", "message": "PDF создан успешно", "url": f"/download/{run_id}/book.pdf"}
+        else:
+            raise HTTPException(500, "Ошибка при создании PDF")
+            
+    except Exception as e:
+        print(f"❌ Ошибка генерации PDF: {e}")
+        raise HTTPException(500, f"Ошибка при создании PDF: {str(e)}")
 
 
 # ───────────── / (главная страница) ─────────────────────
@@ -507,12 +516,12 @@ def home():
                 <h2 class="form-title">Создать Книгу Любви</h2>
                 <form id="loveBookForm">
                     <div class="input-group">
-                        <label class="input-label" for="instagramUrl">Instagram профиль вашего любимого человека 💕</label>
+                        <label class="input-label" for="instagramUrl">Instagram профиль вашего любимого человека</label>
                         <input type="url" id="instagramUrl" class="input-field" placeholder="https://www.instagram.com/username" required>
                     </div>
                     
                     <button type="submit" class="love-button">
-                        Создать Романтическую Книгу ❤️
+                        Создать Романтическую Книгу ❤️    
                     </button>
                 </form>
             </div>

@@ -154,6 +154,14 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
         html_file = out / "book.html"
         html_file.write_text(html, encoding="utf-8")
         
+        # Генерируем PDF версию
+        try:
+            pdf_file = out / "book.pdf"
+            create_pdf_from_html(html, pdf_file)
+            print(f"📄 PDF версия создана: {pdf_file}")
+        except Exception as pdf_error:
+            print(f"❌ Ошибка создания PDF: {pdf_error}")
+        
         final_messages = [
             f"Магия свершилась! Романтическая книга о @{username} готова к прочтению: {html_file}",
             f"Ваша персональная книга любви создана! @{username}, вы теперь — литературный герой: {html_file}",
@@ -1217,6 +1225,160 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     </div>
 </div>
 
+<!-- Плавающие кнопки действий -->
+<div class="floating-actions">
+    <button id="downloadPdf" class="action-btn pdf-btn" title="Скачать PDF">
+        📄 PDF
+    </button>
+    <button id="shareBook" class="action-btn share-btn" title="Поделиться книгой">
+        📤 Поделиться
+    </button>
+    <button id="printBook" class="action-btn print-btn" title="Распечатать" onclick="window.print()">
+        🖨️ Печать
+    </button>
+</div>
+
+<style>
+.floating-actions {{
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 1000;
+}}
+
+.action-btn {{
+    background: linear-gradient(135deg, var(--accent) 0%, var(--gold) 100%);
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 25px;
+    font-family: 'Libre Baskerville', serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    min-width: 120px;
+    text-align: center;
+}}
+
+.action-btn:hover {{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}}
+
+.pdf-btn {{
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}}
+
+.share-btn {{
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}}
+
+.print-btn {{
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+}}
+
+@media (max-width: 768px) {{
+    .floating-actions {{
+        bottom: 20px;
+        right: 20px;
+    }}
+    
+    .action-btn {{
+        padding: 10px 12px;
+        font-size: 12px;
+        min-width: 100px;
+    }}
+}}
+
+@media print {{
+    .floating-actions {{
+        display: none;
+    }}
+}}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {{
+    const downloadPdfBtn = document.getElementById('downloadPdf');
+    const shareBtn = document.getElementById('shareBook');
+    
+    // Функция скачивания PDF
+    downloadPdfBtn.addEventListener('click', async function() {{
+        const originalText = this.textContent;
+        this.textContent = '⏳ Создаю...';
+        this.disabled = true;
+        
+        try {{
+            // Получаем ID из URL
+            const pathParts = window.location.pathname.split('/');
+            const runId = pathParts[pathParts.indexOf('view') + 1];
+            
+            const response = await fetch(`/generate-pdf/${{runId}}`, {{
+                method: 'POST',
+                headers: {{
+                    'Content-Type': 'application/json',
+                }}
+            }});
+            
+            const result = await response.json();
+            
+            if (response.ok) {{
+                // Успешно создан PDF
+                this.textContent = '✅ Готово!';
+                
+                // Автоматически начинаем скачивание
+                const link = document.createElement('a');
+                link.href = result.url;
+                link.download = 'romantic_book.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Возвращаем исходный текст через 2 секунды
+                setTimeout(() => {{
+                    this.textContent = originalText;
+                    this.disabled = false;
+                }}, 2000);
+            }} else {{
+                throw new Error(result.detail || 'Ошибка создания PDF');
+            }}
+        }} catch (error) {{
+            console.error('Ошибка:', error);
+            this.textContent = '❌ Ошибка';
+            setTimeout(() => {{
+                this.textContent = originalText;
+                this.disabled = false;
+            }}, 3000);
+        }}
+    }});
+    
+    // Функция поделиться
+    shareBtn.addEventListener('click', function() {{
+        if (navigator.share) {{
+            navigator.share({{
+                title: document.title,
+                text: 'Посмотри эту романтическую книгу!',
+                url: window.location.href
+            }});
+        }} else {{
+            // Копируем ссылку в буфер обмена
+            navigator.clipboard.writeText(window.location.href).then(() => {{
+                const originalText = this.textContent;
+                this.textContent = '✅ Скопировано!';
+                setTimeout(() => {{
+                    this.textContent = originalText;
+                }}, 2000);
+            }});
+        }}
+    }});
+}});
+</script>
+
 </body>
 </html>"""
      
@@ -1295,4 +1457,204 @@ def create_zine_html(content: dict, analysis: dict, images: list[Path]) -> str:
 </html>"""
     
     return html
+
+def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
+    """Генерирует PDF из HTML контента используя weasyprint"""
+    try:
+        from weasyprint import HTML, CSS
+        from weasyprint.text.fonts import FontConfiguration
+        
+        # Создаем конфигурацию шрифтов
+        font_config = FontConfiguration()
+        
+        # CSS стили специально для PDF с улучшенной типографикой
+        pdf_css = CSS(string="""
+            @page {
+                size: A4;
+                margin: 2cm;
+                @top-center {
+                    content: "";
+                }
+                @bottom-center {
+                    content: counter(page);
+                    font-family: 'Times New Roman', serif;
+                    font-size: 10pt;
+                    color: #666;
+                }
+            }
+            
+            body {
+                font-family: 'Times New Roman', 'Crimson Text', serif !important;
+                font-size: 12pt;
+                line-height: 1.6;
+                color: #2c2a26;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .memoir-page {
+                padding: 1.5cm 1cm;
+                margin: 0;
+                min-height: unset;
+                box-shadow: none;
+                border: none;
+                page-break-after: always;
+            }
+            
+            .memoir-page:last-child {
+                page-break-after: auto;
+            }
+            
+            .cover-memoir {
+                text-align: center;
+                padding: 3cm 2cm;
+                page-break-after: always;
+            }
+            
+            .cover-title {
+                font-size: 28pt;
+                font-weight: bold;
+                margin-bottom: 1cm;
+                color: #2c2a26;
+            }
+            
+            .cover-subtitle {
+                font-size: 14pt;
+                font-style: italic;
+                margin-bottom: 2cm;
+                color: #5a5652;
+            }
+            
+            .chapter-title {
+                font-size: 18pt;
+                font-weight: bold;
+                margin-bottom: 1cm;
+                color: #b85450;
+                border-bottom: 2pt solid #d4af8c;
+                padding-bottom: 0.5cm;
+            }
+            
+            .chapter-number {
+                font-size: 12pt;
+                font-weight: normal;
+                color: #5a5652;
+                margin-bottom: 0.5cm;
+            }
+            
+            .memoir-text {
+                font-size: 12pt;
+                line-height: 1.7;
+                text-align: justify;
+                hyphens: auto;
+            }
+            
+            .memoir-text p {
+                margin-bottom: 1em;
+                text-indent: 1.5em;
+            }
+            
+            .memoir-text p:first-child {
+                text-indent: 0;
+            }
+            
+            .photo-frame {
+                text-align: center;
+                margin: 1.5cm 0;
+                padding: 0.5cm;
+                border: 1pt solid #d4af8c;
+                page-break-inside: avoid;
+            }
+            
+            .photo-frame img {
+                max-width: 100%;
+                max-height: 8cm;
+            }
+            
+            .photo-caption {
+                font-size: 10pt;
+                font-style: italic;
+                color: #5a5652;
+                margin-top: 0.5cm;
+                text-align: center;
+            }
+            
+            .table-of-contents {
+                page-break-after: always;
+            }
+            
+            .toc-title {
+                font-size: 18pt;
+                text-align: center;
+                margin-bottom: 1.5cm;
+                color: #b85450;
+            }
+            
+            .toc-item {
+                margin-bottom: 0.5cm;
+                padding: 0.3cm 0;
+                border-bottom: 1pt dotted #d4af8c;
+                display: flex;
+                justify-content: space-between;
+            }
+            
+            .toc-chapter {
+                font-weight: bold;
+            }
+            
+            .toc-page {
+                color: #5a5652;
+                font-style: italic;
+            }
+            
+            .cover-epigraph {
+                font-style: italic;
+                border-top: 1pt solid #d4af8c;
+                border-bottom: 1pt solid #d4af8c;
+                padding: 1cm;
+                margin: 2cm auto;
+                max-width: 12cm;
+                page-break-inside: avoid;
+            }
+            
+            .memoir-author {
+                margin-top: 2cm;
+                font-size: 11pt;
+            }
+            
+            .memoir-finale {
+                text-align: center;
+                margin-top: 2cm;
+                padding: 1.5cm;
+                border: 1pt solid #d4af8c;
+                page-break-inside: avoid;
+            }
+            
+            .memoir-signature {
+                font-style: italic;
+                margin-top: 1cm;
+                color: #b85450;
+            }
+            
+            .memoir-meta {
+                margin-top: 2cm;
+                padding-top: 1cm;
+                border-top: 1pt solid #d4af8c;
+                font-size: 9pt;
+                color: #5a5652;
+                text-align: center;
+            }
+        """, font_config=font_config)
+        
+        # Генерируем PDF
+        html_doc = HTML(string=html_content)
+        pdf_doc = html_doc.render(stylesheets=[pdf_css], font_config=font_config)
+        pdf_doc.write_pdf(output_path)
+        
+        print(f"✅ PDF книга создана: {output_path}")
+        return output_path
+        
+    except Exception as e:
+        print(f"❌ Ошибка создания PDF: {e}")
+        # Возвращаем путь даже если файл не создался, для обработки ошибок
+        return output_path
 

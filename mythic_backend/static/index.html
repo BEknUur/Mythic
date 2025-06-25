@@ -609,10 +609,24 @@
                     
                     const downloadHtml = `
                         <a href="/view/${currentRunId}/book.html" class="download-link" target="_blank">📖 Читать книгу</a>
-                        <a href="/download/${currentRunId}/book.pdf" class="download-link">📄 Скачать PDF</a>
+                        <a href="/download/${currentRunId}/book.pdf" class="download-link" id="pdfLink">📄 Скачать PDF</a>
                         <a href="/download/${currentRunId}/book.md" class="download-link">📝 Исходник</a>
                     `;
                     document.getElementById('downloadLinks').innerHTML = downloadHtml;
+                    
+                    // Проверяем доступность PDF и добавляем функциональность генерации
+                    const pdfLink = document.getElementById('pdfLink');
+                    if (data.files && data.files.pdf) {
+                        // PDF уже существует
+                        pdfLink.href = data.files.pdf;
+                    } else {
+                        // PDF не существует, добавляем генерацию по клику
+                        pdfLink.href = "#";
+                        pdfLink.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            await generatePDF(currentRunId, pdfLink);
+                        });
+                    }
                     
                     resetButton();
                 }
@@ -637,6 +651,44 @@
 
         function startProgress() {
             updateProgress(10, 'Начинаю работу над вашей книгой...');
+        }
+
+        async function generatePDF(runId, linkElement) {
+            const originalText = linkElement.textContent;
+            linkElement.textContent = '⏳ Создаю PDF...';
+            linkElement.style.pointerEvents = 'none';
+            
+            try {
+                const response = await fetch(`/generate-pdf/${runId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // PDF создан успешно
+                    linkElement.textContent = '📄 Скачать PDF';
+                    linkElement.href = result.url;
+                    linkElement.style.pointerEvents = 'auto';
+                    
+                    // Автоматически начинаем скачивание
+                    window.location.href = result.url;
+                } else {
+                    throw new Error(result.detail || 'Ошибка создания PDF');
+                }
+            } catch (error) {
+                console.error('Ошибка генерации PDF:', error);
+                linkElement.textContent = '❌ Ошибка PDF';
+                linkElement.style.pointerEvents = 'auto';
+                
+                // Через 3 секунды возвращаем исходный текст
+                setTimeout(() => {
+                    linkElement.textContent = originalText;
+                }, 3000);
+            }
         }
 
         function resetButton() {
