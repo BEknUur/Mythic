@@ -19,6 +19,7 @@ import {
   Expand,
   Shrink,
 } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
 
 interface BookReadyDialogProps {
@@ -37,9 +38,21 @@ export function BookReadyDialog({
   const { toast } = useToast();
   const [isCopied, setIsCopied] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const { getToken } = useAuth();
 
   const profile = status?.profile;
-  const htmlUrl = useMemo(() => (runId ? api.getViewUrl(runId) : ''), [runId]);
+  
+  const [htmlUrl, setHtmlUrl] = useState('');
+  
+  // Генерируем URL с токеном
+  useMemo(async () => {
+    if (runId) {
+      const token = await getToken();
+      const url = api.getViewUrl(runId, token || undefined);
+      setHtmlUrl(url);
+    }
+  }, [runId, getToken]);
+
   const hasHtmlFile = status?.stages.book_generated || status?.files?.html;
 
   const copyToClipboard = () => {
@@ -47,7 +60,7 @@ export function BookReadyDialog({
     setIsCopied(true);
     toast({
       title: 'Ссылка скопирована!',
-      description: 'Вы можете поделиться ей с кем угодно.',
+      description: 'Ссылка содержит ваш токен доступа - делитесь осторожно.',
     });
     setTimeout(() => setIsCopied(false), 2000);
   };

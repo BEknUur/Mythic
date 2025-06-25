@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Instagram, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Instagram, CheckCircle, AlertCircle, Loader2, Lock } from 'lucide-react';
+import { useUser, SignInButton, useAuth } from '@clerk/clerk-react';
 import { api } from '@/lib/api';
 
 interface FormProps {
@@ -19,6 +20,8 @@ export function Form({ onStartScrape }: FormProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
   const { toast } = useToast();
+  const { isSignedIn } = useUser();
+  const { getToken } = useAuth();
 
   const validateInstagramUrl = (url: string): boolean => {
     const pattern = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/;
@@ -51,6 +54,11 @@ export function Form({ onStartScrape }: FormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!isSignedIn) {
+      setError('Для создания книги необходимо войти в систему');
+      return;
+    }
+    
     if (!url.trim()) {
       setError('Введите ссылку на Instagram профиль');
       return;
@@ -70,7 +78,8 @@ export function Form({ onStartScrape }: FormProps) {
     setError('');
 
     try {
-      const result = await api.startScrape(url);
+      const token = await getToken();
+      const result = await api.startScrape(url, token || undefined);
       toast({
         title: "Начинаем создание книги",
         description: "Ваш запрос принят в обработку",
@@ -101,6 +110,21 @@ export function Form({ onStartScrape }: FormProps) {
           </CardHeader>
           
           <CardContent className="space-y-6">
+            {/* Authentication Check */}
+            {!isSignedIn && (
+              <Alert className="border-orange-200 bg-orange-50">
+                <Lock className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="text-orange-700">
+                  Для создания книги необходимо войти в систему. 
+                  <SignInButton mode="modal">
+                    <Button variant="link" className="p-0 h-auto text-orange-700 underline">
+                      Войти сейчас
+                    </Button>
+                  </SignInButton>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Connection Status */}
             {isConnected && (
               <Alert className="border-green-200 bg-green-50">
@@ -144,7 +168,7 @@ export function Form({ onStartScrape }: FormProps) {
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://instagram.com/username"
                     className="pl-10 border-gray-300 focus:border-gray-900 focus:ring-gray-900"
-                    disabled={isLoading}
+                    disabled={isLoading || !isSignedIn}
                   />
                 </div>
               </div>
@@ -160,13 +184,18 @@ export function Form({ onStartScrape }: FormProps) {
 
               <Button
                 type="submit"
-                disabled={isLoading || !isConnected || !url.trim()}
+                disabled={isLoading || !isConnected || !url.trim() || !isSignedIn}
                 className="w-full bg-black text-white hover:bg-gray-800 disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Создаем книгу...
+                  </>
+                ) : !isSignedIn ? (
+                  <>
+                    <Lock className="h-4 w-4 mr-2" />
+                    Войдите для создания книги
                   </>
                 ) : (
                   'Создать книгу'

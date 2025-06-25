@@ -1,5 +1,5 @@
 # app/main.py
-from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
+from fastapi import FastAPI, Request, BackgroundTasks, HTTPException, Depends
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +8,7 @@ import asyncio
 from app.services.image_processor import process_folder
 from app.services.text_collector import collect_texts
 from app.services.book_builder import build_romantic_book
+from app.auth import get_current_user, get_optional_current_user
 from pydantic import AnyUrl
 from pathlib import Path
 import json, logging, anyio, random
@@ -217,8 +218,20 @@ def status(run_id: str):
 
 # ───────────── /download/{run_id}/{filename} ─────────────
 @app.get("/download/{run_id}/{filename}")
-def download_file(run_id: str, filename: str):
-    """Скачивание готовых файлов (PDF, HTML)"""
+def download_file(run_id: str, filename: str, request: Request, current_user: dict = Depends(get_optional_current_user)):
+    """Скачивание готовых файлов (PDF, HTML) - только для авторизованных пользователей"""
+    
+    # Проверяем токен из заголовков или query параметров
+    if not current_user:
+        # Пытаемся получить токен из query параметров
+        token = request.query_params.get("token")
+        if token:
+            from app.auth import clerk_auth
+            current_user = clerk_auth.verify_token(token)
+        
+        if not current_user:
+            raise HTTPException(401, "Для скачивания файла необходима авторизация")
+    
     run_dir = Path("data") / run_id
     file_path = run_dir / filename
     
@@ -236,8 +249,20 @@ def download_file(run_id: str, filename: str):
 
 
 @app.get("/view/{run_id}/book.html")
-def view_book_html(run_id: str):
-    """Просмотр HTML версии книги в браузере"""
+def view_book_html(run_id: str, request: Request, current_user: dict = Depends(get_optional_current_user)):
+    """Просмотр HTML версии книги в браузере - только для авторизованных пользователей"""
+    
+    # Проверяем токен из заголовков или query параметров
+    if not current_user:
+        # Пытаемся получить токен из query параметров (для iframe)
+        token = request.query_params.get("token")
+        if token:
+            from app.auth import clerk_auth
+            current_user = clerk_auth.verify_token(token)
+        
+        if not current_user:
+            raise HTTPException(401, "Для просмотра книги необходима авторизация")
+    
     run_dir = Path("data") / run_id
     html_file = run_dir / "book.html"
     

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Loader2, RefreshCw, AlertTriangle, Heart, Book, Camera, User } from 'lucide-react';
+import { CheckCircle, Loader2, RefreshCw, AlertTriangle, Heart, Book, Camera, User, Lock } from 'lucide-react';
+import { useUser, SignInButton, UserButton, useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
 import { BookReadyDialog } from './BookReadyDialog';
 
@@ -26,8 +27,41 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
   const [isBookReadyDialogOpen, setIsBookReadyDialogOpen] = useState(false);
   const [visibleSteps, setVisibleSteps] = useState<number>(0);
   const { toast } = useToast();
+  const { isSignedIn, user } = useUser();
+  const { getToken } = useAuth();
 
   const isBookReady = status?.stages.book_generated || false;
+
+  // Если пользователь не авторизован, показываем предупреждение
+  if (!isSignedIn) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl">
+          <Card className="bg-white border border-red-200">
+            <CardContent className="text-center py-12">
+              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <Lock className="h-8 w-8 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-semibold text-black mb-4">Доступ ограничен</h2>
+              <p className="text-gray-600 mb-6">
+                Для просмотра процесса создания и результата книги необходимо войти в систему
+              </p>
+              <div className="flex gap-3 justify-center">
+                <SignInButton mode="modal">
+                  <Button>
+                    Войти в систему
+                  </Button>
+                </SignInButton>
+                <Button variant="outline" onClick={onReset}>
+                  Вернуться назад
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   // Анимация появления шагов
   useEffect(() => {
@@ -61,7 +95,8 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
   const checkStatusManually = async () => {
     setIsManualChecking(true);
     try {
-      const currentStatus = await api.getStatus(runId);
+      const token = await getToken();
+      const currentStatus = await api.getStatus(runId, token || undefined);
       handleStatusUpdate(currentStatus);
     } catch (error) {
       setError('Ошибка при проверке статуса');
@@ -83,7 +118,8 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     const pollStatus = async () => {
       if (isBookReady || isCancelled) return;
       try {
-        const currentStatus = await api.getStatus(runId);
+        const token = await getToken();
+        const currentStatus = await api.getStatus(runId, token || undefined);
         if (!isCancelled) {
           handleStatusUpdate(currentStatus);
         }
@@ -102,7 +138,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       isCancelled = true;
       clearInterval(interval);
     };
-  }, [runId, onComplete, isBookReady]);
+  }, [runId, onComplete, isBookReady, getToken]);
 
   const getHumanStatus = (stageKey: string, isCompleted: boolean) => {
     const stages: Record<string, { inProgress: string; completed: string }> = {
@@ -144,6 +180,16 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         <div className="w-full max-w-2xl">
           <Card className="bg-white border border-gray-200">
             <CardHeader className="text-center">
+              {/* Информация о пользователе в правом верхнем углу */}
+              <div className="absolute top-4 right-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    {user?.firstName || 'Пользователь'}
+                  </span>
+                  <UserButton />
+                </div>
+              </div>
+
               <div className="mx-auto w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
                 {status?.stages.book_generated ? (
                   <Book className="h-8 w-8 text-purple-600" />

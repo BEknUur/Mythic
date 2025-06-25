@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { useAuth } from '@clerk/clerk-react';
 
 const BASE_URL = 'http://localhost:8000';
 
@@ -20,8 +21,6 @@ const StagesSchema = z.object({
   images_downloaded: z.boolean(),
   book_generated: z.boolean(),
 });
-
-
 
 const StatusResponseSchema = z.object({
   runId: z.string(),
@@ -48,6 +47,19 @@ class ApiError extends Error {
   }
 }
 
+// Функция для получения заголовков с токеном
+const getAuthHeaders = (token?: string) => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+};
+
 // API functions
 export const api = {
   async healthCheck(): Promise<HealthResponse> {
@@ -64,11 +76,12 @@ export const api = {
     }
   },
 
-  async startScrape(instagramUrl: string): Promise<StartScrapeResponse> {
+  async startScrape(instagramUrl: string, token?: string): Promise<StartScrapeResponse> {
     try {
       console.log('Starting scrape for URL:', instagramUrl);
       const response = await fetch(`${BASE_URL}/start-scrape?url=${encodeURIComponent(instagramUrl)}`, {
         method: 'GET',
+        headers: getAuthHeaders(token),
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -87,9 +100,11 @@ export const api = {
     }
   },
 
-  async getStatus(runId: string): Promise<StatusResponse> {
+  async getStatus(runId: string, token?: string): Promise<StatusResponse> {
     try {
-      const response = await fetch(`${BASE_URL}/status/${runId}`);
+      const response = await fetch(`${BASE_URL}/status/${runId}`, {
+        headers: getAuthHeaders(token),
+      });
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Status API error:', response.status, errorText);
@@ -105,11 +120,19 @@ export const api = {
     }
   },
 
-  getViewUrl(runId: string): string {
-    return `${BASE_URL}/view/${runId}/book.html`;
+  getViewUrl(runId: string, token?: string): string {
+    const url = new URL(`${BASE_URL}/view/${runId}/book.html`);
+    if (token) {
+      url.searchParams.set('token', token);
+    }
+    return url.toString();
   },
 
-  getDownloadUrl(runId: string, filename: string): string {
-    return `${BASE_URL}/download/${runId}/${filename}`;
+  getDownloadUrl(runId: string, filename: string, token?: string): string {
+    const url = new URL(`${BASE_URL}/download/${runId}/${filename}`);
+    if (token) {
+      url.searchParams.set('token', token);
+    }
+    return url.toString();
   },
 }; 

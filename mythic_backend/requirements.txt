@@ -16,6 +16,8 @@ google-generativeai
 uuid
 pathlib
 base64
+python-jose[cryptography]
+requests
 
 
 
