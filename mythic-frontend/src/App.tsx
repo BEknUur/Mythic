@@ -1,9 +1,6 @@
 import { useState } from 'react'
 import { ClerkProvider } from '@clerk/clerk-react'
-import { Hero } from './components/Hero'
-import { Steps } from './components/Steps'
-import { Form } from './components/Form'
-import { Footer } from './components/Footer'
+import { MainLayout } from './components/MainLayout'
 import { ProgressTracker } from './components/ProgressTracker'
 import { Toaster } from './components/ui/toaster'
 import './App.css'
@@ -51,13 +48,8 @@ function App() {
 
   return (
     <ClerkProvider publishableKey={clerkPubKey}>
-      <div className="min-h-screen bg-white">
-        <Hero />
-        <Steps />
-        <Form onStartScrape={handleStartScrape} />
-        <Footer />
-        <Toaster />
-      </div>
+      <MainLayout onStartScrape={handleStartScrape} />
+      <Toaster />
     </ClerkProvider>
   )
 }

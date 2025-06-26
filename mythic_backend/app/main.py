@@ -314,7 +314,238 @@ def home():
             color: #2c3e50;
             background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
             min-height: 100vh;
+            padding: 0;
+            display: flex;
+        }
+        
+        /* Sidebar Styles - Shadcn inspired */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #0f0f0f 0%, #1a1a1a 100%);
+            border-right: 1px solid #2a2a2a;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 1000;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #ffffff;
+            text-decoration: none;
+        }
+        
+        .sidebar-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #f368e0 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .sidebar-logo-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 0;
+        }
+        
+        .nav-section {
+            margin-bottom: 32px;
+        }
+        
+        .nav-section-title {
+            color: #888888;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 0 20px 12px;
+            border-bottom: 1px solid #2a2a2a;
+            margin-bottom: 16px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #cccccc;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            margin: 2px 8px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            background: linear-gradient(135deg, #ff6b6b 0%, #f368e0 100%);
+            border-radius: 8px 0 0 8px;
+            transition: width 0.2s ease;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            transform: translateX(4px);
+        }
+        
+        .nav-item:hover::before {
+            width: 3px;
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+        }
+        
+        .nav-item.active::before {
+            width: 3px;
+        }
+        
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .nav-text {
+            flex: 1;
+        }
+        
+        .nav-badge {
+            background: #ff6b6b;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        .sidebar-footer {
             padding: 20px;
+            border-top: 1px solid #2a2a2a;
+        }
+        
+        .progress-section {
+            margin-bottom: 16px;
+        }
+        
+        .progress-title {
+            color: #cccccc;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .progress-bar-container {
+            background: #2a2a2a;
+            border-radius: 4px;
+            height: 6px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            background: linear-gradient(135deg, #ff6b6b 0%, #f368e0 100%);
+            height: 100%;
+            width: 65%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            color: #888888;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        
+        .sidebar-toggle {
+            position: fixed;
+            top: 24px;
+            left: 300px;
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.8);
+            border: none;
+            border-radius: 8px;
+            padding: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .sidebar-toggle:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 20px;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-280px);
+        }
+        
+        .sidebar.collapsed + .sidebar-toggle {
+            left: 20px;
+        }
+        
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-280px);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .sidebar-toggle {
+                left: 20px;
+            }
         }
         
         .container {
@@ -433,22 +664,54 @@ def home():
         
         .love-button {
             width: 100%;
-            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 30%, #ff9ff3 70%, #f368e0 100%);
+            background-size: 300% 300%;
             color: white;
             border: none;
-            padding: 20px 40px;
-            border-radius: 12px;
+            padding: 18px 40px;
+            border-radius: 50px;
             font-size: 1.2em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-family: 'Inter', sans-serif;
             margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.3);
+            animation: gradientShift 6s ease infinite;
+        }
+        
+        .love-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .love-button:hover::before {
+            left: 100%;
         }
         
         .love-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(232, 67, 147, 0.3);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 45px rgba(255, 107, 107, 0.4);
+            background-position: 100% 0;
+        }
+        
+        .love-button:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
         
         .features {
@@ -461,19 +724,47 @@ def home():
         .feature-card {
             background: white;
             padding: 30px;
-            border-radius: 15px;
+            border-radius: 20px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 107, 107, 0.05), transparent);
+            transition: left 0.8s ease;
+        }
+        
+        .feature-card:hover::before {
+            left: 100%;
         }
         
         .feature-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(255, 107, 107, 0.15);
+            background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
         }
         
         .feature-icon {
-            font-size: 3em;
+            font-size: 3.5em;
             margin-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: inline-block;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+        }
+        
+        .feature-card:hover .feature-icon {
+            transform: scale(1.2) rotate(5deg);
+            filter: drop-shadow(0 8px 16px rgba(255, 107, 107, 0.3));
         }
         
         .feature-title {
@@ -488,6 +779,7 @@ def home():
             line-height: 1.6;
         }
         
+        /* Mobile adaptations for main content */
         @media (max-width: 768px) {
             .content {
                 padding: 40px 20px;
@@ -500,61 +792,260 @@ def home():
             .main-title {
                 font-size: 2.5em;
             }
+            
+            .love-form {
+                padding: 30px 20px;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 class="main-title">Романтическая Летопись Любви</h1>
-            <p class="subtitle">Создайте красивую книгу воспоминаний для вашего любимого человека</p>
-            <div class="heart-decoration">💝</div>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <a href="/" class="sidebar-logo">
+                <div class="sidebar-logo-icon">💕</div>
+                <span class="sidebar-logo-text">Mythic</span>
+            </a>
         </div>
         
-        <div class="content">
-            <div class="love-form">
-                <h2 class="form-title">Создать Книгу Любви</h2>
-                <form id="loveBookForm">
-                    <div class="input-group">
-                        <label class="input-label" for="instagramUrl">Instagram профиль вашего любимого человека</label>
-                        <input type="url" id="instagramUrl" class="input-field" placeholder="https://www.instagram.com/username" required>
-                    </div>
-                    
-                    <button type="submit" class="love-button">
-                        Создать Романтическую Книгу ❤️    
-                    </button>
-                </form>
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar-nav">
+            <!-- Main Actions -->
+            <div class="nav-section">
+                <div class="nav-section-title">Основное</div>
+                <a href="#" class="nav-item active" data-action="create-book">
+                    <div class="nav-icon">📖</div>
+                    <span class="nav-text">Создать книгу</span>
+                </a>
+                <a href="#" class="nav-item" data-action="book-to-tiktok">
+                    <div class="nav-icon">🎬</div>
+                    <span class="nav-text">Книга → TikTok</span>
+                    <span class="nav-badge">Новое</span>
+                </a>
+                <a href="#" class="nav-item" data-action="write-fanfic">
+                    <div class="nav-icon">✍️</div>
+                    <span class="nav-text">Написать фанфик</span>
+                </a>
+                <a href="#" class="nav-item" data-action="generate-comic">
+                    <div class="nav-icon">🎨</div>
+                    <span class="nav-text">Сгенерировать комикс</span>
+                </a>
             </div>
             
-            <div class="features">
-                <div class="feature-card">
-                    <div class="feature-icon">📖</div>
-                    <h3 class="feature-title">Красивая Летопись</h3>
-                    <p class="feature-text">Создаем красивую книгу с фотографиями и романтическими текстами о вашем любимом человеке</p>
+            <!-- Library -->
+            <div class="nav-section">
+                <div class="nav-section-title">Библиотека</div>
+                <a href="#" class="nav-item" data-action="my-books">
+                    <div class="nav-icon">📚</div>
+                    <span class="nav-text">Мои книги</span>
+                </a>
+                <a href="#" class="nav-item" data-action="favorites">
+                    <div class="nav-icon">⭐</div>
+                    <span class="nav-text">Избранное</span>
+                </a>
+                <a href="#" class="nav-item" data-action="gallery">
+                    <div class="nav-icon">🖼️</div>
+                    <span class="nav-text">Мини-галерея</span>
+                </a>
+            </div>
+            
+            <!-- Settings -->
+            <div class="nav-section">
+                <div class="nav-section-title">Настройки</div>
+                <a href="#" class="nav-item" data-action="settings">
+                    <div class="nav-icon">⚙️</div>
+                    <span class="nav-text">Настройки</span>
+                </a>
+                <a href="#" class="nav-item" data-action="help">
+                    <div class="nav-icon">❓</div>
+                    <span class="nav-text">Помощь</span>
+                </a>
+            </div>
+        </nav>
+        
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <div class="progress-section">
+                <div class="progress-title">Прогресс чтения</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill"></div>
+                </div>
+                <div class="progress-text">65% завершено</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+    
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="container">
+            <div class="header">
+                <h1 class="main-title">Романтическая Летопись Любви</h1>
+                <p class="subtitle">Создайте красивую книгу воспоминаний для вашего любимого человека</p>
+                <div class="heart-decoration">💝</div>
+            </div>
+            
+            <div class="content">
+                <div class="love-form">
+                    <h2 class="form-title">Создать Книгу Любви</h2>
+                    <form id="loveBookForm">
+                        <div class="input-group">
+                            <label class="input-label" for="instagramUrl">Instagram профиль вашего любимого человека</label>
+                            <input type="url" id="instagramUrl" class="input-field" placeholder="https://www.instagram.com/username" required>
+                        </div>
+                        
+                        <button type="submit" class="love-button">
+                            Создать Романтическую Книгу ❤️    
+                        </button>
+                    </form>
                 </div>
                 
-                <div class="feature-card">
-                    <div class="feature-icon">💌</div>
-                    <h3 class="feature-title">Романтические Послания</h3>
-                    <p class="feature-text">Добавляем трогательные тексты и цитаты о любви между фотографиями</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3 class="feature-title">Элегантный Дизайн</h3>
-                    <p class="feature-text">Профессиональное оформление с романтическими цветами и шрифтами</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3 class="feature-title">Просто и Быстро</h3>
-                    <p class="feature-text">Просто укажите Instagram профиль - мы сделаем всё остальное за вас</p>
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon">📖</div>
+                        <h3 class="feature-title">Красивая Летопись</h3>
+                        <p class="feature-text">Создаем красивую книгу с фотографиями и романтическими текстами о вашем любимом человеке</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">💌</div>
+                        <h3 class="feature-title">Романтические Послания</h3>
+                        <p class="feature-text">Добавляем трогательные тексты и цитаты о любви между фотографиями</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h3 class="feature-title">Элегантный Дизайн</h3>
+                        <p class="feature-text">Профессиональное оформление с романтическими цветами и шрифтами</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h3 class="feature-title">Просто и Быстро</h3>
+                        <p class="feature-text">Просто укажите Instagram профиль - мы сделаем всё остальное за вас</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     
     <script>
+        // Sidebar toggle functionality
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const mainContent = document.getElementById('mainContent');
+        
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        });
+        
+        // Navigation functionality
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remove active class from all items
+                navItems.forEach(nav => nav.classList.remove('active'));
+                
+                // Add active class to clicked item
+                item.classList.add('active');
+                
+                // Handle different actions
+                const action = item.getAttribute('data-action');
+                handleNavigation(action);
+            });
+        });
+        
+        function handleNavigation(action) {
+            switch(action) {
+                case 'create-book':
+                    showCreateBookForm();
+                    break;
+                case 'book-to-tiktok':
+                    showBookToTikTok();
+                    break;
+                case 'write-fanfic':
+                    showFanficForm();
+                    break;
+                case 'generate-comic':
+                    showComicGenerator();
+                    break;
+                case 'my-books':
+                    showMyBooks();
+                    break;
+                case 'favorites':
+                    showFavorites();
+                    break;
+                case 'gallery':
+                    showGallery();
+                    break;
+                case 'settings':
+                    showSettings();
+                    break;
+                case 'help':
+                    showHelp();
+                    break;
+                default:
+                    console.log('Unknown action:', action);
+            }
+        }
+        
+        function showCreateBookForm() {
+            // Default view is already the create book form
+            console.log('Showing create book form');
+        }
+        
+        function showBookToTikTok() {
+            alert('🎬 Функция "Книга → TikTok" скоро будет доступна!\n\nМы работаем над созданием коротких видео из ваших романтических книг для TikTok и Instagram.');
+        }
+        
+        function showFanficForm() {
+            alert('✍️ Функция "Написать фанфик" скоро будет доступна!\n\nВы сможете создавать уникальные фанфики на основе фотографий и данных профиля.');
+        }
+        
+        function showComicGenerator() {
+            alert('🎨 Функция "Сгенерировать комикс" скоро будет доступна!\n\nМы создадим комиксы из ключевых моментов вашей истории любви.');
+        }
+        
+        function showMyBooks() {
+            alert('📚 Функция "Мои книги" скоро будет доступна!\n\nЗдесь будут храниться все ваши созданные книги.');
+        }
+        
+        function showFavorites() {
+            alert('⭐ Функция "Избранное" скоро будет доступна!\n\nСохраняйте лучшие моменты и страницы из ваших книг.');
+        }
+        
+        function showGallery() {
+            alert('🖼️ Функция "Мини-галерея" скоро будет доступна!\n\nБыстрый просмотр всех изображений из ваших проектов.');
+        }
+        
+        function showSettings() {
+            alert('⚙️ Функция "Настройки" скоро будет доступна!\n\nНастройте стиль книг, языки и персонализацию.');
+        }
+        
+        function showHelp() {
+            alert('❓ Нужна помощь?\n\n• Введите Instagram URL\n• Нажмите "Создать книгу"\n• Дождитесь обработки\n• Скачайте готовую книгу\n\nПо вопросам: support@mythic.love');
+        }
+        
+        // Form submission
         document.getElementById('loveBookForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -580,6 +1071,51 @@ def home():
                 button.innerHTML = 'Создать Романтическую Книгу ❤️';
             }   
         });
+        
+        // Progress animation
+        function animateProgress() {
+            const progressFill = document.querySelector('.progress-bar-fill');
+            const progressText = document.querySelector('.progress-text');
+            
+            let progress = 65;
+            const interval = setInterval(() => {
+                progress += Math.random() * 2;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    progressText.textContent = 'Готово!';
+                } else {
+                    progressText.textContent = `${Math.floor(progress)}% завершено`;
+                }
+                progressFill.style.width = `${progress}%`;
+            }, 2000);
+        }
+        
+        // Mobile responsive
+        function handleMobileMenu() {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('mobile-menu');
+                
+                sidebarToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('mobile-open');
+                });
+                
+                // Close sidebar when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+                        sidebar.classList.remove('mobile-open');
+                    }
+                });
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            handleMobileMenu();
+            // animateProgress(); // Uncomment if you want animated progress
+        });
+        
+        window.addEventListener('resize', handleMobileMenu);
     </script>
 </body>
 </html>
@@ -694,30 +1230,68 @@ def status_page(runId: str):
             margin-top: 30px;
         }}
         
-        .download-btn {{
-            padding: 15px 30px;
+        .download-btn {
+            padding: 16px 32px;
             border: none;
-            border-radius: 10px;
+            border-radius: 25px;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             cursor: pointer;
-        }}
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-size: 14px;
+            min-width: 180px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
         
-        .btn-view {{
-            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 100%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .download-btn:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .btn-view {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-        }}
+        }
         
-        .btn-download {{
-            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+        .btn-view:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-download {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
-        }}
+        }
         
-        .download-btn:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }}
+        .btn-download:hover {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(245, 87, 108, 0.4);
+        }
+        
+        .download-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
         
         @media (max-width: 768px) {{
             .status-container {{
