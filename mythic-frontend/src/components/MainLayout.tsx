@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sidebar } from './Sidebar';
+import Sidebar from './Sidebar';
 import { Hero } from './Hero';
 import { Steps } from './Steps';
 import { Form } from './Form';
@@ -90,7 +90,7 @@ export function MainLayout({ onStartScrape }: MainLayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar onNavigate={handleNavigation} />
+      <Sidebar onNavigation={handleNavigation} />
       
       <main className="flex-1 overflow-x-hidden">
         <div className="min-h-screen w-full">
