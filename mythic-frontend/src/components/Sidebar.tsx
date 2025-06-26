@@ -39,22 +39,36 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigation }) => {
 
   return (
     <>
-      {/* Floating Book Animation */}
+      {/* Floating Books Animation with beautiful covers */}
       <div className="floating-book-container">
+        {/* Book 1 - Сердца в цифровом мире */}
         <div className="floating-book">
           <div className="book-pages"></div>
-          <div className="book-pages page-2"></div>
-          <div className="book-pages page-3"></div>
+          
         </div>
+        
+        {/* Book 2 - Мистерии прошлого */}
         <div className="floating-book">
           <div className="book-pages"></div>
-          <div className="book-pages page-2"></div>
-          <div className="book-pages page-3"></div>
+          
         </div>
+        
+        {/* Book 3 - Космические приключения */}
         <div className="floating-book">
           <div className="book-pages"></div>
-          <div className="book-pages page-2"></div>
-          <div className="book-pages page-3"></div>
+         
+        </div>
+        
+        {/* Book 4 - Философия души */}
+        <div className="floating-book">
+          <div className="book-pages"></div>
+        
+        </div>
+        
+        {/* Book 5 - Магия повседневности */}
+        <div className="floating-book">
+          <div className="book-pages"></div>
+         
         </div>
       </div>
 
