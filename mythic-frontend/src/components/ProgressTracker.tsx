@@ -87,8 +87,8 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     setLastChecked(new Date());
 
     if (newStatus.stages.book_generated && !isBookReadyDialogOpen) {
-      setIsBookReadyDialogOpen(true);
-      onComplete();
+        setIsBookReadyDialogOpen(true);
+        onComplete();
     }
   };
 
@@ -405,4 +405,4 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       />
     </>
   );
-}
+} 

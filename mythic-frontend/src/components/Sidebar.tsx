@@ -15,7 +15,6 @@ import {
   HelpCircle,
   Menu,
   X,
-  Heart,
   ChevronLeft
 } from 'lucide-react';
 
@@ -107,13 +106,13 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
   };
 
   const renderNavSection = (title: string, items: NavItem[]) => (
-    <div className="space-y-1">
+    <div className="space-y-2">
       {!isCollapsed && (
-        <h3 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide px-3 py-2">
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide px-4 py-2">
           {title}
         </h3>
       )}
-      <div className="space-y-0.5">
+      <div className="space-y-1">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeItem === item.id;
@@ -123,22 +122,22 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
               key={item.id}
               onClick={() => handleItemClick(item)}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all duration-200 rounded-md mx-2",
-                "hover:bg-accent/50 hover:text-accent-foreground",
-                "focus:outline-none focus:ring-2 focus:ring-primary/20",
+                "w-full flex items-center gap-4 px-4 py-3 text-base font-medium transition-all duration-200 rounded-xl mx-3",
+                "hover:bg-gray-100 dark:hover:bg-gray-800",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-500/20 focus-visible:ring-offset-0",
                 isActive 
-                  ? "bg-primary text-primary-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground",
-                isCollapsed ? "justify-center px-0 w-10 h-10 mx-auto" : "justify-start"
+                  ? "bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 border border-pink-200 dark:border-pink-800 shadow-sm" 
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100",
+                isCollapsed ? "justify-center px-0 w-12 h-12 mx-auto" : "justify-start"
               )}
               title={isCollapsed ? item.label : undefined}
             >
-              <Icon className="h-4 w-4 flex-shrink-0" />
+              <Icon className="h-5 w-5 flex-shrink-0" />
               {!isCollapsed && (
                 <>
                   <span className="flex-1 text-left truncate">{item.label}</span>
                   {item.badge && (
-                    <Badge variant="destructive" className="h-5 px-1.5 text-xs font-medium">
+                    <Badge variant="destructive" className="h-6 px-2 text-xs font-medium bg-red-500 hover:bg-red-600">
                       {item.badge}
                     </Badge>
                   )}
@@ -164,8 +163,8 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-full bg-background/95 backdrop-blur-xl border-r border-border/50 transition-all duration-300 ease-in-out shadow-lg",
-          isCollapsed ? "w-16" : "w-64",
+          "fixed left-0 top-0 z-50 h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ease-in-out",
+          isCollapsed ? "w-20" : "w-80",
           "lg:relative lg:translate-x-0",
           !isCollapsed && "translate-x-0",
           isCollapsed && "-translate-x-full lg:translate-x-0",
@@ -174,64 +173,43 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       >
         {/* Header */}
         <div className={cn(
-          "flex items-center border-b border-border/50 p-4",
+          "flex items-center border-b border-gray-200 dark:border-gray-800 p-6",
           isCollapsed ? "justify-center" : "justify-between"
         )}>
           {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-gradient-to-br from-pink-500 to-violet-600 rounded-lg flex items-center justify-center shadow-sm">
-                <Heart className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-bold text-lg bg-gradient-to-r from-pink-600 to-violet-600 bg-clip-text text-transparent">
-                Mythic
+            <div className="flex items-center gap-3">
+              <span className="font-bold text-2xl text-gray-900 dark:text-white">
+                Mythic AI
               </span>
             </div>
           )}
           
-          {isCollapsed && (
-            <div className="w-7 h-7 bg-gradient-to-br from-pink-500 to-violet-600 rounded-lg flex items-center justify-center shadow-sm">
-              <Heart className="h-4 w-4 text-white" />
-            </div>
-          )}
           
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-7 w-7 p-0 hover:bg-accent/50"
+            className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             {isCollapsed ? (
-              <Menu className="h-4 w-4" />
+              <Menu className="h-5 w-5" />
             ) : (
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" />
             )}
           </Button>
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-auto py-4 space-y-4">
+        <div className="flex-1 overflow-auto py-6 space-y-6">
           {renderNavSection("Основное", mainActions)}
-          {!isCollapsed && <div className="border-t border-border/30 mx-4" />}
+          {!isCollapsed && <div className="border-t border-gray-200 dark:border-gray-700 mx-6" />}
           {renderNavSection("Библиотека", libraryItems)}
-          {!isCollapsed && <div className="border-t border-border/30 mx-4" />}
+          {!isCollapsed && <div className="border-t border-gray-200 dark:border-gray-700 mx-6" />}
           {renderNavSection("Настройки", settingsItems)}
         </div>
 
         {/* Footer with progress */}
-        {!isCollapsed && (
-          <div className="border-t border-border/50 p-4 space-y-3">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground font-medium">Прогресс чтения</span>
-                <span className="font-semibold text-primary">{readingProgress}%</span>
-              </div>
-              <Progress value={readingProgress} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {readingProgress}% завершено
-              </p>
-            </div>
-          </div>
-        )}
+       
       </aside>
 
       {/* Mobile toggle button */}
@@ -239,7 +217,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
         variant="outline"
         size="sm"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed top-4 left-4 z-40 lg:hidden shadow-lg"
+        className="fixed top-4 left-4 z-40 lg:hidden shadow-lg bg-white dark:bg-gray-900"
       >
         <Menu className="h-4 w-4" />
       </Button>

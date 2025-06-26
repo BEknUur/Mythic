@@ -5,7 +5,6 @@ import { Steps } from './Steps';
 import { Form } from './Form';
 import { Footer } from './Footer';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 
 interface MainLayoutProps {
   onStartScrape: (id: string) => void;
@@ -68,7 +67,7 @@ export function MainLayout({ onStartScrape }: MainLayoutProps) {
       case 'help':
         toast({
           title: "❓ Нужна помощь?",
-          description: "• Введите Instagram URL\n• Нажмите \"Создать книгу\"\n• Дождитесь обработки\n• Скачайте готовую книгу\n\nПо вопросам: support@mythic.love",
+          description: "• Введите Instagram URL\n• Нажмите \"Создать книгу\"\n• Дождитесь обработки\n• Скачайте готовую книгу\n\nПо вопросам: t.me/beknur_10",
         });
         break;
     }
@@ -90,11 +89,11 @@ export function MainLayout({ onStartScrape }: MainLayoutProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-pink-50 via-white to-violet-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar onNavigate={handleNavigation} />
       
-      <main className="flex-1 lg:ml-0 overflow-x-hidden">
-        <div className="min-h-screen">
+      <main className="flex-1 overflow-x-hidden">
+        <div className="min-h-screen w-full">
           {renderMainContent()}
         </div>
       </main>

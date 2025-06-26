@@ -971,14 +971,14 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         а каждый профиль — неоконченная история,<br>
         ждущая своего читателя
     </div>
-
+    
     <div class="memoir-author">
         <strong>О профиле:</strong> @{username}<br>
         <small>{full_name}</small><br>
         <small>{followers:,} подписчиков • {posts_count} публикаций</small>
     </div>
-</div>
-
+    </div>
+    
 <!-- ОГЛАВЛЕНИЕ -->
 <div class="memoir-page">
     <div class="table-of-contents">
@@ -1038,10 +1038,10 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 <!-- ГЛАВА 1: ВСТРЕЧА -->
 <div class="memoir-page">
     <div class="chapter-header">
-        <div class="chapter-number">Глава первая</div>
+    <div class="chapter-number">Глава первая</div>
         <h2 class="chapter-title">Встреча</h2>
     </div>
-
+    
     <div class="memoir-text">
         {chapters.get('meeting', 'Поздним вечером я листал ленту Instagram...')}
     </div>
@@ -1059,21 +1059,21 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     <div class="memoir-text">
         {chapters.get('first_impression', 'Первая фотография поразила меня игрой света и тени...')}
     </div>
-</div>
-
+        </div>
+        
 <!-- ГЛАВА 3: ИСТОРИЯ ОДНОГО КАДРА -->
 <div class="memoir-page">
     <div class="chapter-header">
         <div class="chapter-number">Глава третья</div>
         <h2 class="chapter-title">История одного кадра</h2>
-    </div>
-    
+        </div>
+        
     {'<div class="memoir-photo"><div class="photo-frame"><img src="' + processed_images[1] + '" alt="Кадр с историей"></div><div class="photo-caption">' + (real_captions[1] if len(real_captions) > 1 else 'За каждым кадром — целая жизнь') + '</div></div>' if len(processed_images) > 1 else ''}
-    
+            
     <div class="memoir-text">
         {chapters.get('story_creation', 'Представляю, как создавался один из снимков...')}
+        </div>
     </div>
-</div>
 
 <!-- ГЛАВА 4: УГЛУБЛЯЯСЬ В ДЕТАЛИ -->
 <div class="memoir-page">
@@ -1087,14 +1087,14 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     </div>
     
     {'<div class="memoir-photo"><div class="photo-frame"><img src="' + processed_images[2] + '" alt="Детали стиля"></div></div>' if len(processed_images) > 2 else ''}
-</div>
+    </div>
 
 <!-- ГЛАВА 5: СОЦИАЛЬНЫЙ АНАЛИЗ -->
 <div class="memoir-page">
     <div class="chapter-header">
         <div class="chapter-number">Глава пятая</div>
         <h2 class="chapter-title">Социальный анализ</h2>
-    </div>
+</div>
 
     <div class="memoir-text">
         {chapters.get('social_analysis', f'Аудитория @{username} — это не случайная толпа...')}
@@ -1132,15 +1132,15 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     </div>
     
     {'<div class="memoir-photo"><div class="photo-frame"><img src="' + processed_images[4] + '" alt="Любимые места"></div></div>' if len(processed_images) > 4 else ''}
-</div>
+    </div>
 
 <!-- ГЛАВА 8: МЕЖДУ СТРОК -->
 <div class="memoir-page">
     <div class="chapter-header">
         <div class="chapter-number">Глава восьмая</div>
         <h2 class="chapter-title">Между строк</h2>
-    </div>
-    
+</div>
+
     <div class="memoir-text">
         {chapters.get('between_lines', f'За идеальными кадрами @{username} я чувствовал настоящую жизнь...')}
     </div>
@@ -1237,32 +1237,32 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         🖨️ Печать
     </button>
 </div>
-
-<style>
+    
+    <style>
 .floating-actions {{
     position: fixed;
     bottom: 30px;
     right: 30px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+        gap: 15px;
     z-index: 1000;
 }}
 
 .action-btn {{
     background: linear-gradient(135deg, var(--accent) 0%, var(--gold) 100%);
     color: white;
-    border: none;
+        border: none;
     padding: 12px 16px;
     border-radius: 25px;
     font-family: 'Libre Baskerville', serif;
     font-size: 14px;
     font-weight: 600;
-    cursor: pointer;
+        cursor: pointer;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     transition: all 0.3s ease;
     min-width: 120px;
-    text-align: center;
+        text-align: center;
 }}
 
 .action-btn:hover {{
@@ -1282,7 +1282,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
 }}
 
-@media (max-width: 768px) {{
+    @media (max-width: 768px) {{
     .floating-actions {{
         bottom: 20px;
         right: 20px;
@@ -1295,12 +1295,12 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     }}
 }}
 
-@media print {{
+    @media print {{
     .floating-actions {{
         display: none;
     }}
-}}
-</style>
+    }}
+    </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {{
@@ -1340,11 +1340,11 @@ document.addEventListener('DOMContentLoaded', function() {{
                 document.body.removeChild(link);
                 
                 // Возвращаем исходный текст через 2 секунды
-                setTimeout(() => {{
+    setTimeout(() => {{
                     this.textContent = originalText;
                     this.disabled = false;
                 }}, 2000);
-            }} else {{
+    }} else {{
                 throw new Error(result.detail || 'Ошибка создания PDF');
             }}
         }} catch (error) {{
@@ -1381,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', function() {{
 
 </body>
 </html>"""
-     
+    
     return html
 
 def create_zine_html(content: dict, analysis: dict, images: list[Path]) -> str:
@@ -1395,36 +1395,36 @@ def create_zine_html(content: dict, analysis: dict, images: list[Path]) -> str:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Зин @{username}</title>
     <style>
-        body {{
+    body {{
             font-family: 'Arial', sans-serif;
             background: #f5f5f5;
-            margin: 0;
+        margin: 0;
             padding: 20px;
         }}
         .zine-container {{
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
             padding: 40px;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }}
         .zine-title {{
             font-size: 2.5rem;
-            text-align: center;
+        text-align: center;
             margin-bottom: 2rem;
             color: #333;
         }}
         .zine-content {{
-            line-height: 1.8;
-            font-size: 1.1rem;
+        line-height: 1.8;
+        font-size: 1.1rem;
             color: #444;
         }}
         .photo-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
-            margin: 2rem 0;
+        margin: 2rem 0;
         }}
         .photo-card {{
             border-radius: 15px;
@@ -1435,7 +1435,7 @@ def create_zine_html(content: dict, analysis: dict, images: list[Path]) -> str:
             width: 100%;
             height: 200px;
             object-fit: cover;
-        }}
+    }}
     </style>
 </head>
 <body>
@@ -1447,11 +1447,11 @@ def create_zine_html(content: dict, analysis: dict, images: list[Path]) -> str:
             <p>{content.get('places', 'Места и локации...')}</p>
             <p>{content.get('community', 'Сообщество и отклики...')}</p>
             <p>{content.get('legacy', 'Что остается в памяти...')}</p>
-        </div>
-        
+</div>
+
         <div class="photo-grid">
             {''.join([f'<div class="photo-card"><img src="data:image/jpeg;base64,placeholder" alt="Фото"></div>' for _ in range(min(6, len(images)))])}
-        </div>
+</div>
     </div>
 </body>
 </html>"""
