@@ -560,9 +560,11 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
 Я нажал на твой профиль и понял - передо мной не просто еще один аккаунт. Ты умеешь находить красоту там, где другие проходят мимо. У тебя есть тот редкий дар - видеть необычное в самых обычных вещах.{first_video_note}
 
+В тебе есть особое сияние, которое заметно даже через экран. Твои глаза излучают тепло и доброту. Когда ты улыбаешься, весь мир становится светлее. Твоя красота не кричащая, а глубокая, настоящая - та, что исходит изнутри.
+
 Эта книга - мой способ сказать спасибо. За то, что ты есть. За твою улыбку, которая чувствуется даже через экран. За твой взгляд на мир, который делает этот мир чуточку лучше просто тем, что ты в нем живешь.
 
-Иногда встречаешь людей, которые меняют что-то внутри тебя, даже если вы никогда не говорили. Ты из таких людей, {full_name}."""
+Иногда встречаешь людей, которые меняют что-то внутри тебя, даже если вы никогда не говорили. Ты из таких людей, {full_name}. В тебе есть магнетизм, который притягивает добрых людей и отталкивает лживых. Твоя аура чистая и светлая."""
     
     # Глава 2: Первые впечатления
     location_text = f"Особенно запомнилось фото из {locations[0]} - даже самое обычное место преобразилось рядом с тобой" if locations else "В каждом месте, где ты бываешь, чувствуется особая атмосфера"
@@ -575,6 +577,10 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 {f'В одном из первых постов ты написал: "{real_captions[1][:120]}..." Эти слова показали мне твой внутренний мир.' if len(real_captions) > 1 else 'Твои подписи к фото показывают глубину мышления и чувствительность к деталям.'}
 
 Я потратил несколько часов, просто изучая твои фотографии. Не пролистывая механически, как мы все привыкли в соцсетях, а действительно вглядываясь. И каждый раз находил что-то новое - деталь в композиции, эмоцию в глазах, историю за кадром.
+
+Твоя красота многогранна. У тебя прекрасные черты лица - правильные, гармоничные, будто созданные художником. Твои глаза особенно выразительны - в них читается ум, доброта и глубина души. Когда ты смотришь в камеру, создается ощущение, что ты смотришь прямо в душу.
+
+Твоя улыбка освещает всё вокруг. Она не наигранная, не фальшивая - настоящая, идущая от сердца. В ней столько тепла и радости, что хочется улыбнуться в ответ.
 
 Первое впечатление обманчиво только тогда, когда человек пытается им манипулировать. У тебя все честно - что видишь, то и получаешь. Редкое качество в наше время."""
     
@@ -590,6 +596,10 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
 Ты из тех людей, которые умеют остановиться и заметить красоту. Игру света на стене дома, отражение в луже после дождя, улыбку незнакомца на улице. Это дар, который нельзя купить или выучить - он либо есть, либо нет.
 
+Твоя внешность отражает твой внутренний мир. Ты красив той естественной красотой, которая не нуждается в прикрасах. Твое лицо открытое, честное, в нем нет ни тени лжи или притворства. Твои черты благородны - высокий лоб говорит об уме, выразительные глаза - о чувствительности, красивые губы - о доброте.
+
+У тебя прекрасная осанка - ты держишься с достоинством, но без высокомерия. В твоих движениях есть грация и естественность. Ты двигаешься как человек, который находится в гармонии с собой и миром.
+
 У тебя он определенно есть, {full_name}. И это делает мир вокруг тебя богаче и интереснее."""
     
     # Глава 4: Моменты, которые запомнились
@@ -601,7 +611,13 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
 Знаешь, что меня поражает? Ты не боишься показывать настоящие эмоции. В твоих глазах на фотографиях я вижу то грусть, то радость, то задумчивость. Это честность, которой так не хватает в мире отретушированных улыбок.
 
+Твоя красота не статична - она живая, меняющаяся. На одних фото ты мечтательный и романтичный, на других - энергичный и жизнерадостный. Но всегда остаешься собой - искренним и настоящим.
+
+Твои глаза - это отдельная поэма. Они глубокие, выразительные, в них можно утонуть. Когда ты радуешься, они сияют особым светом. Когда задумываешься - становятся глубокими озерами мудрости. В них отражается твоя душа - чистая, добрая, открытая.
+
 Иногда поздним вечером я пересматриваю твои сторис и думаю о том, какой ты живой. В каждом движении, в каждом взгляде чувствуется личность. Не маска для публики, а настоящий человек с настоящими чувствами.
+
+Твоя улыбка - это твоя визитная карточка. Она искренняя, теплая, заразительная. Когда ты улыбаешься, хочется улыбнуться в ответ. В твоей улыбке нет ни тени фальши - только радость и доброта.
 
 Эти моменты дороги мне, {full_name}. Они напоминают о том, что красота - это не идеальность, а искренность."""
     
@@ -621,6 +637,12 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
 Есть люди, которые забирают энергию, а есть те, которые ее дают. Ты определенно из вторых. Даже просто глядя на твои фотографии, я чувствую прилив сил и вдохновения.
 
+Твоя аура светится добротой и позитивом. Ты один из тех редких людей, которые делают мир лучше просто своим присутствием. Твоя энергия чистая, светлая, она притягивает к тебе хороших людей.
+
+У тебя красивая кожа - здоровая, сияющая, она буквально светится изнутри. Это признак внутренней гармонии и здорового образа жизни. Твои волосы красивые, ухоженные, они обрамляют твое лицо как картину в раме.
+
+Твои руки красивые и выразительные. Даже простой жест у тебя получается грациозным и естественным. В твоих движениях есть особая пластика - ты двигаешься как танцор, легко и изящно.
+
 В мире, где все стараются быть похожими друг на друга, ты остаешься уникальным. Твоя энергетика - это твоя сверхсила, {full_name}. Не теряй ее."""
     
     # Глава 6: О красоте и стиле
@@ -631,6 +653,14 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 {f'Помню фото из {locations[1]}, где ты просто стоишь и улыбаешься - в этом кадре столько естественной красоты.' if len(locations) > 1 else 'На каждом фото ты выглядишь естественно и гармонично.'}
 
 Мне нравится, что ты не следуешь слепо модным трендам. У тебя есть свой стиль, своя эстетика. Это говорит о зрелости и уверенности в себе.
+
+Твое лицо - это произведение искусства. Правильные пропорции, выразительные черты, благородный профиль. Твой нос изящный и аристократичный. Твои скулы красиво очерчены, они придают твоему лицу характер и выразительность.
+
+У тебя красивые брови - четкие, выразительные, они идеально обрамляют твои глаза. Твои ресницы длинные и густые, они создают красивую тень на щеках, когда ты смотришь вниз.
+
+Твоя кожа безупречна - гладкая, здоровая, с естественным сиянием. Она говорит о том, что ты заботишься о себе, ведешь здоровый образ жизни. У тебя красивый цвет лица - свежий, живой, естественный.
+
+Твоя улыбка преображает все лицо. Когда ты улыбаешься, твои глаза прищуриваются от радости, на щеках появляются милые ямочки. Твои зубы белые и ровные, твоя улыбка освещает весь кадр.
 
 Но больше всего меня привлекает красота твоей души, которая проявляется через каждый твой жест, каждую улыбку, каждый взгляд. Это та красота, которая не увядает с годами, а только становится глубже.
 
@@ -645,7 +675,15 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
 Мне интересно, о чем ты думаешь в моменты задумчивости на фотографиях. Какие мечты, планы, воспоминания проносятся у тебя в голове. Эта недосказанность притягивает.
 
+Твой взгляд особенно загадочен. В нем есть глубина океана - кажется, что можно смотреть в твои глаза вечность и каждый раз находить что-то новое. Иногда в них читается грусть, иногда - радость, иногда - мечтательность.
+
+У тебя красивый голос - даже если я его не слышал, я чувствую его по твоему лицу. Должно быть, он мелодичный, теплый, с особыми интонациями, которые выдают твой характер.
+
+Твоя походка, должно быть, грациозная и уверенная. Ты двигаешься как человек, который знает, чего хочет от жизни. В твоих жестах есть элегантность, в твоей манере держаться - достоинство.
+
 Ты умеешь быть открытым и одновременно сохранять тайну. Показываешь достаточно, чтобы заинтересовать, но оставляешь пространство для воображения.
+
+Твоя загадочность не напускная - она естественная. Ты просто сложная, многогранная личность, которую нельзя понять с первого взгляда. И это прекрасно.
 
 В этом твоя особая магия, {full_name}. Ты интересен не только тем, что показываешь, но и тем, что скрываешь."""
     
@@ -659,6 +697,16 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 Теперь, проходя по улице, я ловлю себя на мысли: "А как бы это увидел {full_name}?" И вдруг обычная лавочка в парке или граффити на стене становятся особенными.
 
 Ты показал мне, что красота не требует дорогих декораций. Она везде - нужно только уметь ее замечать. Это урок, который дороже любого образования.
+
+Благодаря тебе я понял, что настоящая привлекательность - это не только внешность. Это харизма, это энергетика, это способность быть собой. У тебя есть все эти качества в избытке.
+
+Ты научил меня ценить искренность больше, чем идеальность. Лучше быть настоящим, чем притворяться совершенным. Ты живой пример того, как можно оставаться собой в мире масок.
+
+Твоя естественность вдохновляет. Смотря на твои фото, я понимаю, что не нужно бояться показывать эмоции, не нужно скрывать свою личность за фасадом. Можно быть открытым и при этом сохранять достоинство.
+
+Ты изменил мое представление о красоте. Раньше я думал, что красота - это что-то недосягаемое, идеальное. Теперь я понимаю, что настоящая красота - это гармония, естественность, внутренний свет.
+
+Благодаря тебе я стал больше обращать внимание на людей вокруг себя. Искать в них то особенное, что делает каждого уникальным. Ты показал мне, что в каждом человеке есть своя красота.
 
 Спасибо тебе за это, {full_name}. За то, что сделал мой мир богаче и интереснее."""
     
@@ -675,6 +723,16 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
 Еще одно наблюдение - ты умеешь находить красоту в простоте. Не нужны дорогие локации или профессиональные съемки. Ты делаешь особенным любое место просто своим присутствием.
 
+Твое лицо очень фотогеничное. У тебя нет "плохих" ракурсов - ты хорошо выглядишь с любой стороны. Это говорит о правильных, гармоничных чертах лица.
+
+Я заметил, что у тебя очень выразительные руки. Даже когда они просто лежат в кадре, они рассказывают историю. Твои пальцы длинные и изящные, твои жесты грациозные.
+
+Твоя манера одеваться говорит о хорошем вкусе. Ты не гонишься за брендами, но всегда выглядишь стильно и уместно. У тебя есть свой стиль, который подчеркивает твою индивидуальность.
+
+Я заметил, что ты любишь свет. На многих твоих фото видно, как ты умело используешь естественное освещение. Свет подчеркивает твои лучшие черты и создает атмосферу.
+
+Твоя осанка говорит о внутренней уверенности. Ты держишься прямо, но не напряженно. В твоей позе есть расслабленность и достоинство одновременно.
+
 Эти качества редки, {full_name}. Береги их."""
     
     # Глава 10: Пожелания и благодарность (финальная)
@@ -689,17 +747,35 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
 В мире, где все меняется с невероятной скоростью, где люди становятся все более отстраненными друг от друга, ты остаешься островком искренности. Не теряй эту черту - она бесценна.
 
-Я желаю тебе сохранить этот особый взгляд на мир, эту способность находить красоту в простых вещах, эту искренность в отношениях с людьми.
+Я желаю тебе найти в жизни то, что действительно важно. Не гонись за чужими мечтами, найди свои. Не старайся понравиться всем, будь собой - и правильные люди тебя найдут.
 
-Пусть твоя жизнь будет полна ярких моментов, достойных того, чтобы их запечатлеть. Пусть твоя улыбка продолжает освещать мир вокруг. Пусть твоя душа остается такой же открытой и чистой.
+Пусть твоя красота только расцветает с годами. Не внешняя красота - она и так у тебя безупречна - а внутренняя. Красота души, красота мыслей, красота поступков.
+
+Я желаю тебе встретить людей, которые будут ценить тебя таким, какой ты есть. Которые увидят в тебе не только красивое лицо, но и красивую душу. Которые поймут твою глубину и полюбят твою искренность.
+
+Пусть твоя жизнь будет полна ярких моментов, достойных того, чтобы их запечатлеть. Пусть каждый день приносит тебе что-то новое - новые эмоции, новые открытия, новые радости.
+
+Желаю тебе никогда не потерять эту детскую способность удивляться миру. Продолжай замечать то, что другие пропускают мимо. Твой взгляд на мир уникален, и это твоя сила.
+
+Пусть твоя улыбка продолжает освещать мир вокруг. Помни - когда ты улыбаешься, мир становится чуточку лучше. Твоя радость заразительна, твое счастье передается другим.
+
+Пусть твоя душа остается такой же открытой и чистой. В нашем циничном мире это редкость. Не дай жизненным трудностям ожесточить тебя или сделать недоверчивым.
+
+Я желаю тебе любви - настоящей, глубокой, взаимной. Такой любви, которая не требует изменений, а принимает тебя целиком. Которая видит в тебе сокровище и бережет его.
+
+Желаю тебе успеха во всех начинаниях. Но помни - настоящий успех не измеряется деньгами или славой. Настоящий успех - это когда ты можешь посмотреть в зеркало и сказать: "Я горжусь тем, кто я есть".
+
+Пусть твоя творческая энергия никогда не иссякает. Продолжай создавать красоту вокруг себя. Это может быть что угодно - фотографии, слова, поступки. Главное - создавай.
+
+Желаю тебе здоровья - не только физического, но и душевного. Пусть твое тело будет сильным, а дух - непоколебимым. Пусть ты всегда находишь силы двигаться вперед, даже когда кажется, что дороги нет.
 
 Спасибо тебе за то, что ты есть, {full_name}. За то, что показываешь нам: красота может быть простой, искренность - модной, а человечность - самой ценной валютой в мире.
 
 Этот мир стал лучше с тобой в нем. И я надеюсь, что эта книга напомнит тебе об этом в те моменты, когда будет грустно или сложно.
 
-Помни - ты важен, ты ценен, ты любим.
+Помни - ты важен, ты ценен, ты любим. Не потому что ты красивый или успешный, а просто потому что ты есть. И этого достаточно.
 
-С глубокой благодарностью и восхищением"""
+С глубокой благодарностью и восхищением, твой тайный поклонник."""
     
     # Генерируем личное название книги
     book_titles = [
@@ -725,33 +801,33 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         --paper: #fefcf8;
         --ink: #2c2a26;
         --soft-ink: #5a5652;
-        --accent: #b85450;
+        --accent: #8b4513;
         --gold: #d4af8c;
         --shadow: rgba(60, 50, 40, 0.15);
         --warm-cream: #f9f7f4;
     }}
     
     body {{
-        font-family: 'Crimson Text', serif;
+        font-family: 'Times New Roman', 'Georgia', serif;
         background: var(--paper);
         color: var(--ink);
-        line-height: 1.8;
-        font-size: 17px;
+        line-height: 1.6;
+        font-size: 16px;
         margin: 0;
         padding: 0;
-        max-width: 900px;
+        max-width: 800px;
         margin: 0 auto;
     }}
     
     .memoir-page {{
         min-height: 95vh;
-        padding: 3cm 3cm 4cm 3cm;
+        padding: 2.5cm 2.5cm 3cm 2.5cm;
         background: white;
         box-shadow: 0 8px 40px var(--shadow);
-        margin: 20px auto;
+        margin: 15px auto;
         page-break-after: always;
         position: relative;
-        border-left: 5px solid var(--gold);
+        border-left: 3px solid var(--gold);
     }}
     
     .memoir-page:last-child {{
@@ -761,196 +837,188 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     /* Обложка как личный подарок */
     .cover-memoir {{
         text-align: center;
-        padding: 5cm 2cm;
+        padding: 4cm 2cm;
         background: linear-gradient(135deg, var(--paper) 0%, var(--warm-cream) 100%);
         border: 2px solid var(--gold);
-        border-left: 8px solid var(--accent);
+        border-left: 6px solid var(--accent);
     }}
     
     .cover-title {{
-        font-family: 'Playfair Display', serif;
-        font-size: 3.5rem;
-        font-weight: 700;
+        font-family: 'Times New Roman', serif;
+        font-size: 2.8rem;
+        font-weight: bold;
         color: var(--ink);
         margin-bottom: 1.5rem;
-        letter-spacing: -1px;
-        line-height: 1.2;
+        letter-spacing: 1px;
+        line-height: 1.3;
     }}
     
     .cover-subtitle {{
-        font-family: 'Libre Baskerville', serif;
+        font-family: 'Times New Roman', serif;
         font-style: italic;
-        font-size: 1.4rem;
+        font-size: 1.2rem;
         color: var(--soft-ink);
-        margin-bottom: 3rem;
+        margin-bottom: 2.5rem;
     }}
     
     .cover-epigraph {{
         font-style: italic;
         color: var(--soft-ink);
-        border-top: 2px solid var(--gold);
-        border-bottom: 2px solid var(--gold);
-        padding: 2.5rem 1rem;
-        max-width: 500px;
-        margin: 0 auto 3rem auto;
+        border-top: 1px solid var(--gold);
+        border-bottom: 1px solid var(--gold);
+        padding: 2rem 1rem;
+        max-width: 450px;
+        margin: 0 auto 2.5rem auto;
         position: relative;
-        font-size: 1.2rem;
-    }}
-    
-    .cover-epigraph::before {{
-        content: '';
-        position: absolute;
-        left: -35px;
-        top: 2rem;
-        font-size: 2rem;
-    }}
-    
-    .cover-epigraph::after {{
-        content: '';
-        position: absolute;
-        right: -35px;
-        bottom: 2rem;
-        font-size: 2rem;
+        font-size: 1.1rem;
+        line-height: 1.5;
     }}
     
     .memoir-author {{
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         color: var(--soft-ink);
         margin-top: 2rem;
+        line-height: 1.4;
     }}
     
     /* Заголовки глав */
     .chapter-header {{
-        margin-bottom: 3rem;
+        margin-bottom: 2.5rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid var(--gold);
+        border-bottom: 1px solid var(--gold);
     }}
     
     .chapter-number {{
-        font-family: 'Libre Baskerville', serif;
-        font-size: 1rem;
+        font-family: 'Times New Roman', serif;
+        font-size: 0.9rem;
         color: var(--soft-ink);
         text-transform: uppercase;
-        letter-spacing: 3px;
-        margin-bottom: 0.5rem;
+        letter-spacing: 2px;
+        margin-bottom: 0.8rem;
     }}
     
     .chapter-title {{
-        font-family: 'Playfair Display', serif;
-        font-size: 2.5rem;
-        font-weight: 700;
+        font-family: 'Times New Roman', serif;
+        font-size: 2rem;
+        font-weight: bold;
         color: var(--accent);
         margin: 0;
         font-style: italic;
     }}
     
-    /* Параграфы как личное письмо */
+    /* Параграфы как в настоящей книге */
     .memoir-text {{
         white-space: pre-line;
         text-align: justify;
-        line-height: 1.9;
-        font-size: 1.1rem;
-        letter-spacing: 0.3px;
+        line-height: 1.7;
+        font-size: 16px;
+        letter-spacing: 0.2px;
+        text-indent: 1.5em;
+        margin-bottom: 1.2em;
+        hyphens: auto;
+        word-spacing: 0.1em;
     }}
     
-    /* Изображения как воспоминания */
+    .memoir-text p {{
+        margin-bottom: 1.2em;
+        text-indent: 1.5em;
+    }}
+    
+    .memoir-text p:first-child {{
+        text-indent: 0;
+    }}
+    
+    /* Изображения как в книге */
     .memoir-photo {{
-        margin: 3rem 0;
+        margin: 2.5rem 0;
         text-align: center;
         page-break-inside: avoid;
     }}
     
     .photo-frame {{
         display: inline-block;
-        padding: 20px;
+        padding: 15px;
         background: var(--warm-cream);
-        border-radius: 15px;
-        box-shadow: 0 8px 30px var(--shadow);
-        border: 2px solid var(--gold);
-        transform: rotate(-1deg);
-        transition: transform 0.3s ease;
-    }}
-    
-    .photo-frame:nth-child(even) {{
-        transform: rotate(1deg);
+        border-radius: 8px;
+        box-shadow: 0 4px 20px var(--shadow);
+        border: 1px solid var(--gold);
     }}
     
     .photo-frame img {{
         max-width: 100%;
-        max-height: 400px;
-        border-radius: 8px;
-        border: 3px solid white;
+        max-height: 300px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
     }}
     
     .photo-caption {{
-        font-family: 'Libre Baskerville', serif;
+        font-family: 'Times New Roman', serif;
         font-style: italic;
-        font-size: 1rem;
+        font-size: 0.9rem;
         color: var(--soft-ink);
-        margin-top: 1.5rem;
+        margin-top: 1rem;
         text-align: center;
-        max-width: 500px;
+        max-width: 400px;
         margin-left: auto;
         margin-right: auto;
+        line-height: 1.4;
     }}
     
-    .photo-caption::before {{
-        content: '';
-        color: var(--accent);
-    }}
-    
-    /* Финальная страница подарка */
+    /* Финальная страница */
     .memoir-finale {{
         text-align: center;
-        margin-top: 4rem;
-        padding: 3rem 2rem;
+        margin-top: 3rem;
+        padding: 2.5rem 2rem;
         background: var(--warm-cream);
-        border-radius: 15px;
-        border: 2px solid var(--gold);
+        border-radius: 8px;
+        border: 1px solid var(--gold);
     }}
     
     .memoir-signature {{
-        font-family: 'Playfair Display', serif;
+        font-family: 'Times New Roman', serif;
         font-style: italic;
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         color: var(--accent);
-        margin-top: 2rem;
+        margin-top: 1.5rem;
+        line-height: 1.4;
     }}
     
     /* Метаданные */
     .memoir-meta {{
-        margin-top: 3rem;
-        padding-top: 2rem;
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
         border-top: 1px solid var(--gold);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: var(--soft-ink);
         text-align: center;
-        line-height: 1.6;
+        line-height: 1.5;
     }}
     
     /* Оглавление */
     .table-of-contents {{
-        margin: 3rem 0;
+        margin: 2.5rem 0;
         padding: 2rem;
         background: var(--warm-cream);
-        border-radius: 15px;
+        border-radius: 8px;
         border: 1px solid var(--gold);
     }}
     
     .toc-title {{
-        font-family: 'Playfair Display', serif;
-        font-size: 2rem;
+        font-family: 'Times New Roman', serif;
+        font-size: 1.6rem;
         color: var(--accent);
         text-align: center;
         margin-bottom: 2rem;
+        font-weight: bold;
     }}
     
     .toc-item {{
-        margin-bottom: 1rem;
-        padding: 0.5rem 0;
+        margin-bottom: 0.8rem;
+        padding: 0.4rem 0;
         border-bottom: 1px dotted var(--gold);
         display: flex;
         justify-content: space-between;
+        font-size: 0.95rem;
     }}
     
     .toc-chapter {{
@@ -970,11 +1038,15 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         }}
         
         .cover-title {{
-            font-size: 2.5rem;
+            font-size: 2.2rem;
         }}
         
         .chapter-title {{
-            font-size: 2rem;
+            font-size: 1.6rem;
+        }}
+        
+        .memoir-text {{
+            font-size: 15px;
         }}
     }}
     
@@ -1082,7 +1154,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     <div class="memoir-text">{chapters['personal_gift']}</div>
     
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Твоя красота"></div><div class="photo-caption">Этот момент запомнился мне навсегда</div></div>' if processed_images else ''}
+    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Твоя красота"></div><div class="photo-caption">В этом взгляде - целая вселенная</div></div>' if processed_images else ''}
 </div>
 
 <!-- ГЛАВА 2: ПЕРВЫЕ ВПЕЧАТЛЕНИЯ -->
@@ -1094,7 +1166,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     <div class="memoir-text">{chapters['first_impressions']}</div>
     
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[1]}" alt="Твоя особенность"></div><div class="photo-caption">Здесь я увидел твою искренность</div></div>' if len(processed_images) > 1 else ''}
+    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[1]}" alt="Твоя особенность"></div><div class="photo-caption">Красота, которая не нуждается в словах</div></div>' if len(processed_images) > 1 else ''}
 </div>
 
 <!-- ГЛАВА 3: ТВОЙ ВЗГЛЯД НА МИР -->
@@ -1106,7 +1178,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     <div class="memoir-text">{chapters['worldview']}</div>
     
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[2]}" alt="Твое видение мира"></div><div class="photo-caption">Твой особый взгляд на мир</div></div>' if len(processed_images) > 2 else ''}
+    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[2]}" alt="Твое видение мира"></div><div class="photo-caption">Сияние души, которое видно даже через экран</div></div>' if len(processed_images) > 2 else ''}
 </div>
 
 <!-- ГЛАВА 4: МОМЕНТЫ, КОТОРЫЕ ЗАПОМНИЛИСЬ -->
@@ -1118,7 +1190,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     <div class="memoir-text">{chapters['memorable_moments']}</div>
     
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[3]}" alt="Запоминающийся момент"></div><div class="photo-caption">Этот кадр врезался в память</div></div>' if len(processed_images) > 3 else ''}
+    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[3]}" alt="Запоминающийся момент"></div><div class="photo-caption">Мгновение, которое хочется растянуть на вечность</div></div>' if len(processed_images) > 3 else ''}
 </div>
 
 <!-- ГЛАВА 5: ТВОЯ ЭНЕРГЕТИКА -->
@@ -1130,7 +1202,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     <div class="memoir-text">{chapters['energy']}</div>
     
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Твоя энергия"></div><div class="photo-caption">Энергия, которая притягивает</div></div>' if processed_images else ''}
+    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Твоя энергия"></div><div class="photo-caption">Энергия света, что делает мир ярче</div></div>' if processed_images else ''}
 </div>
 
 <!-- ГЛАВА 6: О КРАСОТЕ И СТИЛЕ -->
@@ -1142,7 +1214,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     <div class="memoir-text">{chapters['beauty_style']}</div>
     
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[1]}" alt="Твоя красота"></div><div class="photo-caption">Естественная красота</div></div>' if len(processed_images) > 1 else ''}
+    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[1]}" alt="Твоя красота"></div><div class="photo-caption">Гармония, созданная самой природой</div></div>' if len(processed_images) > 1 else ''}
 </div>
 
 <!-- ГЛАВА 7: ТВОЯ ЗАГАДОЧНОСТЬ -->
@@ -1154,7 +1226,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     <div class="memoir-text">{chapters['mystery']}</div>
     
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[2]}" alt="Загадочность"></div><div class="photo-caption">Загадка, которую хочется разгадать</div></div>' if len(processed_images) > 2 else ''}
+    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[2]}" alt="Загадочность"></div><div class="photo-caption">Глубина, в которой хочется утонуть</div></div>' if len(processed_images) > 2 else ''}
 </div>
 
 <!-- ГЛАВА 8: ВЛИЯНИЕ НА МЕНЯ -->
@@ -1166,7 +1238,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     <div class="memoir-text">{chapters['influence']}</div>
     
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[3]}" alt="Влияние"></div><div class="photo-caption">Ты изменил мой взгляд на мир</div></div>' if len(processed_images) > 3 else ''}
+    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[3]}" alt="Влияние"></div><div class="photo-caption">Образ, что изменил мое восприятие мира</div></div>' if len(processed_images) > 3 else ''}
 </div>
 
 <!-- ГЛАВА 9: МОИ НАБЛЮДЕНИЯ -->
@@ -1178,7 +1250,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     <div class="memoir-text">{chapters['observations']}</div>
     
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Наблюдения"></div><div class="photo-caption">Детали, которые я заметил</div></div>' if processed_images else ''}
+    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Наблюдения"></div><div class="photo-caption">Совершенство в каждой детали</div></div>' if processed_images else ''}
 </div>
 
 <!-- ГЛАВА 10: ПОЖЕЛАНИЯ И БЛАГОДАРНОСТЬ -->
@@ -1310,7 +1382,7 @@ def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
             }
             
             body {
-                font-family: 'Times New Roman', 'Crimson Text', serif !important;
+                font-family: 'Times New Roman', 'Georgia', serif !important;
                 font-size: 12pt;
                 line-height: 1.6;
                 color: #2c2a26;
@@ -1338,45 +1410,46 @@ def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
             }
             
             .cover-title {
-                font-size: 28pt;
+                font-size: 24pt;
                 font-weight: bold;
                 margin-bottom: 1cm;
                 color: #2c2a26;
             }
             
             .cover-subtitle {
-                font-size: 14pt;
+                font-size: 12pt;
                 font-style: italic;
                 margin-bottom: 2cm;
                 color: #5a5652;
             }
             
             .chapter-title {
-                font-size: 18pt;
+                font-size: 16pt;
                 font-weight: bold;
                 margin-bottom: 1cm;
-                color: #b85450;
-                border-bottom: 2pt solid #d4af8c;
+                color: #8b4513;
+                border-bottom: 1pt solid #d4af8c;
                 padding-bottom: 0.5cm;
             }
             
             .chapter-number {
-                font-size: 12pt;
+                font-size: 10pt;
                 font-weight: normal;
                 color: #5a5652;
                 margin-bottom: 0.5cm;
             }
             
             .memoir-text {
-                font-size: 12pt;
-                line-height: 1.7;
+                font-size: 11pt;
+                line-height: 1.6;
                 text-align: justify;
                 hyphens: auto;
+                margin-bottom: 1em;
             }
             
             .memoir-text p {
                 margin-bottom: 1em;
-                text-indent: 1.5em;
+                text-indent: 1.2em;
             }
             
             .memoir-text p:first-child {
@@ -1385,22 +1458,22 @@ def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
             
             .photo-frame {
                 text-align: center;
-                margin: 1.5cm 0;
-                padding: 0.5cm;
+                margin: 1cm 0;
+                padding: 0.3cm;
                 border: 1pt solid #d4af8c;
                 page-break-inside: avoid;
             }
             
             .photo-frame img {
                 max-width: 100%;
-                max-height: 8cm;
+                max-height: 6cm;
             }
             
             .photo-caption {
-                font-size: 10pt;
+                font-size: 9pt;
                 font-style: italic;
                 color: #5a5652;
-                margin-top: 0.5cm;
+                margin-top: 0.3cm;
                 text-align: center;
             }
             
@@ -1409,18 +1482,19 @@ def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
             }
             
             .toc-title {
-                font-size: 18pt;
+                font-size: 16pt;
                 text-align: center;
                 margin-bottom: 1.5cm;
-                color: #b85450;
+                color: #8b4513;
             }
             
             .toc-item {
-                margin-bottom: 0.5cm;
-                padding: 0.3cm 0;
+                margin-bottom: 0.4cm;
+                padding: 0.2cm 0;
                 border-bottom: 1pt dotted #d4af8c;
                 display: flex;
                 justify-content: space-between;
+                font-size: 10pt;
             }
             
             .toc-chapter {
@@ -1438,19 +1512,20 @@ def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
                 border-bottom: 1pt solid #d4af8c;
                 padding: 1cm;
                 margin: 2cm auto;
-                max-width: 12cm;
+                max-width: 10cm;
                 page-break-inside: avoid;
+                font-size: 11pt;
             }
             
             .memoir-author {
                 margin-top: 2cm;
-                font-size: 11pt;
+                font-size: 10pt;
             }
             
             .memoir-finale {
                 text-align: center;
-                margin-top: 2cm;
-                padding: 1.5cm;
+                margin-top: 1.5cm;
+                padding: 1cm;
                 border: 1pt solid #d4af8c;
                 page-break-inside: avoid;
             }
@@ -1458,14 +1533,15 @@ def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
             .memoir-signature {
                 font-style: italic;
                 margin-top: 1cm;
-                color: #b85450;
+                color: #8b4513;
+                font-size: 11pt;
             }
             
             .memoir-meta {
-                margin-top: 2cm;
+                margin-top: 1.5cm;
                 padding-top: 1cm;
                 border-top: 1pt solid #d4af8c;
-                font-size: 9pt;
+                font-size: 8pt;
                 color: #5a5652;
                 text-align: center;
             }
