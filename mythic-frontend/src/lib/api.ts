@@ -135,4 +135,41 @@ export const api = {
     }
     return url.toString();
   },
+
+  async getBookContent(runId: string, token?: string): Promise<string> {
+    const response = await fetch(`${BASE_URL}/view/${runId}/book.html`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get book content: ${response.statusText}`);
+    }
+
+    return response.text();
+  },
+
+  async downloadFile(runId: string, filename: string, token?: string): Promise<void> {
+    const response = await fetch(`${BASE_URL}/download/${runId}/${filename}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+
+    // Создаем blob и скачиваем файл
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
 }; 

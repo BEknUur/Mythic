@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,7 @@ import {
   Check,
   Expand,
   Shrink,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
@@ -37,30 +38,87 @@ export function BookReadyDialog({
 }: BookReadyDialogProps) {
   const { toast } = useToast();
   const [isCopied, setIsCopied] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [bookContent, setBookContent] = useState<string>('');
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
   const { getToken } = useAuth();
 
   const profile = status?.profile;
-  
-  const [htmlUrl, setHtmlUrl] = useState('');
-  
-  // Генерируем URL с токеном
-  useMemo(async () => {
-    if (runId) {
-      const token = await getToken();
-      const url = api.getViewUrl(runId, token || undefined);
-      setHtmlUrl(url);
-    }
-  }, [runId, getToken]);
-
   const hasHtmlFile = status?.stages.book_generated || status?.files?.html;
 
+  // Загружаем содержимое книги для встроенного просмотра
+  useEffect(() => {
+    if (runId && hasHtmlFile && isOpen) {
+      loadBookContent();
+    }
+  }, [runId, hasHtmlFile, isOpen]);
+
+  const loadBookContent = async () => {
+    if (!runId) return;
+    
+    setIsLoadingContent(true);
+    try {
+      const token = await getToken();
+      const content = await api.getBookContent(runId, token || undefined);
+      setBookContent(content);
+    } catch (error) {
+      console.error('Error loading book content:', error);
+      toast({
+        title: 'Ошибка загрузки',
+        description: 'Не удалось загрузить содержимое книги',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingContent(false);
+    }
+  };
+
+  const openBookInNewTab = async () => {
+    if (!runId) return;
+    
+    try {
+      const token = await getToken();
+      const content = await api.getBookContent(runId, token || undefined);
+      
+      // Создаем новое окно с содержимым книги
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        newWindow.document.write(content);
+        newWindow.document.close();
+      }
+    } catch (error) {
+      console.error('Error opening book:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось открыть книгу',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const downloadBook = async () => {
+    if (!runId) return;
+    
+    try {
+      const token = await getToken();
+      await api.downloadFile(runId, 'book.pdf', token || undefined);
+    } catch (error) {
+      console.error('Error downloading book:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось скачать книгу',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const shareableUrl = `${window.location.origin}/view/${runId}/book.html`;
+
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(htmlUrl);
+    navigator.clipboard.writeText(shareableUrl);
     setIsCopied(true);
     toast({
       title: 'Ссылка скопирована!',
-      description: 'Ссылка содержит ваш токен доступа - делитесь осторожно.',
+      description: 'Внимание: для просмотра потребуется авторизация.',
     });
     setTimeout(() => setIsCopied(false), 2000);
   };
@@ -69,13 +127,7 @@ export function BookReadyDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={`bg-white border-none transition-all duration-300 ease-in-out ${
-          isFullScreen
-            ? 'w-screen h-screen max-w-full'
-            : 'max-w-lg rounded-xl shadow-2xl sm:max-w-[540px]'
-        }`}
-      >
+      <DialogContent className="max-w-4xl max-h-[90vh] bg-white border-none rounded-xl shadow-2xl">
         <DialogHeader className="text-center pt-4">
           <DialogTitle className="text-3xl font-normal text-violet-600">
             Книга готова!
@@ -86,41 +138,52 @@ export function BookReadyDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          <Tabs defaultValue={hasHtmlFile ? "embed" : "newtab"} className="w-full">
+          <Tabs defaultValue={hasHtmlFile ? "preview" : "actions"} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-slate-100">
-              {hasHtmlFile && <TabsTrigger value="embed">Встроенный просмотр</TabsTrigger>}
-              <TabsTrigger value="newtab" className={!hasHtmlFile ? 'col-span-2' : ''}>
-                Открыть в новой вкладке
+              {hasHtmlFile && <TabsTrigger value="preview">Предварительный просмотр</TabsTrigger>}
+              <TabsTrigger value="actions" className={!hasHtmlFile ? 'col-span-2' : ''}>
+                Действия
               </TabsTrigger>
             </TabsList>
             
             {hasHtmlFile && (
-               <TabsContent value="embed">
-                <div className={`relative border bg-slate-50 rounded-lg overflow-hidden transition-all ${isFullScreen ? 'h-[calc(100vh-180px)]' : 'h-[60vh]'}`}>
-                  <div className="absolute top-2 right-2 z-10">
-                    <Button variant="ghost" size="icon" onClick={() => setIsFullScreen(!isFullScreen)}>
-                      {isFullScreen ? <Shrink className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-                      <span className="sr-only">{isFullScreen ? 'Свернуть' : 'Развернуть'}</span>
-                    </Button>
-                  </div>
-                  <iframe
-                    src={htmlUrl}
-                    loading="lazy"
-                    className="w-full h-full border-0"
-                    title="Ваша романтическая книга"
-                  />
+              <TabsContent value="preview">
+                <div className="relative border bg-white rounded-lg overflow-hidden h-[60vh]">
+                  {isLoadingContent ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center space-y-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mx-auto"></div>
+                        <p className="text-sm text-muted-foreground">Загружаем вашу книгу...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-full overflow-auto p-6 book-content">
+                      <div dangerouslySetInnerHTML={{ __html: bookContent }} />
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             )}
            
-            <TabsContent value="newtab">
-              <div className="text-center py-10 flex flex-col items-center justify-center space-y-4 bg-slate-50 rounded-lg border">
-                 <p className="text-muted-foreground">Нажмите, чтобы открыть книгу в новой вкладке.</p>
-                 <Button asChild size="lg">
-                    <a href={htmlUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" /> Открыть книгу
-                    </a>
-                </Button>
+            <TabsContent value="actions">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button onClick={openBookInNewTab} size="lg" className="h-16">
+                    <ExternalLink className="h-5 w-5 mr-2" />
+                    <div className="text-left">
+                      <div className="font-semibold">Открыть в новой вкладке</div>
+                      <div className="text-xs opacity-80">Полноэкранный режим</div>
+                    </div>
+                  </Button>
+                  
+                  <Button onClick={downloadBook} variant="outline" size="lg" className="h-16">
+                    <Download className="h-5 w-5 mr-2" />
+                    <div className="text-left">
+                      <div className="font-semibold">Скачать PDF</div>
+                      <div className="text-xs opacity-80">Сохранить на устройство</div>
+                    </div>
+                  </Button>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
@@ -147,14 +210,17 @@ export function BookReadyDialog({
           )}
 
           <div>
-             <p className="text-sm font-medium mb-2">Ссылка для копирования</p>
+             <p className="text-sm font-medium mb-2">Ссылка для поделиться</p>
              <div className="relative">
-                <Input readOnly value={htmlUrl} className="pr-12 bg-slate-100"/>
+                <Input readOnly value={shareableUrl} className="pr-12 bg-slate-100"/>
                 <Button variant="ghost" size="icon" className="absolute top-1/2 right-1 -translate-y-1/2" onClick={copyToClipboard}>
                     {isCopied ? <Check className="h-4 w-4 text-green-500"/> : <ClipboardCopy className="h-4 w-4" />}
                     <span className="sr-only">Скопировать ссылку</span>
                 </Button>
              </div>
+             <p className="text-xs text-muted-foreground mt-1">
+               ⚠️ Для просмотра по ссылке потребуется авторизация в системе
+             </p>
           </div>
         </div>
       </DialogContent>

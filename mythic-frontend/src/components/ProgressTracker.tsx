@@ -19,6 +19,42 @@ const ProgressBar: React.FC<{ value: number; className?: string }> = ({ value, c
   <Progress value={value} className={className} />
 );
 
+// Компонент анимации печатающейся машинки
+const TypewriterText: React.FC<{ text: string; speed?: number; className?: string }> = ({ 
+  text, 
+  speed = 50, 
+  className = "" 
+}) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText(prev => prev + text[currentIndex]);
+        setCurrentIndex(prev => prev + 1);
+      }, speed);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, text, speed]);
+
+  // Сброс анимации при изменении текста
+  useEffect(() => {
+    setDisplayedText('');
+    setCurrentIndex(0);
+  }, [text]);
+
+  return (
+    <span className={className}>
+      {displayedText}
+      {currentIndex < text.length && (
+        <span className="animate-pulse">|</span>
+      )}
+    </span>
+  );
+};
+
 export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerProps) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -160,18 +196,18 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
   };
 
   const getCurrentPhrase = () => {
-    if (!status) return 'начинаем работу над вашей историей';
+    if (!status) return 'начинаем работу...';
     
-    // Используем романтические сообщения от API
+    // Показываем только романтические сообщения от API
     if (status.message) {
       return status.message;
     }
     
-    // Fallback к статичным сообщениям
-    if (status.stages.book_generated) return 'ваша романтическая книга готова';
-    if (status.stages.images_downloaded) return 'пишем вашу уникальную историю';
-    if (status.stages.data_collected) return 'анализируем ваши лучшие моменты';
-    return 'знакомимся с вашим профилем';
+    // Простые статусы без лишних деталей
+    if (status.stages.book_generated) return 'книга готова';
+    if (status.stages.images_downloaded) return 'создаем книгу';
+    if (status.stages.data_collected) return 'загружаем фотографии';
+    return 'анализируем профиль';
   };
 
   return (
@@ -239,7 +275,11 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                   {status.message && !status.stages.book_generated && (
                     <div className="mb-4 p-3 bg-white rounded-lg border border-pink-200 shadow-sm">
                       <p className="text-pink-700 italic text-sm leading-relaxed">
-                        {status.message}
+                        <TypewriterText 
+                          text={status.message} 
+                          speed={80}
+                          className="inline"
+                        />
                       </p>
                     </div>
                   )}
@@ -304,10 +344,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                     <span className={`block font-medium transition-colors duration-300 ${
                       status?.stages.data_collected ? 'text-green-800' : 'text-gray-600'
                     }`}>
-                      изучаем ваш профиль
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      анализируем ваши интересы, стиль жизни и уникальные особенности
+                      анализ профиля
                     </span>
                   </div>
                 </div>
@@ -330,10 +367,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                     <span className={`block font-medium transition-colors duration-300 ${
                       status?.stages.images_downloaded ? 'text-green-800' : 'text-gray-600'
                     }`}>
-                      собираем ваши лучшие моменты
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      загружаем фотографии и создаем галерею для вашей персональной истории
+                      сбор фотографий
                     </span>
                   </div>
                 </div>
@@ -356,10 +390,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                     <span className={`block font-medium transition-colors duration-300 ${
                       status?.stages.book_generated ? 'text-green-800' : 'text-gray-600'
                     }`}>
-                      создаем вашу книгу любви
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      пишем романтическую историю специально для вас
+                      создание книги
                     </span>
                   </div>
                 </div>

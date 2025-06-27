@@ -8,7 +8,7 @@ import asyncio
 from app.services.image_processor import process_folder
 from app.services.text_collector import collect_texts
 from app.services.book_builder import build_romantic_book, create_pdf_from_html
-from app.auth import get_current_user, get_optional_current_user
+from app.auth import get_current_user, get_optional_current_user, get_user_from_request
 from pydantic import AnyUrl
 from pathlib import Path
 import json, logging, anyio, random
@@ -223,8 +223,12 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
 
 # ───────────── /download/{run_id}/{filename} ─────────────
 @app.get("/download/{run_id}/{filename}")
-def download_file(run_id: str, filename: str, current_user: dict = Depends(get_current_user)):
+def download_file(run_id: str, filename: str, request: Request):
     """Скачивание готовых файлов (PDF, HTML) - только для авторизованных пользователей"""
+    # Проверяем аутентификацию из любого источника
+    current_user = get_user_from_request(request)
+    if not current_user:
+        raise HTTPException(401, "Необходима авторизация для скачивания файлов")
     
     run_dir = Path("data") / run_id
     file_path = run_dir / filename
@@ -245,8 +249,13 @@ def download_file(run_id: str, filename: str, current_user: dict = Depends(get_c
 
 
 @app.get("/view/{run_id}/book.html")
-def view_book_html(run_id: str, current_user: dict = Depends(get_current_user)):
+def view_book_html(run_id: str, request: Request):
     """Просмотр HTML книги - только для авторизованных пользователей"""
+    # Проверяем аутентификацию из любого источника
+    current_user = get_user_from_request(request)
+    if not current_user:
+        raise HTTPException(401, "Необходима авторизация для просмотра книги")
+    
     run_dir = Path("data") / run_id
     html_file = run_dir / "book.html"
     
@@ -1125,7 +1134,111 @@ def home():
 @app.get("/status-page")
 def status_page(runId: str):
     """Страница отслеживания статуса создания книги"""
-    return HTMLResponse(content=f"""
+    
+    # JavaScript код как отдельная строка для избежания конфликтов с f-string
+    js_code = """
+        const runId = '""" + runId + """';
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultContainer = document.getElementById('resultContainer');
+        const downloadButtons = document.getElementById('downloadButtons');
+        
+        const stages = [
+            { text: ' Анализирую изгиб твоего носа: нежная плавная линия, словно созданная искусным скульптором...', progress: 15 },
+            { text: ' Тону в океане твоего взгляда -такой глубокий, что теряюсь в его бездонности...', progress: 25 },
+            { text: 'Изучаю контур твоих губ - они словно лепестки розы, готовые шептать секреты...', progress: 35 },
+            { text: 'Ощущаю мягкость твоей улыбки, как весенний рассвет на горизонте...', progress: 45 },
+            { text: ' Замечаю, как трепещут твои ресницы при каждом моргании - словно крылья бабочки...', progress: 55 },
+            { text: ' Рассматриваю, как свет играет на твоих скулах, создавая идеальные тени...', progress: 65 },
+            { text: 'Восхищаюсь нежностью твоих щёк - они словно тронуты утренним румянцем...', progress: 75 },
+            { text: 'Анализирую мимику - каждое выражение рассказывает отдельную историю твоей души...', progress: 85 },
+            { text: 'Сплетаю слова в главы, чтобы описать твою неповторимую красоту...', progress: 95 }
+        ];
+        
+        let currentStage = 0;
+        
+        // Функция анимации печатающейся машинки
+        function typewriterAnimation(element, text, speed = 80) {
+            return new Promise((resolve) => {
+                element.textContent = '';
+                let i = 0;
+                
+                function typeChar() {
+                    if (i < text.length) {
+                        element.textContent += text.charAt(i);
+                        i++;
+                        setTimeout(typeChar, speed);
+                    } else {
+                        resolve();
+                    }
+                }
+                
+                typeChar();
+            });
+        }
+        
+        async function updateProgress() {
+            if (currentStage < stages.length) {
+                const stage = stages[currentStage];
+                progressFill.style.width = stage.progress + '%';
+                
+                // Анимируем появление романтического текста
+                await typewriterAnimation(progressText, stage.text, 60);
+                
+                currentStage++;
+                setTimeout(updateProgress, 4000); // Увеличил время для просмотра анимации
+            }
+        }
+        
+        async function checkStatus() {
+            try {
+                const response = await fetch(`/status/${runId}`);
+                const status = await response.json();
+                
+                // Не перезаписываем сообщения stages, пока книга не готова
+                
+                if (status.stages.book_generated) {
+                    progressFill.style.width = '100%';
+                    progressText.textContent = 'Готово! ✨';
+                    
+                    setTimeout(() => {
+                        document.querySelector('.progress-container').style.display = 'none';
+                        document.querySelector('.heart-loading').style.display = 'none';
+                        document.querySelector('.status-message').textContent = 'Романтическая книга создана с любовью! 💝';
+                        resultContainer.style.display = 'block';
+                        
+                        if (status.files.html) {
+                            const viewBtn = document.createElement('a');
+                            viewBtn.href = status.files.html;
+                            viewBtn.className = 'download-btn btn-view';
+                            viewBtn.textContent = 'Просмотреть книгу 👀';
+                            viewBtn.target = '_blank';
+                            downloadButtons.appendChild(viewBtn);
+                        }
+                        
+                        if (status.files.pdf) {
+                            const downloadBtn = document.createElement('a');
+                            downloadBtn.href = status.files.pdf;
+                            downloadBtn.className = 'download-btn btn-download';
+                            downloadBtn.textContent = 'Скачать PDF 💕';
+                            downloadBtn.download = 'romantic_book.pdf';
+                            downloadButtons.appendChild(downloadBtn);
+                        }
+                    }, 1000);
+                } else {
+                    setTimeout(checkStatus, 3000);
+                }
+            } catch (error) {
+                setTimeout(checkStatus, 5000);
+            }
+        }
+        
+        // Запускаем обновление прогресса и проверку статуса
+        updateProgress();
+        setTimeout(checkStatus, 5000);
+    """
+    
+    html_content = f"""
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1197,6 +1310,7 @@ def status_page(runId: str):
         .progress-text {{
             color: #636e72;
             font-style: italic;
+            min-height: 24px;
         }}
         
         .heart-loading {{
@@ -1230,7 +1344,7 @@ def status_page(runId: str):
             margin-top: 30px;
         }}
         
-        .download-btn {
+        .download-btn {{
             padding: 16px 32px;
             border: none;
             border-radius: 25px;
@@ -1249,9 +1363,9 @@ def status_page(runId: str):
             align-items: center;
             justify-content: center;
             gap: 8px;
-        }
+        }}
         
-        .download-btn::before {
+        .download-btn::before {{
             content: '';
             position: absolute;
             top: 0;
@@ -1261,37 +1375,37 @@ def status_page(runId: str):
             background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 100%);
             transform: translateX(-100%);
             transition: transform 0.6s ease;
-        }
+        }}
         
-        .download-btn:hover::before {
+        .download-btn:hover::before {{
             transform: translateX(100%);
-        }
+        }}
         
-        .btn-view {
+        .btn-view {{
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-        }
+        }}
         
-        .btn-view:hover {
+        .btn-view:hover {{
             background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
             transform: translateY(-3px) scale(1.05);
             box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
-        }
+        }}
         
-        .btn-download {
+        .btn-download {{
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
-        }
+        }}
         
-        .btn-download:hover {
+        .btn-download:hover {{
             background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
             transform: translateY(-3px) scale(1.05);
             box-shadow: 0 12px 35px rgba(245, 87, 108, 0.4);
-        }
+        }}
         
-        .download-btn:active {
+        .download-btn:active {{
             transform: translateY(-1px) scale(1.02);
-        }
+        }}
         
         @media (max-width: 768px) {{
             .status-container {{
@@ -1320,7 +1434,7 @@ def status_page(runId: str):
         </div>
         
         <div class="result-container" id="resultContainer">
-            <h2 class="success-title">Ваша книга готова! </h2>
+            <h2 class="success-title">Ваша книга готова!</h2>
             <p>Теперь вы можете просмотреть или скачать романтическую книгу</p>
             <div class="download-buttons" id="downloadButtons">
                 
@@ -1329,86 +1443,13 @@ def status_page(runId: str):
     </div>
     
     <script>
-        const runId = '{runId}';
-        const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
-        const resultContainer = document.getElementById('resultContainer');
-        const downloadButtons = document.getElementById('downloadButtons');
-        
-        const stages = [
-            {{ text: ' Анализирую изгиб твоего носа: нежная плавная линия, словно созданная искусным скульптором...', progress: 15 }},
-            {{ text: ' Тону в океане твоего взгляда -такой глубокий, что теряюсь в его бездонности...', progress: 25 }},
-            {{ text: 'Изучаю контур твоих губ - они словно лепестки розы, готовые шептать секреты...', progress: 35 }},
-            {{ text: 'Ощущаю мягкость твоей улыбки, как весенний рассвет на горизонте...', progress: 45 }},
-            {{ text: ' Замечаю, как трепещут твои ресницы при каждом моргании - словно крылья бабочки...', progress: 55 }},
-            {{ text: ' Рассматриваю, как свет играет на твоих скулах, создавая идеальные тени...', progress: 65 }},
-            {{ text: 'Восхищаюсь нежностью твоих щёк - они словно тронуты утренним румянцем...', progress: 75 }},
-            {{ text: 'Анализирую мимику - каждое выражение рассказывает отдельную историю твоей души...', progress: 85 }},
-            {{ text: 'Сплетаю слова в главы, чтобы описать твою неповторимую красоту...', progress: 95 }}
-        ];
-        
-        let currentStage = 0;
-        
-        function updateProgress() {{
-            if (currentStage < stages.length) {{
-                const stage = stages[currentStage];
-                progressFill.style.width = stage.progress + '%';
-                progressText.textContent = stage.text;
-                currentStage++;
-                setTimeout(updateProgress, 3000);
-            }}
-        }}
-        
-        async function checkStatus() {{
-            try {{
-                const response = await fetch(`/status/${{runId}}`);
-                const status = await response.json();
-                
-                // Не перезаписываем сообщения stages, пока книга не готова
-                
-                if (status.stages.book_generated) {{
-                    progressFill.style.width = '100%';
-                    progressText.textContent = 'Готово! ✨';
-                    
-                    setTimeout(() => {{
-                        document.querySelector('.progress-container').style.display = 'none';
-                        document.querySelector('.heart-loading').style.display = 'none';
-                        document.querySelector('.status-message').textContent = 'Романтическая книга создана с любовью! 💝';
-                        resultContainer.style.display = 'block';
-                        
-                        if (status.files.html) {{
-                            const viewBtn = document.createElement('a');
-                            viewBtn.href = status.files.html;
-                            viewBtn.className = 'download-btn btn-view';
-                            viewBtn.textContent = 'Просмотреть книгу 👀';
-                            viewBtn.target = '_blank';
-                            downloadButtons.appendChild(viewBtn);
-                        }}
-                        
-                        if (status.files.pdf) {{
-                            const downloadBtn = document.createElement('a');
-                            downloadBtn.href = status.files.pdf;
-                            downloadBtn.className = 'download-btn btn-download';
-                            downloadBtn.textContent = 'Скачать PDF 💕';
-                            downloadBtn.download = 'romantic_book.pdf';
-                            downloadButtons.appendChild(downloadBtn);
-                        }}
-                    }}, 1000);
-                }} else {{
-                    setTimeout(checkStatus, 3000);
-                }}
-            }} catch (error) {{
-                setTimeout(checkStatus, 5000);
-            }}
-        }}
-        
-        // Запускаем обновление прогресса и проверку статуса
-        updateProgress();
-        setTimeout(checkStatus, 5000);
+        {js_code}
     </script>
 </body>
 </html>
-    """)
+    """
+    
+    return HTMLResponse(content=html_content)
 
 @app.post("/create-book")
 async def create_book(request: Request, background: BackgroundTasks, current_user: dict = Depends(get_current_user)):

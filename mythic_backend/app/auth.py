@@ -1,7 +1,7 @@
 import jwt
 import requests
 from typing import Optional, Dict, Any
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.config import settings
 import json
@@ -80,7 +80,7 @@ class ClerkAuth:
 
 clerk_auth = ClerkAuth()
 
-def get_current_user(authorization: HTTPAuthorizationCredentials = security) -> Dict[str, Any]:
+def get_current_user(authorization: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
     """Обязательная аутентификация - только для зарегистрированных пользователей"""
     if not clerk_auth.enabled:
         raise HTTPException(
@@ -118,4 +118,28 @@ def get_optional_current_user(request: Request) -> Optional[Dict[str, Any]]:
     try:
         return clerk_auth.verify_token(token)
     except HTTPException:
-        return None 
+        return None
+
+def get_user_from_request(request: Request) -> Optional[Dict[str, Any]]:
+    """Получаем пользователя из запроса - проверяем заголовок Authorization и query параметр token"""
+    if not clerk_auth.enabled:
+        return None
+    
+    # Сначала проверяем Authorization заголовок
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        try:
+            return clerk_auth.verify_token(token)
+        except HTTPException:
+            pass
+    
+    # Если в заголовке нет токена, проверяем query параметр
+    token = request.query_params.get("token")
+    if token:
+        try:
+            return clerk_auth.verify_token(token)
+        except HTTPException:
+            pass
+    
+    return None 
