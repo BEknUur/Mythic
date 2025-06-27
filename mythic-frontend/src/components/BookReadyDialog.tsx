@@ -167,6 +167,19 @@ export function BookReadyDialog({
            
             <TabsContent value="actions">
               <div className="space-y-4">
+                {/* Уведомление об автоматическом сохранении */}
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 text-green-800">
+                    <Check className="h-5 w-5" />
+                    <div>
+                      <p className="font-semibold">Книга автоматически сохранена!</p>
+                      <p className="text-sm text-green-700">
+                        Ваша книга уже добавлена в раздел "Мои книги" и доступна в любое время
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Button onClick={openBookInNewTab} size="lg" className="h-16">
                     <ExternalLink className="h-5 w-5 mr-2" />

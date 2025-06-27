@@ -8,9 +8,10 @@ import { useToast } from '@/hooks/use-toast';
 
 interface MainLayoutProps {
   onStartScrape: (id: string) => void;
+  onShowLibrary: () => void;
 }
 
-export function MainLayout({ onStartScrape }: MainLayoutProps) {
+export function MainLayout({ onStartScrape, onShowLibrary }: MainLayoutProps) {
   const [currentView, setCurrentView] = useState('create-book');
   const { toast } = useToast();
 
@@ -41,20 +42,11 @@ export function MainLayout({ onStartScrape }: MainLayoutProps) {
         });
         break;
       case 'my-books':
-        toast({
-          title: "📚 Функция \"Мои книги\" скоро будет доступна!",
-          description: "Здесь будут храниться все ваши созданные книги.",
-        });
-        break;
-      case 'favorites':
-        toast({
-          title: "⭐ Функция \"Избранное\" скоро будет доступна!",
-          description: "Сохраняйте лучшие моменты и страницы из ваших книг.",
-        });
+        onShowLibrary();
         break;
       case 'gallery':
         toast({
-          title: "🖼️ Функция \"Мини-галерея\" скоро будет доступна!",
+          title: "🖼️ Функция \"Галерея\" скоро будет доступна!",
           description: "Быстрый просмотр всех изображений из ваших проектов.",
         });
         break;

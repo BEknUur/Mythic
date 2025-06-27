@@ -180,19 +180,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigation }) => {
               <Button
                 variant="ghost"
                 className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('favorites')}
-              >
-                <Star className="h-5 w-5 text-yellow-500" />
-                <span className="ml-3 font-medium">Избранное</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('mini-gallery')}
+                onClick={() => handleNavClick('gallery')}
               >
                 <Image className="h-5 w-5 text-indigo-500" />
-                <span className="ml-3 font-medium">Мини-галерея</span>
+                <span className="ml-3 font-medium">Галерея</span>
               </Button>
             </div>
           </div>

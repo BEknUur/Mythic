@@ -35,10 +35,36 @@ const HealthResponseSchema = z.object({
   message: z.string(),
 });
 
+// Новые схемы для пользовательских книг
+const UserBookSchema = z.object({
+  id: z.string(),
+  run_id: z.string(),
+  title: z.string(),
+  created_at: z.string(),
+  profile_username: z.string().optional(),
+  profile_full_name: z.string().optional(),
+  has_pdf: z.boolean(),
+  has_html: z.boolean(),
+});
+
+const UserBooksResponseSchema = z.object({
+  books: z.array(UserBookSchema),
+  total: z.number(),
+});
+
+const SaveBookResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  book_id: z.string().optional(),
+});
+
 // Types
 export type StartScrapeResponse = z.infer<typeof StartScrapeResponseSchema>;
 export type StatusResponse = z.infer<typeof StatusResponseSchema>;
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;
+export type UserBook = z.infer<typeof UserBookSchema>;
+export type UserBooksResponse = z.infer<typeof UserBooksResponseSchema>;
+export type SaveBookResponse = z.infer<typeof SaveBookResponseSchema>;
 
 class ApiError extends Error {
   constructor(message: string, public status?: number) {
@@ -159,6 +185,106 @@ export const api = {
 
     if (!response.ok) {
       throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+
+    // Создаем blob и скачиваем файл
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
+  // Методы для работы с пользовательскими книгами
+  async saveBookToLibrary(runId: string, customTitle?: string, token?: string): Promise<SaveBookResponse> {
+    try {
+      const response = await fetch(`${BASE_URL}/books/save`, {
+        method: 'POST',
+        headers: getAuthHeaders(token),
+        body: JSON.stringify({
+          run_id: runId,
+          custom_title: customTitle,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new ApiError(`HTTP ${response.status}: ${errorText}`, response.status);
+      }
+
+      const data = await response.json();
+      return SaveBookResponseSchema.parse(data);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Ошибка сохранения книги');
+    }
+  },
+
+  async getMyBooks(token?: string): Promise<UserBooksResponse> {
+    try {
+      const response = await fetch(`${BASE_URL}/books/my`, {
+        headers: getAuthHeaders(token),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new ApiError(`HTTP ${response.status}: ${errorText}`, response.status);
+      }
+
+      const data = await response.json();
+      return UserBooksResponseSchema.parse(data);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Ошибка получения списка книг');
+    }
+  },
+
+  async deleteBook(bookId: string, token?: string): Promise<void> {
+    try {
+      const response = await fetch(`${BASE_URL}/books/${bookId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(token),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new ApiError(`HTTP ${response.status}: ${errorText}`, response.status);
+      }
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Ошибка удаления книги');
+    }
+  },
+
+  getSavedBookViewUrl(bookId: string, token?: string): string {
+    const url = new URL(`${BASE_URL}/books/${bookId}/view`);
+    if (token) {
+      url.searchParams.set('token', token);
+    }
+    return url.toString();
+  },
+
+  getSavedBookDownloadUrl(bookId: string, filename: string, token?: string): string {
+    const url = new URL(`${BASE_URL}/books/${bookId}/download/${filename}`);
+    if (token) {
+      url.searchParams.set('token', token);
+    }
+    return url.toString();
+  },
+
+  async downloadSavedBook(bookId: string, filename: string, token?: string): Promise<void> {
+    const response = await fetch(`${BASE_URL}/books/${bookId}/download/${filename}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to download saved book: ${response.statusText}`);
     }
 
     // Создаем blob и скачиваем файл

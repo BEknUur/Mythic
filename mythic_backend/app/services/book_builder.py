@@ -94,7 +94,7 @@ def analyze_profile_data(posts_data: list) -> dict:
     
     return analysis
 
-def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format: str = "classic"):
+def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format: str = "classic", user_id: str = None):
     """Создание HTML книги (с выбором формата: classic или zine)"""
     try:
         # Загружаем данные профиля
@@ -161,6 +161,104 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
             print(f"📄 PDF версия создана: {pdf_file}")
         except Exception as pdf_error:
             print(f"❌ Ошибка создания PDF: {pdf_error}")
+        
+        # Автоматическое сохранение в библиотеку пользователя
+        if user_id:
+            try:
+                import uuid
+                import datetime
+                import shutil
+                
+                # Получаем данные профиля для названия книги
+                profile_username = analysis.get("username")
+                profile_full_name = analysis.get("full_name")
+                
+                # Генерируем уникальный ID для книги
+                book_id = str(uuid.uuid4())
+                
+                # Определяем название книги
+                title = f"Для {profile_full_name or profile_username or 'Неизвестный'} с любовью"
+                
+                # Функции для работы с библиотекой пользователя (локальные копии)
+                def get_user_books_db_path_local(user_id: str) -> Path:
+                    user_books_dir = Path("data") / "user_books"
+                    user_books_dir.mkdir(parents=True, exist_ok=True)
+                    return user_books_dir / f"{user_id}.json"
+
+                def load_user_books_local(user_id: str) -> list[dict]:
+                    books_file = get_user_books_db_path_local(user_id)
+                    if not books_file.exists():
+                        return []
+                    try:
+                        return json.loads(books_file.read_text(encoding="utf-8"))
+                    except:
+                        return []
+
+                def save_user_books_local(user_id: str, books: list[dict]):
+                    books_file = get_user_books_db_path_local(user_id)
+                    books_file.write_text(json.dumps(books, ensure_ascii=False, indent=2), encoding="utf-8")
+
+                def copy_book_to_user_library_local(run_id: str, user_id: str, book_id: str) -> bool:
+                    try:
+                        source_dir = Path("data") / run_id
+                        user_library_dir = Path("data") / "user_books" / user_id / book_id
+                        user_library_dir.mkdir(parents=True, exist_ok=True)
+                        
+                        # Копируем файлы книги
+                        for file in ["book.html", "book.pdf", "posts.json"]:
+                            source_file = source_dir / file
+                            if source_file.exists():
+                                shutil.copy2(source_file, user_library_dir / file)
+                        
+                        # Копируем папку с изображениями
+                        source_images = source_dir / "images"
+                        if source_images.exists():
+                            target_images = user_library_dir / "images"
+                            if target_images.exists():
+                                shutil.rmtree(target_images)
+                            shutil.copytree(source_images, target_images)
+                        
+                        return True
+                    except Exception as e:
+                        print(f"Ошибка копирования книги {run_id} для пользователя {user_id}: {e}")
+                        return False
+                
+                # Загружаем существующие книги пользователя
+                books = load_user_books_local(user_id)
+                
+                # Проверяем, не сохранена ли уже эта книга
+                already_saved = False
+                for book in books:
+                    if book["run_id"] == run_id:
+                        already_saved = True
+                        break
+                
+                if not already_saved:
+                    # Копируем файлы книги в библиотеку пользователя
+                    if copy_book_to_user_library_local(run_id, user_id, book_id):
+                        # Добавляем книгу в список
+                        new_book = {
+                            "id": book_id,
+                            "run_id": run_id,
+                            "title": title,
+                            "created_at": datetime.datetime.now().isoformat(),
+                            "profile_username": profile_username,
+                            "profile_full_name": profile_full_name,
+                            "has_pdf": pdf_file.exists(),
+                            "has_html": html_file.exists()
+                        }
+                        
+                        books.append(new_book)
+                        save_user_books_local(user_id, books)
+                        
+                        print(f"📚 Книга автоматически сохранена в библиотеку пользователя {user_id}")
+                    else:
+                        print("❌ Ошибка автоматического сохранения книги в библиотеку")
+                else:
+                    print("📚 Книга уже была сохранена в библиотеке пользователя")
+                    
+            except Exception as save_error:
+                print(f"❌ Ошибка автоматического сохранения: {save_error}")
         
         final_messages = [
             f"Магия свершилась! Романтическая книга о @{username} готова к прочтению: {html_file}",

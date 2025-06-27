@@ -9,9 +9,9 @@ from app.services.image_processor import process_folder
 from app.services.text_collector import collect_texts
 from app.services.book_builder import build_romantic_book, create_pdf_from_html
 from app.auth import get_current_user, get_optional_current_user, get_user_from_request
-from pydantic import AnyUrl
+from pydantic import AnyUrl, BaseModel
 from pathlib import Path
-import json, logging, anyio, random
+import json, logging, anyio, random, datetime, uuid, shutil
 
 from app.config import settings
 from app.services.apify_client import run_actor, fetch_run, fetch_items
@@ -67,8 +67,17 @@ async def start_scrape(url: AnyUrl, current_user: dict = Depends(get_current_use
     }
 
     run = await run_actor(run_input, webhooks=[webhook])
-    log.info("Actor started runId=%s for user=%s", run["id"], current_user.get("sub"))
-    return {"runId": run["id"], "message": "Начинаю исследовать вашу личность... Это займет несколько минут"}
+    run_id = run["id"]
+    user_id = current_user.get("sub")
+    
+    # Сохраняем информацию о пользователе для этого run_id
+    run_dir = Path("data") / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    user_meta = {"user_id": user_id, "created_at": datetime.datetime.now().isoformat()}
+    (run_dir / "user_meta.json").write_text(json.dumps(user_meta, ensure_ascii=False), encoding="utf-8")
+    
+    log.info("Actor started runId=%s for user=%s", run_id, user_id)
+    return {"runId": run_id, "message": "Начинаю исследовать вашу личность... Это займет несколько минут"}
 
 
 @app.post("/webhook/apify")
@@ -95,13 +104,21 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "posts.json").write_text(json.dumps(items, ensure_ascii=False, indent=2))
 
+    # Получаем user_id из метаданных
+    user_id = None
+    user_meta_file = run_dir / "user_meta.json"
+    if user_meta_file.exists():
+        try:
+            user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
+            user_id = user_meta.get("user_id")
+        except:
+            pass
+
     # --- качаем картинки ---------------------------------------------------------------
     images_dir = run_dir / "images"
     background.add_task(download_photos, items, images_dir)
 
     async def _build():
-        
-
         print("💕 Ожидаем завершения загрузки изображений...")
         await asyncio.sleep(5)
         
@@ -115,7 +132,18 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
 
         imgs      = await process_folder(images_dir)
         comments  = collect_texts(run_dir / "posts.json")
-        build_romantic_book(run_id, imgs, comments)
+        
+        # Получаем user_id из метаданных или из текущего пользователя
+        user_id = current_user.get("sub")
+        user_meta_file = run_dir / "user_meta.json"
+        if user_meta_file.exists():
+            try:
+                user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
+                user_id = user_meta.get("user_id", user_id)
+            except:
+                pass
+        
+        build_romantic_book(run_id, imgs, comments, user_id=user_id)
 
     background.add_task(lambda: anyio.run(_build))
 
@@ -1465,9 +1493,272 @@ async def create_book(request: Request, background: BackgroundTasks, current_use
 
         imgs      = await process_folder(images_dir)
         comments  = collect_texts(run_dir / "posts.json")
-        build_romantic_book(run_id, imgs, comments, book_format)
+        
+        # Получаем user_id из метаданных или из текущего пользователя
+        user_id = current_user.get("sub")
+        user_meta_file = run_dir / "user_meta.json"
+        if user_meta_file.exists():
+            try:
+                user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
+                user_id = user_meta.get("user_id", user_id)
+            except:
+                pass
+        
+        build_romantic_book(run_id, imgs, comments, book_format, user_id=user_id)
 
     background.add_task(lambda: anyio.run(_build))
 
     format_name = "классическую книгу" if book_format == "classic" else "мозаичный зин"
     return {"status": "processing", "runId": run_id, "format": book_format, "message": f"Создание {format_name} началось! Скоро будет готова"}
+
+# Модели для работы с книгами пользователя
+class SaveBookRequest(BaseModel):
+    run_id: str
+    custom_title: str = None
+
+class UserBook(BaseModel):
+    id: str
+    run_id: str
+    title: str
+    created_at: str
+    profile_username: str = None
+    profile_full_name: str = None
+    has_pdf: bool = False
+    has_html: bool = False
+
+class UserBooksResponse(BaseModel):
+    books: list[UserBook]
+    total: int
+
+# Функции для работы с пользовательскими книгами
+def get_user_books_db_path(user_id: str) -> Path:
+    """Получить путь к файлу с книгами пользователя"""
+    user_books_dir = Path("data") / "user_books"
+    user_books_dir.mkdir(parents=True, exist_ok=True)
+    return user_books_dir / f"{user_id}.json"
+
+def load_user_books(user_id: str) -> list[dict]:
+    """Загрузить книги пользователя"""
+    books_file = get_user_books_db_path(user_id)
+    if not books_file.exists():
+        return []
+    try:
+        return json.loads(books_file.read_text(encoding="utf-8"))
+    except:
+        return []
+
+def save_user_books(user_id: str, books: list[dict]):
+    """Сохранить книги пользователя"""
+    books_file = get_user_books_db_path(user_id)
+    books_file.write_text(json.dumps(books, ensure_ascii=False, indent=2), encoding="utf-8")
+
+def copy_book_to_user_library(run_id: str, user_id: str, book_id: str) -> bool:
+    """Копировать файлы книги в библиотеку пользователя"""
+    try:
+        source_dir = Path("data") / run_id
+        user_library_dir = Path("data") / "user_books" / user_id / book_id
+        user_library_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Копируем файлы книги
+        for file in ["book.html", "book.pdf", "posts.json"]:
+            source_file = source_dir / file
+            if source_file.exists():
+                shutil.copy2(source_file, user_library_dir / file)
+        
+        # Копируем папку с изображениями
+        source_images = source_dir / "images"
+        if source_images.exists():
+            target_images = user_library_dir / "images"
+            if target_images.exists():
+                shutil.rmtree(target_images)
+            shutil.copytree(source_images, target_images)
+        
+        return True
+    except Exception as e:
+        log.error(f"Ошибка копирования книги {run_id} для пользователя {user_id}: {e}")
+        return False
+
+# Эндпоинты для управления книгами пользователя
+
+@app.post("/books/save", response_model=dict)
+async def save_book_to_library(request: SaveBookRequest, current_user: dict = Depends(get_current_user)):
+    """Сохранить книгу в библиотеку пользователя"""
+    user_id = current_user.get("sub")
+    run_id = request.run_id
+    
+    # Проверяем, что книга существует и завершена
+    run_dir = Path("data") / run_id
+    html_file = run_dir / "book.html"
+    if not html_file.exists():
+        raise HTTPException(404, "Книга не найдена или еще не готова")
+    
+    # Загружаем данные профиля из posts.json
+    posts_json = run_dir / "posts.json"
+    profile_username = None
+    profile_full_name = None
+    if posts_json.exists():
+        try:
+            posts_data = json.loads(posts_json.read_text(encoding="utf-8"))
+            if posts_data:
+                profile = posts_data[0]
+                profile_username = profile.get("username")
+                profile_full_name = profile.get("fullName")
+        except:
+            pass
+    
+    # Генерируем уникальный ID для книги
+    book_id = str(uuid.uuid4())
+    
+    # Определяем название книги
+    title = request.custom_title or f"Для {profile_full_name or profile_username or 'Неизвестный'} с любовью"
+    
+    # Загружаем существующие книги пользователя
+    books = load_user_books(user_id)
+    
+    # Проверяем, не сохранена ли уже эта книга
+    for book in books:
+        if book["run_id"] == run_id:
+            return {"success": True, "message": "Книга уже сохранена в вашей библиотеке", "book_id": book["id"]}
+    
+    # Копируем файлы книги в библиотеку пользователя
+    if not copy_book_to_user_library(run_id, user_id, book_id):
+        raise HTTPException(500, "Ошибка сохранения книги")
+    
+    # Добавляем книгу в список
+    pdf_file = run_dir / "book.pdf"
+    new_book = {
+        "id": book_id,
+        "run_id": run_id,
+        "title": title,
+        "created_at": datetime.datetime.now().isoformat(),
+        "profile_username": profile_username,
+        "profile_full_name": profile_full_name,
+        "has_pdf": pdf_file.exists(),
+        "has_html": html_file.exists()
+    }
+    
+    books.append(new_book)
+    save_user_books(user_id, books)
+    
+    log.info(f"Книга {run_id} сохранена в библиотеке пользователя {user_id}")
+    return {"success": True, "message": "Книга сохранена в вашей библиотеке", "book_id": book_id}
+
+@app.get("/books/my", response_model=UserBooksResponse)
+async def get_my_books(current_user: dict = Depends(get_current_user)):
+    """Получить список книг пользователя"""
+    user_id = current_user.get("sub")
+    books_data = load_user_books(user_id)
+    
+    # Преобразуем в модели Pydantic
+    books = [UserBook(**book) for book in books_data]
+    
+    # Сортируем по дате создания (новые сначала)
+    books.sort(key=lambda x: x.created_at, reverse=True)
+    
+    return UserBooksResponse(books=books, total=len(books))
+
+@app.delete("/books/{book_id}")
+async def delete_book(book_id: str, current_user: dict = Depends(get_current_user)):
+    """Удалить книгу из библиотеки пользователя"""
+    user_id = current_user.get("sub")
+    books = load_user_books(user_id)
+    
+    # Находим книгу
+    book_to_delete = None
+    for i, book in enumerate(books):
+        if book["id"] == book_id:
+            book_to_delete = book
+            books.pop(i)
+            break
+    
+    if not book_to_delete:
+        raise HTTPException(404, "Книга не найдена")
+    
+    # Удаляем файлы книги
+    book_dir = Path("data") / "user_books" / user_id / book_id
+    if book_dir.exists():
+        try:
+            shutil.rmtree(book_dir)
+        except Exception as e:
+            log.error(f"Ошибка удаления файлов книги {book_id}: {e}")
+    
+    # Сохраняем обновленный список
+    save_user_books(user_id, books)
+    
+    log.info(f"Книга {book_id} удалена из библиотеки пользователя {user_id}")
+    return {"success": True, "message": "Книга удалена из библиотеки"}
+
+@app.get("/books/{book_id}/view")
+async def view_saved_book(book_id: str, request: Request):
+    """Просмотр сохраненной книги"""
+    # Проверяем аутентификацию из любого источника (включая токен из URL)
+    current_user = get_user_from_request(request)
+    if not current_user:
+        raise HTTPException(401, "Необходима авторизация для просмотра книги")
+    
+    user_id = current_user.get("sub")
+    books = load_user_books(user_id)
+    
+    # Находим книгу
+    book = None
+    for b in books:
+        if b["id"] == book_id:
+            book = b
+            break
+    
+    if not book:
+        raise HTTPException(404, "Книга не найдена")
+    
+    # Путь к HTML файлу книги
+    book_dir = Path("data") / "user_books" / user_id / book_id
+    html_file = book_dir / "book.html"
+    
+    if not html_file.exists():
+        raise HTTPException(404, "HTML файл книги не найден")
+    
+    log.info(f"Saved book view for book {book_id} by user {user_id}")
+    return HTMLResponse(html_file.read_text(encoding="utf-8"))
+
+@app.get("/books/{book_id}/download/{filename}")
+async def download_saved_book(book_id: str, filename: str, request: Request):
+    """Скачать файл сохраненной книги"""
+    # Проверяем аутентификацию из любого источника (включая токен из URL)
+    current_user = get_user_from_request(request)
+    if not current_user:
+        raise HTTPException(401, "Необходима авторизация для скачивания файла")
+    
+    user_id = current_user.get("sub")
+    books = load_user_books(user_id)
+    
+    # Находим книгу
+    book = None
+    for b in books:
+        if b["id"] == book_id:
+            book = b
+            break
+    
+    if not book:
+        raise HTTPException(404, "Книга не найдена")
+    
+    # Путь к файлу
+    book_dir = Path("data") / "user_books" / user_id / book_id
+    file_path = book_dir / filename
+    
+    if not file_path.exists():
+        raise HTTPException(404, "Файл не найден")
+    
+    log.info(f"Saved book download {filename} for book {book_id} by user {user_id}")
+    
+    # Определяем MIME тип
+    if filename.endswith('.pdf'):
+        media_type = 'application/pdf'
+    elif filename.endswith('.html'):
+        media_type = 'text/html'
+    else:
+        media_type = 'application/octet-stream'
+    
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type=media_type
+    )

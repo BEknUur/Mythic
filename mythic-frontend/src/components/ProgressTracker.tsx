@@ -227,18 +227,18 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               </div>
 
               {/* Минималистичная иконка */}
-              <div className="mx-auto w-16 h-16 bg-foreground rounded-full flex items-center justify-center mb-6 relative">
+              <div className="mx-auto w-16 h-16 bg-gray-100 border-2 border-gray-200 rounded-full flex items-center justify-center mb-6 relative">
                 {status?.stages.book_generated ? (
-                  <Book className="h-8 w-8 text-background" />
+                  <Book className="h-8 w-8 text-gray-600" />
                 ) : (
-                  <Heart className="h-8 w-8 text-background animate-pulse" />
+                  <Heart className="h-8 w-8 text-gray-600 animate-pulse" />
                 )}
               </div>
 
-              <CardTitle className="text-3xl font-bold text-foreground mb-2">
+              <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
                 Создаем вашу историю любви
               </CardTitle>
-              <CardDescription className="text-muted-foreground text-lg leading-relaxed">
+              <CardDescription className="text-gray-600 text-lg leading-relaxed">
                 Наш искусственный интеллект анализирует ваш Instagram и создает персональную романтическую книгу
               </CardDescription>
             </CardHeader>
@@ -255,17 +255,17 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                   onClick={checkStatusManually}
                   disabled={isManualChecking}
                   variant="outline"
-                  className="h-14 px-8"
+                  className="h-14 px-8 border-gray-200 hover:bg-gray-50"
                 >
                   {isManualChecking ? (
-                    <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                    <Loader2 className="h-5 w-5 mr-3 animate-spin text-gray-500" />
                   ) : (
-                    <RefreshCw className="h-5 w-5 mr-3" />
+                    <RefreshCw className="h-5 w-5 mr-3 text-gray-500" />
                   )}
                   {isManualChecking ? 'проверяем статус' : 'обновить статус'}
                 </Button>
                 {lastChecked && (
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-sm text-gray-400 mt-2">
                     последняя проверка: {lastChecked.toLocaleTimeString()}
                   </p>
                 )}
@@ -273,16 +273,16 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
 
               {/* Живой статус */}
               {status && (
-                <div className="bg-muted/50 p-8 rounded-lg border">
-                  <h4 className="font-semibold mb-6 text-foreground text-lg flex items-center gap-2">
-                    <div className="w-2 h-2 bg-foreground rounded-full animate-pulse"></div>
+                <div className="bg-gray-50 p-8 rounded-lg border border-gray-100">
+                  <h4 className="font-semibold mb-6 text-gray-800 text-lg flex items-center gap-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
                     Сейчас происходит:
                   </h4>
                   
                   {/* Романтическое сообщение от API */}
                   {status.message && !status.stages.book_generated && (
-                    <div className="mb-6 p-5 bg-background rounded-lg border shadow-sm">
-                      <p className="text-foreground italic text-base leading-relaxed font-medium">
+                    <div className="mb-6 p-5 bg-white rounded-lg border border-gray-100 shadow-sm">
+                      <p className="text-gray-700 italic text-base leading-relaxed font-medium">
                         <TypewriterText 
                           text={status.message} 
                           speed={60}
@@ -294,35 +294,35 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                   
                   <div className="space-y-4 text-base">
                     <div className={`flex items-center justify-between transition-all duration-700 ${visibleSteps >= 1 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
-                      <span className="text-foreground flex items-center gap-3 font-medium">
-                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                          <User className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-gray-700 flex items-center gap-3 font-medium">
+                        <div className="w-8 h-8 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center">
+                          <User className="w-4 h-4 text-gray-500" />
                         </div>
                         анализ профиля
                       </span>
-                      <span className={`font-semibold transition-colors duration-300 ${status.stages.data_collected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      <span className={`font-semibold transition-colors duration-300 ${status.stages.data_collected ? 'text-gray-800' : 'text-gray-400'}`}>
                         {getHumanStatus('data_collected', status.stages.data_collected)}
                       </span>
                     </div>
                     <div className={`flex items-center justify-between transition-all duration-700 delay-300 ${visibleSteps >= 2 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
-                      <span className="text-foreground flex items-center gap-3 font-medium">
-                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                          <Camera className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-gray-700 flex items-center gap-3 font-medium">
+                        <div className="w-8 h-8 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center">
+                          <Camera className="w-4 h-4 text-gray-500" />
                         </div>
                         сбор фотографий
                       </span>
-                      <span className={`font-semibold transition-colors duration-300 ${status.stages.images_downloaded ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      <span className={`font-semibold transition-colors duration-300 ${status.stages.images_downloaded ? 'text-gray-800' : 'text-gray-400'}`}>
                         {getHumanStatus('images_downloaded', status.stages.images_downloaded) || 'ожидание'}
                       </span>
                     </div>
                     <div className={`flex items-center justify-between transition-all duration-700 delay-600 ${visibleSteps >= 3 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
-                      <span className="text-foreground flex items-center gap-3 font-medium">
-                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                          <Book className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-gray-700 flex items-center gap-3 font-medium">
+                        <div className="w-8 h-8 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center">
+                          <Book className="w-4 h-4 text-gray-500" />
                         </div>
                         создание книги
                       </span>
-                      <span className={`font-semibold transition-colors duration-300 ${status.stages.book_generated ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      <span className={`font-semibold transition-colors duration-300 ${status.stages.book_generated ? 'text-gray-800' : 'text-gray-400'}`}>
                         {getHumanStatus('book_generated', status.stages.book_generated) || 'ожидание'}
                       </span>
                     </div>
@@ -336,20 +336,20 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                   value={status ? (Object.values(status.stages).filter(Boolean).length / 3) * 100 : 0} 
                   className="h-2"
                 />
-                <p className="text-center text-lg text-muted-foreground italic transition-all duration-500">
+                <p className="text-center text-lg text-gray-600 italic transition-all duration-500">
                   {getCurrentPhrase()}
                 </p>
               </div>
 
-              {/* Детальные шаги - минималистичные */}
+              {/* Детальные шаги - светлые */}
               <div className="grid grid-cols-3 gap-4">
                 <div className={`text-center p-4 rounded-lg border transition-all duration-500 ${
                   status?.stages.data_collected 
-                    ? 'bg-foreground text-background border-foreground' 
-                    : 'bg-muted/50 border-border'
+                    ? 'bg-gray-800 text-white border-gray-800' 
+                    : 'bg-gray-50 border-gray-200'
                 }`}>
                   <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                    status?.stages.data_collected ? 'bg-background text-foreground' : 'bg-muted text-muted-foreground'
+                    status?.stages.data_collected ? 'bg-white text-gray-800' : 'bg-gray-200 text-gray-500'
                   }`}>
                     {status?.stages.data_collected ? (
                       <CheckCircle className="w-5 h-5" />
@@ -358,7 +358,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                     )}
                   </div>
                   <span className={`block text-sm font-medium ${
-                    status?.stages.data_collected ? 'text-background' : 'text-muted-foreground'
+                    status?.stages.data_collected ? 'text-white' : 'text-gray-600'
                   }`}>
                     анализ
                   </span>
@@ -366,11 +366,11 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                 
                 <div className={`text-center p-4 rounded-lg border transition-all duration-500 ${
                   status?.stages.images_downloaded 
-                    ? 'bg-foreground text-background border-foreground' 
-                    : 'bg-muted/50 border-border'
+                    ? 'bg-gray-800 text-white border-gray-800' 
+                    : 'bg-gray-50 border-gray-200'
                 }`}>
                   <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                    status?.stages.images_downloaded ? 'bg-background text-foreground' : 'bg-muted text-muted-foreground'
+                    status?.stages.images_downloaded ? 'bg-white text-gray-800' : 'bg-gray-200 text-gray-500'
                   }`}>
                     {status?.stages.images_downloaded ? (
                       <CheckCircle className="w-5 h-5" />
@@ -379,7 +379,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                     )}
                   </div>
                   <span className={`block text-sm font-medium ${
-                    status?.stages.images_downloaded ? 'text-background' : 'text-muted-foreground'
+                    status?.stages.images_downloaded ? 'text-white' : 'text-gray-600'
                   }`}>
                     фотографии
                   </span>
@@ -387,11 +387,11 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                 
                 <div className={`text-center p-4 rounded-lg border transition-all duration-500 ${
                   status?.stages.book_generated 
-                    ? 'bg-foreground text-background border-foreground' 
-                    : 'bg-muted/50 border-border'
+                    ? 'bg-gray-800 text-white border-gray-800' 
+                    : 'bg-gray-50 border-gray-200'
                 }`}>
                   <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                    status?.stages.book_generated ? 'bg-background text-foreground' : 'bg-muted text-muted-foreground'
+                    status?.stages.book_generated ? 'bg-white text-gray-800' : 'bg-gray-200 text-gray-500'
                   }`}>
                     {status?.stages.book_generated ? (
                       <CheckCircle className="w-5 h-5" />
@@ -400,7 +400,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                     )}
                   </div>
                   <span className={`block text-sm font-medium ${
-                    status?.stages.book_generated ? 'text-background' : 'text-muted-foreground'
+                    status?.stages.book_generated ? 'text-white' : 'text-gray-600'
                   }`}>
                     книга
                   </span>
@@ -409,16 +409,16 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
 
               {/* Превью профиля */}
               {status?.profile && (
-                <div className="bg-muted/30 p-6 rounded-lg border">
-                  <h3 className="font-semibold text-foreground mb-3 text-lg flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" />
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
+                  <h3 className="font-semibold text-gray-800 mb-3 text-lg flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-gray-600" />
                     профиль найден
                   </h3>
-                  <p className="text-base text-foreground mb-1">
-                    <span className="font-semibold">{status.profile.fullName}</span> 
-                    <span className="text-muted-foreground ml-2">@{status.profile.username}</span>
+                  <p className="text-base text-gray-700 mb-1">
+                    <span className="font-semibold text-gray-800">{status.profile.fullName}</span> 
+                    <span className="text-gray-500 ml-2">@{status.profile.username}</span>
                   </p>
-                  <p className="text-sm text-muted-foreground flex items-center gap-4">
+                  <p className="text-sm text-gray-500 flex items-center gap-4">
                     <span className="flex items-center gap-1">
                       <User className="w-4 h-4" />
                       {status.profile.followers.toLocaleString()} подписчиков
@@ -432,11 +432,11 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               )}
 
               {/* Кнопка возврата */}
-              <div className="text-center pt-6 border-t">
+              <div className="text-center pt-6 border-t border-gray-100">
                 <Button
                   onClick={onReset}
                   variant="ghost"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 >
                   ← вернуться к форме
                 </Button>
