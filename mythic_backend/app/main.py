@@ -9,9 +9,14 @@ from app.services.image_processor import process_folder
 from app.services.text_collector import collect_texts
 from app.services.book_builder import build_romantic_book, create_pdf_from_html
 from app.auth import get_current_user, get_optional_current_user, get_user_from_request
+from app.database import get_db, create_tables
+from app.services.user_service import UserService
+from app.services.book_service import BookService
+from app.models import User, Book
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import AnyUrl, BaseModel
 from pathlib import Path
-import json, logging, anyio, random, datetime, uuid, shutil
+import json, logging, random, datetime, uuid, shutil
 
 from app.config import settings
 from app.services.apify_client import run_actor, fetch_run, fetch_items
@@ -21,6 +26,15 @@ from app.auth import clerk_auth
 log = logging.getLogger("api")
 app = FastAPI(title="Романтическая Летопись Любви", description="Создает красивые романтические книги на основе Instagram профилей для ваших любимых")
 
+# Создаем таблицы при запуске
+@app.on_event("startup")
+async def startup_event():
+    try:
+        create_tables()
+        log.info("База данных инициализирована")
+    except Exception as e:
+        log.warning(f"Предупреждение при инициализации БД: {e}")
+        # Не падаем, продолжаем работу
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,7 +59,11 @@ def health_check():
 
 # ───────────── /start-scrape ────────────────────────────────
 @app.get("/start-scrape")
-async def start_scrape(url: AnyUrl, current_user: dict = Depends(get_current_user)):
+async def start_scrape(
+    url: AnyUrl, 
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     """Начать скрапинг Instagram профиля - только для авторизованных пользователей"""
     clean_url = str(url).rstrip("/")        
 
@@ -68,15 +86,23 @@ async def start_scrape(url: AnyUrl, current_user: dict = Depends(get_current_use
 
     run = await run_actor(run_input, webhooks=[webhook])
     run_id = run["id"]
-    user_id = current_user.get("sub")
+    clerk_user_id = current_user.get("sub")
     
-    # Сохраняем информацию о пользователе для этого run_id
+    # Создаем сессию обработки в БД
+    await UserService.create_processing_session(
+        db=db,
+        run_id=run_id,
+        clerk_user_id=clerk_user_id,
+        instagram_url=clean_url
+    )
+    
+    # Сохраняем информацию о пользователе для этого run_id (для совместимости)
     run_dir = Path("data") / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    user_meta = {"user_id": user_id, "created_at": datetime.datetime.now().isoformat()}
+    user_meta = {"user_id": clerk_user_id, "created_at": datetime.datetime.now().isoformat()}
     (run_dir / "user_meta.json").write_text(json.dumps(user_meta, ensure_ascii=False), encoding="utf-8")
     
-    log.info("Actor started runId=%s for user=%s", run_id, user_id)
+    log.info("Actor started runId=%s for user=%s", run_id, clerk_user_id)
     return {"runId": run_id, "message": "Начинаю исследовать вашу личность... Это займет несколько минут"}
 
 
@@ -105,12 +131,12 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
     (run_dir / "posts.json").write_text(json.dumps(items, ensure_ascii=False, indent=2))
 
     # Получаем user_id из метаданных
-    user_id = None
+    clerk_user_id = None
     user_meta_file = run_dir / "user_meta.json"
     if user_meta_file.exists():
         try:
             user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
-            user_id = user_meta.get("user_id")
+            clerk_user_id = user_meta.get("user_id")
         except:
             pass
 
@@ -133,19 +159,25 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
         imgs      = await process_folder(images_dir)
         comments  = collect_texts(run_dir / "posts.json")
         
-        # Получаем user_id из метаданных или из текущего пользователя
-        user_id = current_user.get("sub")
-        user_meta_file = run_dir / "user_meta.json"
-        if user_meta_file.exists():
-            try:
-                user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
-                user_id = user_meta.get("user_id", user_id)
-            except:
-                pass
+        # Создаем книгу (без user_id, он будет извлечен из файла)
+        build_romantic_book(run_id, imgs, comments, user_id=None)
         
-        build_romantic_book(run_id, imgs, comments, user_id=user_id)
+        # Автоматически сохраняем книгу в БД
+        if clerk_user_id:
+            try:
+                # Создаем новую сессию для background task
+                from app.database import AsyncSessionLocal
+                async with AsyncSessionLocal() as db_session:
+                    await BookService.create_book_from_run(
+                        db=db_session,
+                        run_id=run_id,
+                        clerk_user_id=clerk_user_id
+                    )
+                    print(f"📚 Книга {run_id} автоматически сохранена в БД для пользователя {clerk_user_id}")
+            except Exception as e:
+                print(f"❌ Ошибка автосохранения книги в БД: {e}")
 
-    background.add_task(lambda: anyio.run(_build))
+    background.add_task(_build)
 
     return {"status": "processing", "runId": run_id, "message": "Собираю данные, чтобы понять вашу душу... Скоро начну создавать книгу"}
 
@@ -1506,7 +1538,7 @@ async def create_book(request: Request, background: BackgroundTasks, current_use
         
         build_romantic_book(run_id, imgs, comments, book_format, user_id=user_id)
 
-    background.add_task(lambda: anyio.run(_build))
+    background.add_task(_build)
 
     format_name = "классическую книгу" if book_format == "classic" else "мозаичный зин"
     return {"status": "processing", "runId": run_id, "format": book_format, "message": f"Создание {format_name} началось! Скоро будет готова"}
@@ -1516,7 +1548,7 @@ class SaveBookRequest(BaseModel):
     run_id: str
     custom_title: str = None
 
-class UserBook(BaseModel):
+class UserBookResponse(BaseModel):
     id: str
     run_id: str
     title: str
@@ -1527,63 +1559,19 @@ class UserBook(BaseModel):
     has_html: bool = False
 
 class UserBooksResponse(BaseModel):
-    books: list[UserBook]
+    books: list[UserBookResponse]
     total: int
-
-# Функции для работы с пользовательскими книгами
-def get_user_books_db_path(user_id: str) -> Path:
-    """Получить путь к файлу с книгами пользователя"""
-    user_books_dir = Path("data") / "user_books"
-    user_books_dir.mkdir(parents=True, exist_ok=True)
-    return user_books_dir / f"{user_id}.json"
-
-def load_user_books(user_id: str) -> list[dict]:
-    """Загрузить книги пользователя"""
-    books_file = get_user_books_db_path(user_id)
-    if not books_file.exists():
-        return []
-    try:
-        return json.loads(books_file.read_text(encoding="utf-8"))
-    except:
-        return []
-
-def save_user_books(user_id: str, books: list[dict]):
-    """Сохранить книги пользователя"""
-    books_file = get_user_books_db_path(user_id)
-    books_file.write_text(json.dumps(books, ensure_ascii=False, indent=2), encoding="utf-8")
-
-def copy_book_to_user_library(run_id: str, user_id: str, book_id: str) -> bool:
-    """Копировать файлы книги в библиотеку пользователя"""
-    try:
-        source_dir = Path("data") / run_id
-        user_library_dir = Path("data") / "user_books" / user_id / book_id
-        user_library_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Копируем файлы книги
-        for file in ["book.html", "book.pdf", "posts.json"]:
-            source_file = source_dir / file
-            if source_file.exists():
-                shutil.copy2(source_file, user_library_dir / file)
-        
-        # Копируем папку с изображениями
-        source_images = source_dir / "images"
-        if source_images.exists():
-            target_images = user_library_dir / "images"
-            if target_images.exists():
-                shutil.rmtree(target_images)
-            shutil.copytree(source_images, target_images)
-        
-        return True
-    except Exception as e:
-        log.error(f"Ошибка копирования книги {run_id} для пользователя {user_id}: {e}")
-        return False
 
 # Эндпоинты для управления книгами пользователя
 
 @app.post("/books/save", response_model=dict)
-async def save_book_to_library(request: SaveBookRequest, current_user: dict = Depends(get_current_user)):
+async def save_book_to_library(
+    request: SaveBookRequest, 
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     """Сохранить книгу в библиотеку пользователя"""
-    user_id = current_user.get("sub")
+    clerk_user_id = current_user.get("sub")
     run_id = request.run_id
     
     # Проверяем, что книга существует и завершена
@@ -1592,162 +1580,113 @@ async def save_book_to_library(request: SaveBookRequest, current_user: dict = De
     if not html_file.exists():
         raise HTTPException(404, "Книга не найдена или еще не готова")
     
-    # Загружаем данные профиля из posts.json
-    posts_json = run_dir / "posts.json"
-    profile_username = None
-    profile_full_name = None
-    if posts_json.exists():
-        try:
-            posts_data = json.loads(posts_json.read_text(encoding="utf-8"))
-            if posts_data:
-                profile = posts_data[0]
-                profile_username = profile.get("username")
-                profile_full_name = profile.get("fullName")
-        except:
-            pass
+    # Создаем или получаем существующую книгу
+    book = await BookService.create_book_from_run(
+        db=db,
+        run_id=run_id,
+        clerk_user_id=clerk_user_id,
+        custom_title=request.custom_title
+    )
     
-    # Генерируем уникальный ID для книги
-    book_id = str(uuid.uuid4())
-    
-    # Определяем название книги
-    title = request.custom_title or f"Для {profile_full_name or profile_username or 'Неизвестный'} с любовью"
-    
-    # Загружаем существующие книги пользователя
-    books = load_user_books(user_id)
-    
-    # Проверяем, не сохранена ли уже эта книга
-    for book in books:
-        if book["run_id"] == run_id:
-            return {"success": True, "message": "Книга уже сохранена в вашей библиотеке", "book_id": book["id"]}
-    
-    # Копируем файлы книги в библиотеку пользователя
-    if not copy_book_to_user_library(run_id, user_id, book_id):
+    if not book:
         raise HTTPException(500, "Ошибка сохранения книги")
     
-    # Добавляем книгу в список
-    pdf_file = run_dir / "book.pdf"
-    new_book = {
-        "id": book_id,
-        "run_id": run_id,
-        "title": title,
-        "created_at": datetime.datetime.now().isoformat(),
-        "profile_username": profile_username,
-        "profile_full_name": profile_full_name,
-        "has_pdf": pdf_file.exists(),
-        "has_html": html_file.exists()
-    }
-    
-    books.append(new_book)
-    save_user_books(user_id, books)
-    
-    log.info(f"Книга {run_id} сохранена в библиотеке пользователя {user_id}")
-    return {"success": True, "message": "Книга сохранена в вашей библиотеке", "book_id": book_id}
+    log.info(f"Книга {run_id} сохранена в библиотеке пользователя {clerk_user_id}")
+    return {"success": True, "message": "Книга сохранена в вашей библиотеке", "book_id": book.id}
 
 @app.get("/books/my", response_model=UserBooksResponse)
-async def get_my_books(current_user: dict = Depends(get_current_user)):
+async def get_my_books(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     """Получить список книг пользователя"""
-    user_id = current_user.get("sub")
-    books_data = load_user_books(user_id)
+    clerk_user_id = current_user.get("sub")
+    books = await BookService.get_user_books(db, clerk_user_id)
     
-    # Преобразуем в модели Pydantic
-    books = [UserBook(**book) for book in books_data]
+    # Преобразуем в модели ответа
+    book_responses = []
+    for book in books:
+        book_responses.append(UserBookResponse(
+            id=book.id,
+            run_id=book.run_id,
+            title=book.title,
+            created_at=book.created_at.isoformat(),
+            profile_username=book.profile_username,
+            profile_full_name=book.profile_full_name,
+            has_pdf=book.has_pdf,
+            has_html=book.has_html
+        ))
     
-    # Сортируем по дате создания (новые сначала)
-    books.sort(key=lambda x: x.created_at, reverse=True)
-    
-    return UserBooksResponse(books=books, total=len(books))
+    return UserBooksResponse(books=book_responses, total=len(book_responses))
 
 @app.delete("/books/{book_id}")
-async def delete_book(book_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_book(
+    book_id: str, 
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     """Удалить книгу из библиотеки пользователя"""
-    user_id = current_user.get("sub")
-    books = load_user_books(user_id)
+    clerk_user_id = current_user.get("sub")
     
-    # Находим книгу
-    book_to_delete = None
-    for i, book in enumerate(books):
-        if book["id"] == book_id:
-            book_to_delete = book
-            books.pop(i)
-            break
+    success = await BookService.delete_book(db, book_id, clerk_user_id)
     
-    if not book_to_delete:
+    if not success:
         raise HTTPException(404, "Книга не найдена")
     
-    # Удаляем файлы книги
-    book_dir = Path("data") / "user_books" / user_id / book_id
-    if book_dir.exists():
-        try:
-            shutil.rmtree(book_dir)
-        except Exception as e:
-            log.error(f"Ошибка удаления файлов книги {book_id}: {e}")
-    
-    # Сохраняем обновленный список
-    save_user_books(user_id, books)
-    
-    log.info(f"Книга {book_id} удалена из библиотеки пользователя {user_id}")
+    log.info(f"Книга {book_id} удалена из библиотеки пользователя {clerk_user_id}")
     return {"success": True, "message": "Книга удалена из библиотеки"}
 
 @app.get("/books/{book_id}/view")
-async def view_saved_book(book_id: str, request: Request):
+async def view_saved_book(book_id: str, request: Request, db: AsyncSession = Depends(get_db)):
     """Просмотр сохраненной книги"""
     # Проверяем аутентификацию из любого источника (включая токен из URL)
     current_user = get_user_from_request(request)
     if not current_user:
         raise HTTPException(401, "Необходима авторизация для просмотра книги")
     
-    user_id = current_user.get("sub")
-    books = load_user_books(user_id)
-    
-    # Находим книгу
-    book = None
-    for b in books:
-        if b["id"] == book_id:
-            book = b
-            break
+    clerk_user_id = current_user.get("sub")
+    book = await BookService.get_book_by_id(db, book_id, clerk_user_id)
     
     if not book:
         raise HTTPException(404, "Книга не найдена")
     
-    # Путь к HTML файлу книги
-    book_dir = Path("data") / "user_books" / user_id / book_id
-    html_file = book_dir / "book.html"
-    
-    if not html_file.exists():
+    if not book.html_path or not Path(book.html_path).exists():
         raise HTTPException(404, "HTML файл книги не найден")
     
-    log.info(f"Saved book view for book {book_id} by user {user_id}")
-    return HTMLResponse(html_file.read_text(encoding="utf-8"))
+    log.info(f"Saved book view for book {book_id} by user {clerk_user_id}")
+    return HTMLResponse(Path(book.html_path).read_text(encoding="utf-8"))
 
 @app.get("/books/{book_id}/download/{filename}")
-async def download_saved_book(book_id: str, filename: str, request: Request):
+async def download_saved_book(
+    book_id: str, 
+    filename: str, 
+    request: Request, 
+    db: AsyncSession = Depends(get_db)
+):
     """Скачать файл сохраненной книги"""
     # Проверяем аутентификацию из любого источника (включая токен из URL)
     current_user = get_user_from_request(request)
     if not current_user:
         raise HTTPException(401, "Необходима авторизация для скачивания файла")
     
-    user_id = current_user.get("sub")
-    books = load_user_books(user_id)
-    
-    # Находим книгу
-    book = None
-    for b in books:
-        if b["id"] == book_id:
-            book = b
-            break
+    clerk_user_id = current_user.get("sub")
+    book = await BookService.get_book_by_id(db, book_id, clerk_user_id)
     
     if not book:
         raise HTTPException(404, "Книга не найдена")
     
-    # Путь к файлу
-    book_dir = Path("data") / "user_books" / user_id / book_id
-    file_path = book_dir / filename
+    # Определяем путь к файлу
+    if filename == "book.pdf" and book.pdf_path:
+        file_path = Path(book.pdf_path)
+    elif filename == "book.html" and book.html_path:
+        file_path = Path(book.html_path)
+    else:
+        raise HTTPException(404, "Файл не найден")
     
     if not file_path.exists():
         raise HTTPException(404, "Файл не найден")
     
-    log.info(f"Saved book download {filename} for book {book_id} by user {user_id}")
+    log.info(f"Saved book download {filename} for book {book_id} by user {clerk_user_id}")
     
     # Определяем MIME тип
     if filename.endswith('.pdf'):

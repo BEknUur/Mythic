@@ -1,23 +1,29 @@
-fastapi
-uvicorn[standard]
-apify-client
+fastapi==0.104.1
+uvicorn==0.24.0
+apify-client==1.7.1
 httpx
 python-dotenv
 pydantic-settings
-weasyprint
+weasyprint==61.2
 openai==0.28.1
 anyio
 asyncio
 markdown
-python-multipart    
-pillow
+python-multipart==0.0.6
+pillow==10.1.0
 transformers
 google-generativeai
 uuid
 pathlib
 base64
-python-jose[cryptography]
-requests
+python-jose[cryptography]==3.3.0
+requests==2.31.0
+playwright==1.40.0
+cryptography==41.0.8
+sqlalchemy==2.0.23
+alembic==1.13.1
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
 
 
 
