@@ -214,34 +214,35 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     <>
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
-          <Card className="bg-white border border-gray-200">
-            <CardHeader className="text-center">
+          <Card className="bg-white border border-border shadow-lg">
+            <CardHeader className="text-center relative">
               {/* Информация о пользователе в правом верхнем углу */}
               <div className="absolute top-4 right-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground font-medium">
                     {user?.firstName || 'Пользователь'}
                   </span>
                   <UserButton />
                 </div>
               </div>
 
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+              {/* Минималистичная иконка */}
+              <div className="mx-auto w-16 h-16 bg-foreground rounded-full flex items-center justify-center mb-6 relative">
                 {status?.stages.book_generated ? (
-                  <Book className="h-8 w-8 text-purple-600" />
+                  <Book className="h-8 w-8 text-background" />
                 ) : (
-                  <Heart className="h-8 w-8 text-pink-600 animate-pulse" />
+                  <Heart className="h-8 w-8 text-background animate-pulse" />
                 )}
               </div>
-              <CardTitle className="text-2xl text-black">Создаем вашу историю любви</CardTitle>
-              <CardDescription className="text-gray-600">
+
+              <CardTitle className="text-3xl font-bold text-foreground mb-2">
+                Создаем вашу историю любви
+              </CardTitle>
+              <CardDescription className="text-muted-foreground text-lg leading-relaxed">
                 Наш искусственный интеллект анализирует ваш Instagram и создает персональную романтическую книгу
               </CardDescription>
-              <div className="text-xs text-gray-500 mt-2">
-                Номер заказа: {runId}
-              </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
               {error && (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
@@ -254,13 +255,17 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                   onClick={checkStatusManually}
                   disabled={isManualChecking}
                   variant="outline"
-                  className="h-12 px-6 border-2"
+                  className="h-14 px-8"
                 >
-                  {isManualChecking ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                  {isManualChecking ? (
+                    <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-5 w-5 mr-3" />
+                  )}
                   {isManualChecking ? 'проверяем статус' : 'обновить статус'}
                 </Button>
                 {lastChecked && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-sm text-muted-foreground mt-2">
                     последняя проверка: {lastChecked.toLocaleTimeString()}
                   </p>
                 )}
@@ -268,47 +273,56 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
 
               {/* Живой статус */}
               {status && (
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200 transition-all duration-500">
-                  <h4 className="font-medium mb-4 text-blue-900">Сейчас происходит:</h4>
+                <div className="bg-muted/50 p-8 rounded-lg border">
+                  <h4 className="font-semibold mb-6 text-foreground text-lg flex items-center gap-2">
+                    <div className="w-2 h-2 bg-foreground rounded-full animate-pulse"></div>
+                    Сейчас происходит:
+                  </h4>
                   
                   {/* Романтическое сообщение от API */}
                   {status.message && !status.stages.book_generated && (
-                    <div className="mb-4 p-3 bg-white rounded-lg border border-pink-200 shadow-sm">
-                      <p className="text-pink-700 italic text-sm leading-relaxed">
+                    <div className="mb-6 p-5 bg-background rounded-lg border shadow-sm">
+                      <p className="text-foreground italic text-base leading-relaxed font-medium">
                         <TypewriterText 
                           text={status.message} 
-                          speed={80}
+                          speed={60}
                           className="inline"
                         />
                       </p>
                     </div>
                   )}
                   
-                  <div className="space-y-3 text-sm">
+                  <div className="space-y-4 text-base">
                     <div className={`flex items-center justify-between transition-all duration-700 ${visibleSteps >= 1 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
-                      <span className="text-blue-700 flex items-center gap-2">
-                        <User className="w-4 h-4" />
+                      <span className="text-foreground flex items-center gap-3 font-medium">
+                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                        </div>
                         анализ профиля
                       </span>
-                      <span className={`font-medium transition-colors duration-300 ${status.stages.data_collected ? 'text-green-600' : 'text-orange-600'}`}>
+                      <span className={`font-semibold transition-colors duration-300 ${status.stages.data_collected ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {getHumanStatus('data_collected', status.stages.data_collected)}
                       </span>
                     </div>
                     <div className={`flex items-center justify-between transition-all duration-700 delay-300 ${visibleSteps >= 2 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
-                      <span className="text-blue-700 flex items-center gap-2">
-                        <Camera className="w-4 h-4" />
+                      <span className="text-foreground flex items-center gap-3 font-medium">
+                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                          <Camera className="w-4 h-4 text-muted-foreground" />
+                        </div>
                         сбор фотографий
                       </span>
-                      <span className={`font-medium transition-colors duration-300 ${status.stages.images_downloaded ? 'text-green-600' : 'text-gray-500'}`}>
+                      <span className={`font-semibold transition-colors duration-300 ${status.stages.images_downloaded ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {getHumanStatus('images_downloaded', status.stages.images_downloaded) || 'ожидание'}
                       </span>
                     </div>
                     <div className={`flex items-center justify-between transition-all duration-700 delay-600 ${visibleSteps >= 3 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
-                      <span className="text-blue-700 flex items-center gap-2">
-                        <Book className="w-4 h-4" />
+                      <span className="text-foreground flex items-center gap-3 font-medium">
+                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                          <Book className="w-4 h-4 text-muted-foreground" />
+                        </div>
                         создание книги
                       </span>
-                      <span className={`font-medium transition-colors duration-300 ${status.stages.book_generated ? 'text-green-600' : 'text-gray-500'}`}>
+                      <span className={`font-semibold transition-colors duration-300 ${status.stages.book_generated ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {getHumanStatus('book_generated', status.stages.book_generated) || 'ожидание'}
                       </span>
                     </div>
@@ -317,106 +331,114 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               )}
 
               {/* Прогресс */}
-              <div className="space-y-4">
-                <ProgressBar value={status ? (Object.values(status.stages).filter(Boolean).length / 3) * 100 : 0} className="h-3" />
-                <p className="text-center text-sm text-muted-foreground italic transition-all duration-500">
+              <div className="space-y-6">
+                <ProgressBar 
+                  value={status ? (Object.values(status.stages).filter(Boolean).length / 3) * 100 : 0} 
+                  className="h-2"
+                />
+                <p className="text-center text-lg text-muted-foreground italic transition-all duration-500">
                   {getCurrentPhrase()}
                 </p>
               </div>
 
-              {/* Детальные шаги */}
-              <div className="space-y-3">
-                <div className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-500 ${
+              {/* Детальные шаги - минималистичные */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className={`text-center p-4 rounded-lg border transition-all duration-500 ${
                   status?.stages.data_collected 
-                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm' 
-                    : 'bg-gray-50 border border-gray-200'
+                    ? 'bg-foreground text-background border-foreground' 
+                    : 'bg-muted/50 border-border'
                 }`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    status?.stages.data_collected ? 'bg-green-500 scale-110' : 'bg-gray-300'
+                  <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+                    status?.stages.data_collected ? 'bg-background text-foreground' : 'bg-muted text-muted-foreground'
                   }`}>
                     {status?.stages.data_collected ? (
-                      <CheckCircle className="w-5 h-5 text-white" />
+                      <CheckCircle className="w-5 h-5" />
                     ) : (
-                      <span className="text-xs text-white font-medium">1</span>
+                      <span className="text-sm font-bold">1</span>
                     )}
                   </div>
-                  <div className="flex-1">
-                    <span className={`block font-medium transition-colors duration-300 ${
-                      status?.stages.data_collected ? 'text-green-800' : 'text-gray-600'
-                    }`}>
-                      анализ профиля
-                    </span>
-                  </div>
+                  <span className={`block text-sm font-medium ${
+                    status?.stages.data_collected ? 'text-background' : 'text-muted-foreground'
+                  }`}>
+                    анализ
+                  </span>
                 </div>
                 
-                <div className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-500 ${
+                <div className={`text-center p-4 rounded-lg border transition-all duration-500 ${
                   status?.stages.images_downloaded 
-                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm' 
-                    : 'bg-gray-50 border border-gray-200'
+                    ? 'bg-foreground text-background border-foreground' 
+                    : 'bg-muted/50 border-border'
                 }`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    status?.stages.images_downloaded ? 'bg-green-500 scale-110' : 'bg-gray-300'
+                  <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+                    status?.stages.images_downloaded ? 'bg-background text-foreground' : 'bg-muted text-muted-foreground'
                   }`}>
                     {status?.stages.images_downloaded ? (
-                      <CheckCircle className="w-5 h-5 text-white" />
+                      <CheckCircle className="w-5 h-5" />
                     ) : (
-                      <span className="text-xs text-white font-medium">2</span>
+                      <span className="text-sm font-bold">2</span>
                     )}
                   </div>
-                  <div className="flex-1">
-                    <span className={`block font-medium transition-colors duration-300 ${
-                      status?.stages.images_downloaded ? 'text-green-800' : 'text-gray-600'
-                    }`}>
-                      сбор фотографий
-                    </span>
-                  </div>
+                  <span className={`block text-sm font-medium ${
+                    status?.stages.images_downloaded ? 'text-background' : 'text-muted-foreground'
+                  }`}>
+                    фотографии
+                  </span>
                 </div>
                 
-                <div className={`flex items-center gap-3 p-4 rounded-xl transition-all duration-500 ${
+                <div className={`text-center p-4 rounded-lg border transition-all duration-500 ${
                   status?.stages.book_generated 
-                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm' 
-                    : 'bg-gray-50 border border-gray-200'
+                    ? 'bg-foreground text-background border-foreground' 
+                    : 'bg-muted/50 border-border'
                 }`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    status?.stages.book_generated ? 'bg-green-500 scale-110' : 'bg-gray-300'
+                  <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+                    status?.stages.book_generated ? 'bg-background text-foreground' : 'bg-muted text-muted-foreground'
                   }`}>
                     {status?.stages.book_generated ? (
-                      <CheckCircle className="w-5 h-5 text-white" />
+                      <CheckCircle className="w-5 h-5" />
                     ) : (
-                      <span className="text-xs text-white font-medium">3</span>
+                      <span className="text-sm font-bold">3</span>
                     )}
                   </div>
-                  <div className="flex-1">
-                    <span className={`block font-medium transition-colors duration-300 ${
-                      status?.stages.book_generated ? 'text-green-800' : 'text-gray-600'
-                    }`}>
-                      создание книги
-                    </span>
-                  </div>
+                  <span className={`block text-sm font-medium ${
+                    status?.stages.book_generated ? 'text-background' : 'text-muted-foreground'
+                  }`}>
+                    книга
+                  </span>
                 </div>
               </div>
 
               {/* Превью профиля */}
               {status?.profile && (
-                <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-xl border border-gray-200 transition-all duration-500">
-                  <h3 className="font-medium text-black mb-2">профиль найден</h3>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">{status.profile.fullName}</span> (@{status.profile.username})
+                <div className="bg-muted/30 p-6 rounded-lg border">
+                  <h3 className="font-semibold text-foreground mb-3 text-lg flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    профиль найден
+                  </h3>
+                  <p className="text-base text-foreground mb-1">
+                    <span className="font-semibold">{status.profile.fullName}</span> 
+                    <span className="text-muted-foreground ml-2">@{status.profile.username}</span>
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {status.profile.followers.toLocaleString()} подписчиков • {status.profile.posts} постов
+                  <p className="text-sm text-muted-foreground flex items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <User className="w-4 h-4" />
+                      {status.profile.followers.toLocaleString()} подписчиков
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Camera className="w-4 h-4" />
+                      {status.profile.posts} постов
+                    </span>
                   </p>
                 </div>
               )}
 
               {/* Кнопка возврата */}
-              <div className="text-center pt-4 border-t border-gray-100">
+              <div className="text-center pt-6 border-t">
                 <Button
                   onClick={onReset}
                   variant="ghost"
-                  className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                  className="text-muted-foreground hover:text-foreground"
                 >
-                  вернуться к форме
+                  ← вернуться к форме
                 </Button>
               </div>
             </CardContent>
