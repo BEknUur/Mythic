@@ -45,7 +45,8 @@ def health_check():
 
 # ───────────── /start-scrape ────────────────────────────────
 @app.get("/start-scrape")
-async def start_scrape(url: AnyUrl):
+async def start_scrape(url: AnyUrl, current_user: dict = Depends(get_current_user)):
+    """Начать скрапинг Instagram профиля - только для авторизованных пользователей"""
     clean_url = str(url).rstrip("/")        
 
     run_input = {
@@ -66,7 +67,7 @@ async def start_scrape(url: AnyUrl):
     }
 
     run = await run_actor(run_input, webhooks=[webhook])
-    log.info("Actor started runId=%s", run["id"])
+    log.info("Actor started runId=%s for user=%s", run["id"], current_user.get("sub"))
     return {"runId": run["id"], "message": "Начинаю исследовать вашу личность... ❤️"}
 
 
@@ -122,14 +123,15 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
 
 
 @app.get("/status/{run_id}")
-def status(run_id: str):
+def status(run_id: str, current_user: dict = Depends(get_current_user)):
+    """Проверить статус создания книги - только для авторизованных пользователей"""
     run_dir = Path("data") / run_id
     posts_json = run_dir / "posts.json"
     images_dir = run_dir / "images"
     html_file = run_dir / "book.html"
     pdf_file = run_dir / "book.pdf"
     
-    log.info(f"Status check for {run_id}")
+    log.info(f"Status check for {run_id} by user {current_user.get('sub')}")
     
     data_collected = posts_json.exists()
     images_downloaded = images_dir.exists() and any(images_dir.glob("*"))
@@ -221,14 +223,16 @@ def status(run_id: str):
 
 # ───────────── /download/{run_id}/{filename} ─────────────
 @app.get("/download/{run_id}/{filename}")
-def download_file(run_id: str, filename: str):
-    """Скачивание готовых файлов (PDF, HTML)"""
+def download_file(run_id: str, filename: str, current_user: dict = Depends(get_current_user)):
+    """Скачивание готовых файлов (PDF, HTML) - только для авторизованных пользователей"""
     
     run_dir = Path("data") / run_id
     file_path = run_dir / filename
     
     if not file_path.exists():
         raise HTTPException(404, f"Файл {filename} не найден")
+    
+    log.info(f"File download {filename} for run {run_id} by user {current_user.get('sub')}")
     
     # Определяем MIME тип
     media_type = "application/pdf" if filename.endswith(".pdf") else "text/html"
@@ -241,45 +245,41 @@ def download_file(run_id: str, filename: str):
 
 
 @app.get("/view/{run_id}/book.html")
-def view_book_html(run_id: str):
-    """Просмотр HTML версии книги в браузере"""
-    
+def view_book_html(run_id: str, current_user: dict = Depends(get_current_user)):
+    """Просмотр HTML книги - только для авторизованных пользователей"""
     run_dir = Path("data") / run_id
     html_file = run_dir / "book.html"
     
     if not html_file.exists():
-        raise HTTPException(404, "HTML версия книги не найдена")
+        raise HTTPException(404, "Книга не найдена")
+    
+    log.info(f"Book view for run {run_id} by user {current_user.get('sub')}")
     
     html_content = html_file.read_text(encoding="utf-8")
     return HTMLResponse(content=html_content)
 
 
 @app.post("/generate-pdf/{run_id}")
-async def generate_pdf(run_id: str):
-    """Генерирует PDF версию книги из HTML"""
-    
+async def generate_pdf(run_id: str, current_user: dict = Depends(get_current_user)):
+    """Генерация PDF из HTML книги - только для авторизованных пользователей"""
     run_dir = Path("data") / run_id
     html_file = run_dir / "book.html"
     pdf_file = run_dir / "book.pdf"
     
     if not html_file.exists():
-        raise HTTPException(404, "HTML версия книги не найдена")
+        raise HTTPException(404, "HTML книга не найдена")
+    
+    if pdf_file.exists():
+        return {"status": "exists", "message": "PDF уже создан", "download_url": f"/download/{run_id}/book.pdf"}
+    
+    log.info(f"PDF generation for run {run_id} by user {current_user.get('sub')}")
     
     try:
-        # Читаем HTML контент
-        html_content = html_file.read_text(encoding="utf-8")
-        
-        # Генерируем PDF
-        create_pdf_from_html(html_content, pdf_file)
-        
-        if pdf_file.exists():
-            return {"status": "success", "message": "PDF создан успешно", "url": f"/download/{run_id}/book.pdf"}
-        else:
-            raise HTTPException(500, "Ошибка при создании PDF")
-            
+        await create_pdf_from_html(str(html_file), str(pdf_file))
+        return {"status": "success", "message": "PDF создан", "download_url": f"/download/{run_id}/book.pdf"}
     except Exception as e:
-        print(f"❌ Ошибка генерации PDF: {e}")
-        raise HTTPException(500, f"Ошибка при создании PDF: {str(e)}")
+        log.error(f"Error creating PDF: {e}")
+        raise HTTPException(500, f"Ошибка создания PDF: {e}")
 
 
 # ───────────── / (главная страница) ─────────────────────
@@ -1411,8 +1411,8 @@ def status_page(runId: str):
     """)
 
 @app.post("/create-book")
-async def create_book(request: Request, background: BackgroundTasks):
-    """Создает романтическую книгу на основе данных профиля"""
+async def create_book(request: Request, background: BackgroundTasks, current_user: dict = Depends(get_current_user)):
+    """Создает романтическую книгу на основе данных профиля - только для авторизованных пользователей"""
     try:
         body = await request.json()
         run_id = body.get("runId")
@@ -1425,6 +1425,8 @@ async def create_book(request: Request, background: BackgroundTasks):
         run_dir = Path("data") / run_id
         if not run_dir.exists():
             raise HTTPException(404, f"Данные для runId {run_id} не найдены")
+            
+        log.info(f"Book creation started for run {run_id} by user {current_user.get('sub')}")
     except Exception as e:
         raise HTTPException(400, f"Ошибка в параметрах запроса: {e}")
 

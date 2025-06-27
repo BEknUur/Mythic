@@ -1,6 +1,3 @@
-/* Import modern fonts */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Crimson+Text:wght@400;600&family=Libre+Baskerville:wght@400;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
-
 .floating-book-container {
   position: fixed;
   top: 0;
@@ -38,8 +35,7 @@
   flex-direction: column;
   justify-content: space-between;
   padding: 8px 6px;
-  font-family: 'Playfair Display', 'Georgia', serif;
-  font-weight: 600;
+  font-family: 'Georgia', 'Times New Roman', serif;
 }
 
 /* Book spine with realistic shadow */
@@ -63,141 +59,106 @@
 /* Book 1 - "Сердца в цифровом мире" */
 .floating-book:nth-child(1) .book-pages {
   background: linear-gradient(135deg, #2D1B69 0%, #11998e 50%, #38ef7d 100%);
-  color: #000000;
-  text-shadow: 
-    0 1px 3px rgba(255,255,255,0.8), 
-    0 2px 6px rgba(255,255,255,0.6),
-    0 0 20px rgba(255,255,255,0.4);
-  font-family: 'Playfair Display', serif;
-  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 .floating-book:nth-child(1) .book-pages::after {
-  content: '📱💕\A"СЕРДЦА В\AЦИФРОВОМ\AМИРЕ"\A\A— АННА ЦИФРОВА —';
+  content: '📱💕\A"Сердца в\Aцифровом\Aмире"\A\A— Анна Цифрова —';
   white-space: pre;
   position: absolute;
-  top: 12px;
-  left: 10px;
-  right: 6px;
-  font-size: 8px;
-  font-weight: 700;
+  top: 15px;
+  left: 12px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: bold;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.3;
   z-index: 3;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
 }
 
 /* Book 2 - "Мистерии прошлого" */
 .floating-book:nth-child(2) .book-pages {
   background: linear-gradient(135deg, #8B0000 0%, #DC143C 30%, #FF6347 100%);
-  color: #000000;
-  text-shadow: 
-    0 1px 3px rgba(255,255,255,0.9), 
-    0 2px 6px rgba(255,255,255,0.7),
-    0 0 25px rgba(255,255,255,0.5);
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 600;
+  color: #FFE4B5;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9);
 }
 
 .floating-book:nth-child(2) .book-pages::after {
-  content: '🌙✨\A"МИСТЕРИИ\AПРОШЛОГО"\A\A— ЕЛЕНА ТАЙНАЯ —';
+  content: '🌙✨\A"Мистерии\Aпрошлого"\A\A— Елена Тайная —';
   white-space: pre;
   position: absolute;
-  top: 12px;
-  left: 10px;
-  right: 6px;
-  font-size: 8px;
-  font-weight: 600;
+  top: 15px;
+  left: 12px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: bold;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.3;
   z-index: 3;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
 }
 
 /* Book 3 - "Космические приключения" */
 .floating-book:nth-child(3) .book-pages {
   background: linear-gradient(135deg, #0F3460 0%, #16537e 50%, #533483 100%);
-  color: #000000;
-  text-shadow: 
-    0 1px 3px rgba(255,255,255,0.8), 
-    0 2px 6px rgba(255,255,255,0.6),
-    0 0 20px rgba(255,255,255,0.4);
-  font-family: 'Libre Baskerville', serif;
-  font-weight: 700;
+  color: #E0E6FF;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 .floating-book:nth-child(3) .book-pages::after {
-  content: '🚀⭐\A"КОСМИЧЕСКИЕ\AПРИКЛЮЧЕНИЯ"\A\A— ВИКТОР ЗВЁЗДНЫЙ —';
+  content: '🚀⭐\A"Космические\Aприключения"\A\A— Виктор Звёздный —';
   white-space: pre;
   position: absolute;
-  top: 10px;
-  left: 8px;
-  right: 4px;
-  font-size: 7px;
-  font-weight: 700;
+  top: 15px;
+  left: 12px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: bold;
   text-align: center;
   line-height: 1.3;
   z-index: 3;
-  letter-spacing: 0.2px;
-  text-transform: uppercase;
 }
 
 /* Book 4 - "Философия души" */
 .floating-book:nth-child(4) .book-pages {
   background: linear-gradient(135deg, #654ea3 0%, #eaafc8 50%, #f093fb 100%);
-  color: #000000;
-  text-shadow: 
-    0 1px 3px rgba(255,255,255,0.9), 
-    0 2px 6px rgba(255,255,255,0.7),
-    0 0 25px rgba(255,255,255,0.5);
-  font-family: 'Crimson Text', serif;
-  font-weight: 600;
+  color: #2C1810;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
 }
 
 .floating-book:nth-child(4) .book-pages::after {
-  content: '🧠💭\A"ФИЛОСОФИЯ\AДУШИ"\A\A— МАРИЯ МУДРАЯ —';
+  content: '🧠💭\A"Философия\Aдуши"\A\A— Мария Мудрая —';
   white-space: pre;
   position: absolute;
-  top: 12px;
-  left: 10px;
-  right: 6px;
-  font-size: 8px;
-  font-weight: 600;
+  top: 15px;
+  left: 12px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: bold;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.3;
   z-index: 3;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
 }
 
 /* Book 5 - "Магия повседневности" */
 .floating-book:nth-child(5) .book-pages {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  color: #000000;
-  text-shadow: 
-    0 1px 3px rgba(255,255,255,0.8), 
-    0 2px 6px rgba(255,255,255,0.6),
-    0 0 20px rgba(255,255,255,0.4);
-  font-family: 'Playfair Display', serif;
-  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.7);
 }
 
 .floating-book:nth-child(5) .book-pages::after {
-  content: '✨🌸\A"МАГИЯ\AПОВСЕДНЕВНОСТИ"\A\A— СОФЬЯ ДОБРАЯ —';
+  content: '✨🌸\A"Магия\Aповседневности"\A\A— Софья Добрая —';
   white-space: pre;
   position: absolute;
-  top: 10px;
-  left: 8px;
-  right: 4px;
-  font-size: 7px;
-  font-weight: 700;
+  top: 15px;
+  left: 12px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: bold;
   text-align: center;
   line-height: 1.3;
   z-index: 3;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
 }
 
 /* Enhanced page flipping effect */

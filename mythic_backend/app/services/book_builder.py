@@ -239,7 +239,7 @@ def apply_dream_pastel_effect(img: Image.Image) -> Image.Image:
                 print(f"❌ Ошибка при добавлении шума: {noise_error}")
         else:
             print("⚠️ Пропускаем добавление шума (numpy недоступен)")
-        
+        return img.convert('RGB')
         # Легкое увеличение яркости
         enhancer = ImageEnhance.Brightness(img)
         img = enhancer.enhance(1.05)

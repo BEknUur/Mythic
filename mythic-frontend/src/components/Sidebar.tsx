@@ -1,21 +1,19 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+
 import { Button } from '@/components/ui/button';
 import {
   BookOpen,
   Video,
   PenTool,
   FileImage,
-  Palette,
   Library,
   Star,
   Image,
   Settings,
   HelpCircle,
   Menu,
-  X,
   ChevronLeft,
   ChevronRight,
   Sparkles

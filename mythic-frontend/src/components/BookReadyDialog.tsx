@@ -78,7 +78,7 @@ export function BookReadyDialog({
       >
         <DialogHeader className="text-center pt-4">
           <DialogTitle className="text-3xl font-normal text-violet-600">
-            🎉 Книга готова!
+            Книга готова!
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Ваша персональная история создана и готова к просмотру.

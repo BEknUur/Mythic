@@ -1,4 +1,4 @@
-import { Instagram, Send, Code } from 'lucide-react';
+import { Instagram, Send } from 'lucide-react';
 
 const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg

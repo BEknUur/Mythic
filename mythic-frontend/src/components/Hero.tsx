@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Instagram, Zap, BookOpen, LogIn, UserPlus } from 'lucide-react';
+import { Instagram, Zap, BookOpen, LogIn, UserPlus, Lock } from 'lucide-react';
 import { useUser, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 
 export function Hero() {
@@ -19,18 +19,18 @@ export function Hero() {
             </div>
           ) : (
             <>
+              <SignUpButton mode="modal">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Регистрация
+                </Button>
+              </SignUpButton>
               <SignInButton mode="modal">
                 <Button variant="outline" size="sm" className="flex items-center gap-2">
                   <LogIn className="h-4 w-4" />
                   Войти
                 </Button>
               </SignInButton>
-              <SignUpButton mode="modal">
-                <Button size="sm" className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Регистрация
-                </Button>
-              </SignUpButton>
             </>
           )}
         </div>
@@ -47,10 +47,11 @@ export function Hero() {
         </p>
 
         {!isSignedIn && (
-          <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-lg max-w-lg mx-auto">
-            <p className="text-amber-800 text-sm">
-              💡 Для создания и просмотра книги необходима регистрация
-            </p>
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full text-sm text-gray-600 shadow-sm">
+              <Lock className="h-4 w-4 text-gray-400" />
+              Требуется регистрация для создания книг
+            </div>
           </div>
         )}
 
