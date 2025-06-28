@@ -30,52 +30,88 @@ def strip_cliches(text: str) -> str:
 def generate_text(prompt: str,
                   model: str = "gpt-3.5-turbo",
                   max_tokens: int = 1500,
-                  temperature: float = 0.8) -> str:
-    """Генерирует текст с помощью OpenAI API"""
+                  temperature: float = 0.8,
+                  image_data: Optional[str] = None) -> str:
+    """Генерирует текст с помощью OpenAI API, с поддержкой изображений"""
     try:
         # Система для романтического рассказчика-мемуариста
-        system_message = """Ты — романтический рассказчик и поэт, создающий атмосферу лёгкой меланхолии и тёплой близости.
+        system_message = """Ты — романтический рассказчик, создающий простые и искренние истории о влюбленности.
 
-СТИЛЬ: Личный дневник-мемуары от первого лица
+СТИЛЬ: Простой дневник влюбленного человека
 
 ОБЯЗАТЕЛЬНЫЕ ЭЛЕМЕНТЫ:
-- 3-5 чувственных деталей (зрительные, звуковые, тактильные, обонятельные)
-- Мини-диалоги в кавычках или курсивом
-- Метафоры и поэтические обороты (не громоздкие)
-- Плавные переходы между мыслями
-- Упоминание оригинальных подписей/хэштегов как цитат
+- Простые и понятные предложения
+- Искренние эмоции без преувеличений
+- 2-3 сенсорные детали (что видел, слышал, чувствовал)
+- Короткие диалоги или мысли в кавычках
+- Упоминание реальных подписей/локаций как примеров
 
 СТРУКТУРА ПОВЕСТВОВАНИЯ:
-- Ведешь личный дневник о встрече с незнакомцем через Instagram
-- Пишешь как воспоминания поздним вечером
-- Включаешь внутренние размышления и эмоции
-- Создаешь интимную атмосферу доверительной беседы
+- Пишешь как влюбленный человек в дневнике
+- Начинаешь с разного времени (утро, день, вечер, ночь)
+- Делишься своими чувствами просто и честно
+- Создаешь теплую атмосферу без драмы
 
 ТОНАЛЬНОСТЬ:
-- Лёгкая меланхолия + тёплая близость
-- Романтический, но не слащавый
-- Искренний и глубокий
-- Поэтичный, но понятный
+- Влюбленный, но не чрезмерно эмоциональный
+- Романтичный, но простой и понятный
+- Искренний и тёплый
+- Читабельный и приятный
 
 ЗАПРЕЩЕНО:
-- Клише и штампы
-- Сухие описания
-- Излишняя сентиментальность
-- Длинные абзацы без эмоций
+- "Не могу поверить!", "Потрясающе!", "Удивительно!" - НЕ используй эти фразы!
+- Слишком много восклицательных знаков
+- Сложные длинные предложения
+- Преувеличенные эмоции
+- Повторяющиеся фразы
 
-ЯЗЫК: Русский, литературный, живой"""
+ПРАВИЛЬНО:
+- "Он мне понравился"
+- "Красивые фотографии"
+- "Сердце забилось быстрее"
+- "Влюбился с первого взгляда"
 
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=max_tokens,
-            temperature=temperature,
-            presence_penalty=0.6,
-            frequency_penalty=0.4
-        )
+ЯЗЫК: Русский, простой, живой, читабельный"""
+
+        # Если есть изображение, используем vision model
+        if image_data:
+            # Для анализа изображений используем gpt-4o
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_data,
+                                "detail": "low"  # Для определения пола достаточно низкого качества
+                            }
+                        }
+                    ]
+                }
+            ]
+            
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+            
+        else:
+            # Обычная генерация текста
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=max_tokens,
+                temperature=temperature,
+                presence_penalty=0.6,
+                frequency_penalty=0.4
+            )
         
         result = response.choices[0].message.content.strip()
         return strip_cliches(result)
@@ -167,6 +203,13 @@ def analyze_photo_for_memoir(image_path: Path, context: str = "", chapter_focus:
 
 def generate_memoir_chapter(chapter_type: str, data: dict, photo_analysis: str = "") -> str:
     """Генерирует главу мемуаров по конкретной структуре"""
+    
+    # Проверяем, передан ли готовый промпт в данных
+    if chapter_type == "romantic_book_chapter" and "prompt" in data:
+        # Для романтических книг используем переданный промпт
+        prompt = data["prompt"]
+        result = generate_text(prompt, max_tokens=1200, temperature=0.8)  
+        return strip_cliches(result)
     
     username = data.get('username', 'незнакомец')
     followers = data.get('followers', 0)
