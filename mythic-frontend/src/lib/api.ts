@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { useAuth } from '@clerk/clerk-react';
 
 const BASE_URL = 'http://localhost:8000';
 

@@ -9,13 +9,11 @@ import {
   PenTool,
   FileImage,
   Library,
-  Star,
   Image,
   Settings,
   HelpCircle,
   Menu,
   ChevronLeft,
-  ChevronRight,
   Sparkles
 } from 'lucide-react';
 import './FloatingBook.css';

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,8 +16,6 @@ import {
   Users,
   FileText,
   Check,
-  Expand,
-  Shrink,
   Download,
 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';

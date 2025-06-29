@@ -4,13 +4,13 @@ from app.config import settings
 from typing import Optional
 import logging
 import random
-from openai import AzureOpenAI
+from openai import OpenAI
 
 # Инициализация Azure OpenAI
-client = AzureOpenAI(
+client = OpenAI(
     api_key=settings.AZURE_OPENAI_API_KEY,
-    api_version=settings.AZURE_OPENAI_API_VERSION,
-    azure_endpoint=settings.AZURE_OPENAI_ENDPOINT
+    base_url=settings.AZURE_OPENAI_ENDPOINT,
+    default_headers={"api-key": settings.AZURE_OPENAI_API_KEY}
 )
 
 logger = logging.getLogger(__name__)

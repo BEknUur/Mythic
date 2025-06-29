@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,7 +15,7 @@ import {
   FileText
 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
-import { api, type UserBook, type UserBooksResponse } from '@/lib/api';
+import { api, type UserBook} from '@/lib/api';
 
 interface MyBooksLibraryProps {
   onBack: () => void;
