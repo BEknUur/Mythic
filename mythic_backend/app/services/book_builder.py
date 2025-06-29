@@ -7,6 +7,7 @@ from app.services.llm_client import strip_cliches, analyze_photo_for_memoir, gen
 from typing import List, Tuple
 import random
 import time
+import re
 
 try:
     import numpy as np
@@ -1178,9 +1179,9 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
                 print(f"⚡ Короткий ответ для '{config['title']}', использую fallback")
                 chapters[config['key']] = quick_fallbacks.get(config['key'], f"Глава о {config['title'].lower()} полна восхищения и теплых слов.")
             else:
-                # Очищаем от клише
                 clean_content = strip_cliches(generated_content)
-                chapters[config['key']] = clean_content
+                # Применяем форматирование: абзацы + выделения
+                chapters[config['key']] = format_chapter_text(clean_content)
             
             print(f"✅ Глава '{config['title']}' готова за {chapter_time:.1f}с")
             
@@ -1256,6 +1257,14 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         background: linear-gradient(135deg, var(--paper) 0%, var(--warm-cream) 100%);
         border: 2px solid var(--gold);
         border-left: 6px solid var(--accent);
+    }}
+    
+    .cover-title, .cover-subtitle, .cover-epigraph, .memoir-author {{
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }}
     
     .cover-title {{
@@ -1772,206 +1781,100 @@ def create_zine_html(content: dict, analysis: dict, images: list[Path]) -> str:
     return html
 
 def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
-    """Генерирует PDF из HTML контента используя weasyprint"""
+    """Генерирует PDF из HTML контента используя weasyprint с кремовым фоном и полноэкранным стилем"""
     try:
         from weasyprint import HTML, CSS
         from weasyprint.text.fonts import FontConfiguration
-        
-        # Создаем конфигурацию шрифтов
         font_config = FontConfiguration()
-        
-        # CSS стили специально для PDF с улучшенной типографикой
-        pdf_css = CSS(string="""
+        professional_pdf_css = CSS(string="""
+            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
             @page {
                 size: A4;
-                margin: 2cm;
-                @top-center {
-                    content: "";
-                }
-                @bottom-center {
-                    content: counter(page);
-                    font-family: 'Times New Roman', serif;
-                    font-size: 10pt;
-                    color: #666;
-                }
+                margin: 0;
+                background: #fdf6ee;
             }
-            
             body {
-                font-family: 'Times New Roman', 'Georgia', serif !important;
-                font-size: 12pt;
-                line-height: 1.6;
+                font-family: 'Inter', serif;
+                font-size: 13pt;
+                background: #fdf6ee;
                 color: #2c2a26;
                 margin: 0;
                 padding: 0;
             }
-            
             .memoir-page {
-                padding: 1.5cm 1cm;
-                margin: 0;
-                min-height: unset;
+                min-height: 100vh;
+                width: 100vw;
+                background: #fdf6ee;
                 box-shadow: none;
+                margin: 0;
+                padding: 0 0 0 0;
                 border: none;
-                page-break-after: always;
             }
-            
-            .memoir-page:last-child {
-                page-break-after: auto;
-            }
-            
-            .cover-memoir {
-                text-align: center;
-                padding: 3cm 2cm;
-                page-break-after: always;
-            }
-            
-            .cover-title {
-                font-size: 24pt;
-                font-weight: bold;
-                margin-bottom: 1cm;
-                color: #2c2a26;
-            }
-            
-            .cover-subtitle {
-                font-size: 12pt;
-                font-style: italic;
-                margin-bottom: 2cm;
-                color: #5a5652;
-            }
-            
-            .chapter-title {
-                font-size: 16pt;
-                font-weight: bold;
-                margin-bottom: 1cm;
-                color: #8b4513;
-                border-bottom: 1pt solid #d4af8c;
-                padding-bottom: 0.5cm;
-            }
-            
-            .chapter-number {
-                font-size: 10pt;
-                font-weight: normal;
-                color: #5a5652;
-                margin-bottom: 0.5cm;
-            }
-            
             .memoir-text {
-                font-size: 11pt;
-                line-height: 1.6;
-                text-align: justify;
-                hyphens: auto;
-                margin-bottom: 1em;
+                font-size: 15pt;
+                line-height: 1.7;
+                color: #2c2a26;
+                background: transparent;
+                margin: 0 0 0 0;
+                padding: 0.5cm 0.5cm;
             }
-            
-            .memoir-text p {
-                margin-bottom: 1em;
-                text-indent: 1.2em;
-            }
-            
-            .memoir-text p:first-child {
-                text-indent: 0;
-            }
-            
-            .photo-frame {
-                text-align: center;
-                margin: 1cm 0;
-                padding: 0.3cm;
-                border: 1pt solid #d4af8c;
-                page-break-inside: avoid;
-            }
-            
-            .photo-frame img {
+            .memoir-photo img {
                 max-width: 100%;
-                max-height: 6cm;
+                max-height: 90vh;
+                display: block;
+                margin: 0 auto;
+                border-radius: 12pt;
+                box-shadow: 0 4pt 20pt rgba(0,0,0,0.10);
             }
-            
-            .photo-caption {
-                font-size: 9pt;
-                font-style: italic;
-                color: #5a5652;
-                margin-top: 0.3cm;
-                text-align: center;
-            }
-            
-            .table-of-contents {
-                page-break-after: always;
-            }
-            
-            .toc-title {
-                font-size: 16pt;
-                text-align: center;
-                margin-bottom: 1.5cm;
-                color: #8b4513;
-            }
-            
-            .toc-item {
-                margin-bottom: 0.4cm;
-                padding: 0.2cm 0;
-                border-bottom: 1pt dotted #d4af8c;
+            .cover-memoir {
+                background: linear-gradient(135deg, #fdf6ee 0%, #f7e7d7 100%);
+                min-height: 100vh;
+                height: 100vh;
+                width: 100vw;
+                min-width: 0;
+                min-height: 0;
                 display: flex;
-                justify-content: space-between;
-                font-size: 10pt;
-            }
-            
-            .toc-chapter {
-                font-weight: bold;
-            }
-            
-            .toc-page {
-                color: #5a5652;
-                font-style: italic;
-            }
-            
-            .cover-epigraph {
-                font-style: italic;
-                border-top: 1pt solid #d4af8c;
-                border-bottom: 1pt solid #d4af8c;
-                padding: 1cm;
-                margin: 2cm auto;
-                max-width: 10cm;
-                page-break-inside: avoid;
-                font-size: 11pt;
-            }
-            
-            .memoir-author {
-                margin-top: 2cm;
-                font-size: 10pt;
-            }
-            
-            .memoir-finale {
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
                 text-align: center;
-                margin-top: 1.5cm;
-                padding: 1cm;
-                border: 1pt solid #d4af8c;
-                page-break-inside: avoid;
-            }
-            
-            .memoir-signature {
-                font-style: italic;
-                margin-top: 1cm;
-                color: #8b4513;
-                font-size: 11pt;
-            }
-            
-            .memoir-meta {
-                margin-top: 1.5cm;
-                padding-top: 1cm;
-                border-top: 1pt solid #d4af8c;
-                font-size: 8pt;
-                color: #5a5652;
-                text-align: center;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
             }
         """, font_config=font_config)
-        
-        # Генерируем PDF
         html_doc = HTML(string=html_content)
-        pdf_doc = html_doc.render(stylesheets=[pdf_css], font_config=font_config)
+        pdf_doc = html_doc.render(stylesheets=[professional_pdf_css], font_config=font_config)
         pdf_doc.write_pdf(output_path)
-        
         print(f"✅ PDF книга создана: {output_path}")
         return output_path
-        
     except Exception as e:
         print(f"❌ Ошибка создания PDF: {e}")
-        # Возвращаем путь даже если файл не создался, для обработки ошибок
         return output_path
+
+def format_chapter_text(text: str) -> str:
+    """
+    Выделяет ключевые фразы только жирным шрифтом, максимум 10 выделений на текст.
+    """
+    highlight_words = [
+        r'люблю', r'восхищаюсь', r'красота', r'улыбка', r'вдохновение', r'нежность', r'счастье',
+        r'особый', r'магия', r'мечта', r'свет', r'душа', r'сердце', r'навсегда', r'благодарю',
+        r'ты', r'твой', r'твоя', r'тебя', r'мир', r'жизнь', r'чувства', r'эмоции', r'вдохновляешь',
+        r'улыбка', r'глаза', r'взгляд', r'обожаю', r'нежно', r'искренне', r'светишься', r'особенная', r'особенный'
+    ]
+    
+    max_bold = 10
+    bold_count = 0
+    def highlight(match):
+        nonlocal bold_count
+        if bold_count < max_bold:
+            bold_count += 1
+            return f'<b>{match.group(0)}</b>'
+        else:
+            return match.group(0)
+    
+    pattern = re.compile(r'(' + '|'.join(highlight_words) + r')', re.IGNORECASE)
+    formatted_text = pattern.sub(highlight, text)
+    return formatted_text
 
