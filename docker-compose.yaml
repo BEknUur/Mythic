@@ -54,7 +54,7 @@ services:
       retries: 3
     networks: [mythic]
 
-  # ---------- React frontend ----------
+  # ---------- React frontend ---------
   frontend:
     build:
       context: ./mythic-frontend
