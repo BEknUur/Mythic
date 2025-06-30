@@ -42,12 +42,6 @@ async def startup_event():
 app.add_middleware(
     CORSMiddleware,
    allow_origins=[
-    "http://164.90.172.68",
-    "http://164.90.172.68:80",     
-    "http://164.90.172.68:8000", 
-    "http://mythicai.me",
-    "http://mythicai.me:80",
-    "http://mythicai.me:8000",
     "https://mythicai.me",
     "https://www.mythicai.me",
 ],
