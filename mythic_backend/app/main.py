@@ -130,7 +130,7 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "posts.json").write_text(json.dumps(items, ensure_ascii=False, indent=2))
 
-    # Получаем user_id из метаданных
+    # Получаем user_id из метаданых
     clerk_user_id = None
     user_meta_file = run_dir / "user_meta.json"
     if user_meta_file.exists():
