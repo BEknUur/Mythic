@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://164.90.172.68:8000';
 
 // Zod schemas for API validation
 const StartScrapeResponseSchema = z.object({
