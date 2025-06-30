@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = None
     
     GOOGLE_API_KEY: str
-    CLERK_SECRET_KEY: Optional[str] = None
-    CLERK_PUBLISHABLE_KEY: Optional[str] = None
+    CLERK_SECRET_KEY: str
+    CLERK_PUBLISHABLE_KEY: str
     
     # Database configuration
     DATABASE_URL:str

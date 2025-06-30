@@ -176,6 +176,16 @@ export const api = {
   },
 
   async downloadFile(runId: string, filename: string, token?: string): Promise<void> {
+    // If trying to download PDF, generate it first
+    if (filename === 'book.pdf') {
+      try {
+        await this.generatePdf(runId, token);
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        // Continue with download attempt even if generation fails
+      }
+    }
+
     const response = await fetch(`${BASE_URL}/download/${runId}/${filename}`, {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -196,6 +206,26 @@ export const api = {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+  },
+
+  async generatePdf(runId: string, token?: string): Promise<{ status: string; message: string; download_url?: string }> {
+    try {
+      const response = await fetch(`${BASE_URL}/generate-pdf/${runId}`, {
+        method: 'POST',
+        headers: getAuthHeaders(token),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new ApiError(`HTTP ${response.status}: ${errorText}`, response.status);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError('Ошибка генерации PDF');
+    }
   },
 
   // Методы для работы с пользовательскими книгами

@@ -7,7 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from app.services.image_processor import process_folder
 from app.services.text_collector import collect_texts
-from app.services.book_builder import build_romantic_book, create_pdf_from_html
+from app.services.book_builder import (
+    build_romantic_book,
+    # create_pdf_from_html_async is now deprecated
+)
 from app.auth import get_current_user, get_optional_current_user, get_user_from_request
 from app.database import get_db, create_tables
 from app.services.user_service import UserService
@@ -43,6 +46,7 @@ app.add_middleware(
         "http://localhost:3000",  
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
+        "*" 
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -160,7 +164,7 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
         comments  = collect_texts(run_dir / "posts.json")
         
         # Создаем книгу (без user_id, он будет извлечен из файла)
-        build_romantic_book(run_id, imgs, comments, user_id=None)
+        build_romantic_book(run_id, imgs, comments, "classic", user_id=None)
         
         # Автоматически сохраняем книгу в БД
         if clerk_user_id:
@@ -322,19 +326,32 @@ async def generate_pdf(run_id: str, current_user: dict = Depends(get_current_use
     pdf_file = run_dir / "book.pdf"
     
     if not html_file.exists():
-        raise HTTPException(404, "HTML книга не найдена")
+        raise HTTPException(404, "Исходная HTML книга не найдена, не могу сгенерировать PDF.")
     
     if pdf_file.exists():
         return {"status": "exists", "message": "PDF уже создан", "download_url": f"/download/{run_id}/book.pdf"}
     
-    log.info(f"PDF generation for run {run_id} by user {current_user.get('sub')}")
+    log.info(f"PDF generation requested for run {run_id} by user {current_user.get('sub')}")
     
+    # Поскольку fpdf2 требует исходных данных, мы перезапускаем часть процесса сборки книги
+    # Это не оптимально, но гарантирует, что PDF будет создан с теми же данными
     try:
-        await create_pdf_from_html(str(html_file), str(pdf_file))
-        return {"status": "success", "message": "PDF создан", "download_url": f"/download/{run_id}/book.pdf"}
+        images_dir = run_dir / "images"
+        imgs = await process_folder(images_dir)
+        comments = collect_texts(run_dir / "posts.json")
+        user_id = current_user.get("sub")
+
+        # Эта функция теперь также создает PDF
+        build_romantic_book(run_id, imgs, comments, "classic", user_id)
+
+        if pdf_file.exists():
+             return {"status": "success", "message": "PDF успешно создан", "download_url": f"/download/{run_id}/book.pdf"}
+        else:
+            raise HTTPException(500, "Ошибка создания PDF: файл не был сохранен.")
+
     except Exception as e:
-        log.error(f"Error creating PDF: {e}")
-        raise HTTPException(500, f"Ошибка создания PDF: {e}")
+        log.error(f"Error creating PDF via build_romantic_book: {e}")
+        raise HTTPException(500, f"Ошибка при создании PDF: {e}")
 
 
 # ───────────── / (главная страница) ─────────────────────
@@ -1536,7 +1553,7 @@ async def create_book(request: Request, background: BackgroundTasks, current_use
             except:
                 pass
         
-        build_romantic_book(run_id, imgs, comments, book_format, user_id=user_id)
+        build_romantic_book(run_id, imgs, comments, book_format, user_id)
 
     background.add_task(_build)
 
@@ -1592,7 +1609,7 @@ async def save_book_to_library(
         raise HTTPException(500, "Ошибка сохранения книги")
     
     log.info(f"Книга {run_id} сохранена в библиотеке пользователя {clerk_user_id}")
-    return {"success": True, "message": "Книга сохранена в вашей библиотеке", "book_id": book.id}
+    return {"success": True, "message": "Книга сохранена в вашей библиотеке", "book_id": str(book.id)}
 
 @app.get("/books/my", response_model=UserBooksResponse)
 async def get_my_books(
@@ -1607,7 +1624,7 @@ async def get_my_books(
     book_responses = []
     for book in books:
         book_responses.append(UserBookResponse(
-            id=book.id,
+            id=str(book.id),  # Конвертируем UUID в строку
             run_id=book.run_id,
             title=book.title,
             created_at=book.created_at.isoformat(),

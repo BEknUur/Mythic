@@ -1,59 +1,41 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # База данных PostgreSQL
+  # ---------- PostgreSQL ----------
   database:
     image: postgres:15-alpine
-    container_name: mythic-postgres
     environment:
       POSTGRES_DB: mythic
       POSTGRES_USER: mythic
       POSTGRES_PASSWORD: mythic_password_2024
-      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./mythic_backend/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mythic -d mythic"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
-    networks:
-      - mythic-network
+    networks: [mythic]
 
-  # Redis для кэширования (опционально)
+  # ---------- Redis ----------
   redis:
     image: redis:7-alpine
-    container_name: mythic-redis
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
-    restart: unless-stopped
-    networks:
-      - mythic-network
+    networks: [mythic]
 
-  # Бэкенд FastAPI
+  # ---------- FastAPI backend ----------
   backend:
-    build:
-      context: ./mythic_backend
-      dockerfile: Dockerfile
+    build: ./mythic_backend
+    env_file: .env
     container_name: mythic-backend
-    env_file:
-      - .env
-    environment:
-      REDIS_URL: redis://redis:6379/0
-      DEBUG: "true"
-      PYTHONPATH: /usr/src/app
     volumes:
       - ./mythic_backend/data:/usr/src/app/data
       - ./mythic_backend/static:/usr/src/app/static
@@ -70,64 +52,31 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-    restart: unless-stopped
-    networks:
-      - mythic-network
+    networks: [mythic]
 
-  # Фронтенд React
+  # ---------- React frontend ----------
   frontend:
     build:
       context: ./mythic-frontend
-      dockerfile: Dockerfile
       args:
-        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY}
-        VITE_API_BASE_URL: http://localhost:8000
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+        VITE_CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY} 
     container_name: mythic-frontend
-    environment:
-      - VITE_API_BASE_URL=http://localhost:8000
-      - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
     ports:
       - "3000:80"
     depends_on:
       - backend
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost"]
       interval: 30s
       timeout: 10s
       retries: 3
-    restart: unless-stopped
-    networks:
-      - mythic-network
+    networks: [mythic]
 
-  # Nginx reverse proxy (опционально, для production)
-  nginx:
-    image: nginx:alpine
-    container_name: mythic-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
-    depends_on:
-      - frontend
-      - backend
-    restart: unless-stopped
-    networks:
-      - mythic-network
-    profiles:
-      - production
-
-# Volumes для хранения данных
 volumes:
   postgres_data:
-    driver: local
   redis_data:
-    driver: local
 
-# Сеть для связи между контейнерами
 networks:
-  mythic-network:
+  mythic:
     driver: bridge

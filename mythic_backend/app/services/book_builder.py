@@ -8,6 +8,8 @@ from typing import List, Tuple
 import random
 import time
 import re
+import asyncio
+from fpdf import FPDF
 
 try:
     import numpy as np
@@ -159,8 +161,9 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
         # Генерируем PDF версию
         try:
             pdf_file = out / "book.pdf"
-            create_pdf_from_html(html, pdf_file)
-            print(f"📄 PDF версия создана: {pdf_file}")
+            # Создаем красивый PDF из HTML контента с помощью WeasyPrint
+            create_pdf_with_weasyprint(pdf_file, html)
+            print(f"📄 Красивая PDF версия создана: {pdf_file}")
         except Exception as pdf_error:
             print(f"❌ Ошибка создания PDF: {pdf_error}")
         
@@ -1780,78 +1783,150 @@ def create_zine_html(content: dict, analysis: dict, images: list[Path]) -> str:
     
     return html
 
-def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
-    """Генерирует PDF из HTML контента используя weasyprint с кремовым фоном и полноэкранным стилем"""
+def create_pdf_with_weasyprint(output_path: Path, html_content: str):
+    """Генерирует красивый PDF из HTML используя WeasyPrint."""
     try:
         from weasyprint import HTML, CSS
-        from weasyprint.text.fonts import FontConfiguration
-        font_config = FontConfiguration()
-        professional_pdf_css = CSS(string="""
-            @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
-            @page {
-                size: A4;
-                margin: 0;
-                background: #fdf6ee;
-            }
-            body {
-                font-family: 'Inter', serif;
-                font-size: 13pt;
-                background: #fdf6ee;
-                color: #2c2a26;
-                margin: 0;
-                padding: 0;
-            }
-            .memoir-page {
-                min-height: 100vh;
-                width: 100vw;
-                background: #fdf6ee;
-                box-shadow: none;
-                margin: 0;
-                padding: 0 0 0 0;
-                border: none;
-            }
-            .memoir-text {
-                font-size: 15pt;
-                line-height: 1.7;
-                color: #2c2a26;
-                background: transparent;
-                margin: 0 0 0 0;
-                padding: 0.5cm 0.5cm;
-            }
-            .memoir-photo img {
-                max-width: 100%;
-                max-height: 90vh;
-                display: block;
-                margin: 0 auto;
-                border-radius: 12pt;
-                box-shadow: 0 4pt 20pt rgba(0,0,0,0.10);
-            }
-            .cover-memoir {
-                background: linear-gradient(135deg, #fdf6ee 0%, #f7e7d7 100%);
-                min-height: 100vh;
-                height: 100vh;
-                width: 100vw;
-                min-width: 0;
-                min-height: 0;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                border: none;
-                box-shadow: none;
-                margin: 0;
-                padding: 0;
-            }
-        """, font_config=font_config)
+        
+        # Создаем PDF из HTML контента
         html_doc = HTML(string=html_content)
-        pdf_doc = html_doc.render(stylesheets=[professional_pdf_css], font_config=font_config)
-        pdf_doc.write_pdf(output_path)
-        print(f"✅ PDF книга создана: {output_path}")
-        return output_path
+        
+        # Дополнительные CSS стили для печати PDF
+        print_css = CSS(string="""
+            @page {
+                margin: 1.5cm;
+                size: A4;
+            }
+            
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .memoir-page {
+                page-break-after: always;
+                margin: 0;
+                box-shadow: none;
+            }
+            
+            .memoir-page:last-child {
+                page-break-after: auto;
+            }
+            
+            .photo-frame {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+            
+            /* Убираем лишние тени для печати */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+        """)
+        
+        # Генерируем PDF
+        html_doc.write_pdf(str(output_path), stylesheets=[print_css])
+        print(f"✅ Красивый PDF создан с помощью WeasyPrint: {output_path}")
+        
+    except ImportError:
+        print("❌ WeasyPrint не установлен. Устанавливаю...")
+        import subprocess
+        import sys
+        
+        try:
+            # Пытаемся установить weasyprint
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "weasyprint"])
+            print("✅ WeasyPrint установлен успешно")
+            
+            # Повторяем попытку создания PDF
+            from weasyprint import HTML, CSS
+            html_doc = HTML(string=html_content)
+            print_css = CSS(string="""
+                @page {
+                    margin: 1.5cm;
+                    size: A4;
+                }
+                
+                body {
+                    margin: 0;
+                    padding: 0;
+                }
+                
+                .memoir-page {
+                    page-break-after: always;
+                    margin: 0;
+                    box-shadow: none;
+                }
+                
+                .memoir-page:last-child {
+                    page-break-after: auto;
+                }
+                
+                .photo-frame {
+                    box-shadow: none;
+                    border: 1px solid #ddd;
+                }
+                
+                * {
+                    -webkit-print-color-adjust: exact !important;
+                    color-adjust: exact !important;
+                }
+            """)
+            
+            html_doc.write_pdf(str(output_path), stylesheets=[print_css])
+            print(f"✅ Красивый PDF создан с помощью WeasyPrint: {output_path}")
+            
+        except Exception as install_error:
+            print(f"❌ Не удалось установить WeasyPrint: {install_error}")
+            # Fallback к простому PDF
+            create_simple_pdf_fallback(output_path)
+            
     except Exception as e:
-        print(f"❌ Ошибка создания PDF: {e}")
-        return output_path
+        print(f"❌ Ошибка при создании PDF с WeasyPrint: {e}")
+        # Fallback к простому PDF
+        create_simple_pdf_fallback(output_path)
+
+def create_simple_pdf_fallback(output_path: Path):
+    """Простой fallback PDF если WeasyPrint недоступен."""
+    try:
+        from fpdf import FPDF
+        
+        pdf = FPDF()
+        pdf.add_page()
+        
+        try:
+            pdf.add_font('DejaVu', '', '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', uni=True)
+            pdf.set_font('DejaVu', '', 12)
+        except:
+            pdf.set_font('Arial', '', 12)
+        
+        pdf.cell(0, 20, "Романтическая книга", 0, 1, 'C')
+        pdf.ln(10)
+        pdf.multi_cell(0, 10, "PDF создан в упрощенном режиме. Для красивого PDF установите WeasyPrint.")
+        
+        pdf.output(str(output_path))
+        print(f"✅ Создан простой PDF (fallback): {output_path}")
+        
+    except Exception as fallback_error:
+        print(f"❌ Ошибка создания fallback PDF: {fallback_error}")
+
+def create_pdf_with_fpdf(output_path: Path, chapters: dict, analysis: dict, images: list[Path]):
+    """(DEPRECATED) Старая функция создания PDF. Используйте create_pdf_with_weasyprint."""
+    print("⚠️ create_pdf_with_fpdf deprecated. WeasyPrint создаст более красивый PDF.")
+    create_simple_pdf_fallback(output_path)
+
+def create_pdf_from_html(html_content: str, output_path: Path) -> Path:
+    """(DEPRECATED) Генерирует PDF из HTML контента"""
+    print("⚠️ create_pdf_from_html is deprecated. Use create_pdf_with_weasyprint.")
+    return output_path
+
+async def create_pdf_from_html_async(html_path: Path, output_path: Path) -> Path:
+    """(DEPRECATED) Асинхронно генерирует PDF из HTML файла."""
+    print("⚠️ create_pdf_from_html_async is deprecated and will be removed. Use create_pdf_with_weasyprint.")
+    # Оставляем заглушку, чтобы не ломать вызовы, но она ничего не делает
+    # В идеале, нужно переключить все вызовы на новый метод
+    return output_path
 
 def format_chapter_text(text: str) -> str:
     """

@@ -1,62 +1,103 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from .models import Base
-from .config import settings
+# app/database.py
+from __future__ import annotations
+
+import os
 from typing import AsyncGenerator
 
-# URL базы данных из настроек
-DATABASE_URL = settings.DATABASE_URL
-ASYNC_DATABASE_URL = settings.get_async_database_url
+from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    async_sessionmaker,
+)
+from sqlalchemy.orm import sessionmaker, Session
 
-# Синхронный движок (для миграций и инициализации)
+from .config import settings
+from .models import Base
+
+# -----------------------------------------------------------
+# 1.  URLs
+# -----------------------------------------------------------
+DATABASE_URL: str = settings.DATABASE_URL
+ASYNC_DATABASE_URL: str = settings.get_async_database_url
+
+# -----------------------------------------------------------
+# 2.  Движки
+# -----------------------------------------------------------
+#   sync – нужен для миграций и create_all / drop_all
 sync_engine = create_engine(
     DATABASE_URL,
-    echo=False,  # Установите True для логирования SQL запросов
+    echo=False,          # True → лог SQL
     pool_size=20,
     max_overflow=30,
-    pool_pre_ping=True
+    pool_pre_ping=True,
 )
 
-# Асинхронный движок (для основной работы)
+#   async – основная работа приложения
 async_engine = create_async_engine(
     ASYNC_DATABASE_URL,
-    echo=False,  # Установите True для логирования SQL запросов
+    echo=False,
     pool_size=20,
     max_overflow=30,
-    pool_pre_ping=True
+    pool_pre_ping=True,
 )
 
-# Фабрики сессий
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
+# -----------------------------------------------------------
+# 3.  Фабрики сессий
+# -----------------------------------------------------------
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=sync_engine,
+)
+
 AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,
     class_=AsyncSession,
-    expire_on_commit=False
+    expire_on_commit=False,
 )
 
-def create_tables():
-    """Создать все таблицы в базе данных"""
+# -----------------------------------------------------------
+# 4.  Инициализация схемы
+# -----------------------------------------------------------
+def create_tables() -> None:
+    """
+    Создать (или, при FORCE_DB_RESET=1, пересоздать) таблицы в базе.
+
+    ▸ В dev-среде удобно дропать всё перед стартом контейнера,
+      чтобы схема всегда соответствовала актуальным моделям.
+    ▸ В production НЕ включайте FORCE_DB_RESET – используйте Alembic.
+    """
+    if os.getenv("FORCE_DB_RESET") == "1":
+        print("[DB] ⚠️  Dropping all tables (FORCE_DB_RESET=1)")
+        Base.metadata.drop_all(bind=sync_engine)
+
+    # checkfirst=True – создаст только отсутствующие таблицы
     Base.metadata.create_all(bind=sync_engine)
 
+
+# -----------------------------------------------------------
+# 5.  Helpers для зависимостей FastAPI
+# -----------------------------------------------------------
 def get_sync_db() -> Session:
-    """Получить синхронную сессию базы данных"""
+    """Синхронная сессия (редко нужна, например, для Alembic-скриптов)."""
     db = SessionLocal()
     try:
         return db
     finally:
         db.close()
 
+
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
-    """Получить асинхронную сессию базы данных"""
+    """Асинхронная сессия (используется приложением)."""
     async with AsyncSessionLocal() as session:
         try:
             yield session
         finally:
             await session.close()
 
-# Зависимость для FastAPI
+
+# alias: import → Depends(get_db)
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Зависимость FastAPI для получения сессии базы данных"""
-    async for session in get_async_db():
-        yield session 
+    async for s in get_async_db():
+        yield s
