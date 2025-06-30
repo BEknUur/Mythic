@@ -43,8 +43,12 @@ app.add_middleware(
     CORSMiddleware,
    allow_origins=[
     "http://164.90.172.68",
-    "http://164.90.172.68:80",      # страница
-    "http://164.90.172.68:8000",    # swagger, прямые запросы
+    "http://164.90.172.68:80",     
+    "http://164.90.172.68:8000", 
+    "http://mythicai.me",
+    "http://mythicai.me:80",
+    "http://mythicai.me:8000",
+    "https://mythicai.me",
 ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
