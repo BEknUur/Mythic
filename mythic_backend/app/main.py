@@ -41,12 +41,9 @@ async def startup_event():
 
 app.add_middleware(
     CORSMiddleware,
-   allow_origins=[
-    "https://mythicai.me",
-    "https://www.mythicai.me",
-],
+    allow_origins=["https://mythicai.me", "https://www.mythicai.me"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
