@@ -63,7 +63,7 @@ services:
         VITE_CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY} 
     container_name: mythic-frontend
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
     healthcheck:
