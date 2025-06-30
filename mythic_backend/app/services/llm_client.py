@@ -6,7 +6,7 @@ import logging
 import random
 from openai import AzureOpenAI
 
-# Инициализация Azure OpenAI
+# Инициализация Azur
 client = AzureOpenAI(
     api_key=settings.AZURE_OPENAI_API_KEY,
     azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
