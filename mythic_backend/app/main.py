@@ -49,6 +49,7 @@ app.add_middleware(
     "http://mythicai.me:80",
     "http://mythicai.me:8000",
     "https://mythicai.me",
+    "https://www.mythicai.me",
 ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
