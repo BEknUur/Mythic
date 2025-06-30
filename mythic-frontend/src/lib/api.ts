@@ -1,12 +1,6 @@
 import { z } from 'zod'
 
-/* ──────────── BASE URL ────────────
- * 1. Берём из переменной окружения, если она есть.
- * 2. Удаляем хвостовой «/», чтобы не было «//».
- * 3. Фолбэк – относительный «/api», если переменная не задана.
- */
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api'
+const BASE_URL =import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api'
 
 /* ──────────── VALIDATION SCHEMAS ──────────── */
 const StartScrapeResponseSchema = z.object({
