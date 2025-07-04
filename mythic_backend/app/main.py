@@ -41,7 +41,7 @@ async def startup_event():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://mythicai.me", "https://www.mythicai.me"],
+    allow_origins=["https://mythicai.me", "https://www.mythicai.me","https://9d44-95-56-238-194.ngrok-free.app","http://localhost:5173",     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

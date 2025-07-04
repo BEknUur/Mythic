@@ -26,7 +26,6 @@ class UserService:
                 user.email = email
                 user.full_name = full_name
                 await db.commit()
-                await db.refresh(user)
             return user
         
         # Создаем нового пользователя
@@ -37,7 +36,6 @@ class UserService:
         )
         db.add(user)
         await db.commit()
-        await db.refresh(user)
         return user
     
     @staticmethod
@@ -88,7 +86,6 @@ class UserService:
         )
         db.add(session)
         await db.commit()
-        await db.refresh(session)
         return session
     
     @staticmethod
@@ -118,7 +115,6 @@ class UserService:
             session.error_message = error_message
         
         await db.commit()
-        await db.refresh(session)
         return session
     
     @staticmethod

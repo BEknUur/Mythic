@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
-const BASE_URL =import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api'
+const BASE_URL = 'http://localhost:8000'
+console.log(BASE_URL);
 
 /* ──────────── VALIDATION SCHEMAS ──────────── */
 const StartScrapeResponseSchema = z.object({
