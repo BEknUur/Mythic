@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from starlette.responses import StreamingResponse, Response
 from openai import AsyncAzureOpenAI
+import json
 
 router = APIRouter(prefix="/api")
 
@@ -134,6 +135,9 @@ class EditRequest(BaseModel):
 class ChatRequest(BaseModel):
     messages: List[Dict[str, str]]
 
+class ModerateRequest(BaseModel):
+    input: str
+
 @router.post("/edit-text")
 async def edit_text(req: EditRequest):
     """
@@ -198,4 +202,30 @@ async def chat_edit(req: ChatRequest):
             print(f"An error occurred during streaming: {e}")
             yield f"❌ Произошла ошибка при обработке запроса. Попробуйте еще раз."
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream") 
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+@router.post("/moderate")
+async def moderate_text(req: ModerateRequest):
+    """
+    Проверяет текст на соответствие политике OpenAI.
+    """
+    try:
+        response = await client.moderations.create(input=req.input)
+        result = response.results[0]
+        return {"flagged": result.flagged}
+    except Exception as e:
+        print(f"Ошибка модерации: {e}")
+        # Если сервис модерации падает, лучше не блокировать пользователя.
+        return {"flagged": False, "error": str(e)}
+
+# Добавляем обработчик OPTIONS для CORS
+@router.options("/moderate")
+async def options_moderate():
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
+    ) 

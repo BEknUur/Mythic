@@ -277,4 +277,19 @@ export const api = {
   getEditChatUrl: () => {
     return `${BASE_URL}/api/edit-chat`;
   },
+
+  async moderateText(text: string, token?: string): Promise<{ flagged: boolean; error?: string }> {
+    const response = await fetch(`${BASE_URL}/api/moderate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ input: text })
+    });
+    if (!response.ok) {
+        throw new Error('Moderation request failed');
+    }
+    return response.json();
+  }
 }

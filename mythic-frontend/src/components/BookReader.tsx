@@ -28,7 +28,8 @@ interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  suggestion?: AISuggestion;
+  suggestions?: string[];
+  originalFragment?: string;
   error?: string;
 }
 
@@ -52,6 +53,10 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
   const [chatInput, setChatInput] = useState("");
   const [isAiResponding, setIsAiResponding] = useState(false);
   const [currentEditSession, setCurrentEditSession] = useState<EditSession | null>(null);
+  const [selectedRange, setSelectedRange] = useState<Range | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [variantIndex, setVariantIndex] = useState(0);
+  const [manualInput, setManualInput] = useState("");
   
   const bookContentRef = useRef<HTMLDivElement>(null);
   const selectionRangeRef = useRef<Range | null>(null);
@@ -108,6 +113,106 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
     }
   };
 
+  // Обработчик выделения текста мышкой
+  const handleMouseUp = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    
+    const range = sel.getRangeAt(0);
+    const selectedText = range.toString().trim();
+    
+    // Проверяем, что выделение внутри нашего контейнера и не пустое
+    if (
+      !range.collapsed &&
+      selectedText.length > 2 &&
+      bookContentRef.current?.contains(range.commonAncestorContainer)
+    ) {
+      setSelectedRange(range.cloneRange());
+      
+      // Автоматически запрашиваем предложения
+      fetchSuggestions(selectedText);
+      
+      // Убираем визуальное выделение
+      sel.removeAllRanges();
+    }
+  };
+
+  // Запрос предложений к AI
+  const fetchSuggestions = async (fragment: string) => {
+    try {
+      setIsAiResponding(true);
+      const token = await getToken();
+      
+      const systemPrompt = `Вы — AI-Редактор книги. Ваш единственный навык — предлагать улучшения текста.
+
+Правила:
+1. Работайте ТОЛЬКО с редактированием текста книги
+2. Никакого оффтопа (спорт, погода, политика)
+3. Запрещена нецензурная лексика
+4. Возвращайте JSON: {"suggestions": ["вариант1", "вариант2", "вариант3"]}
+5. Всегда 3 варианта улучшения
+6. Сохраняйте исходный смысл
+
+Фрагмент для улучшения: "${fragment}"`;
+
+      const response = await fetch(api.getEditChatUrl(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Улучшите этот фрагмент: "${fragment}"` }
+          ]
+        })
+      });
+
+      if (!response.body) throw new Error("No response body");
+      
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantResponse = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        assistantResponse += decoder.decode(value, { stream: true });
+      }
+
+      // Парсим JSON ответ
+      try {
+        const jsonMatch = assistantResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+            setSuggestions(parsed.suggestions);
+            setVariantIndex(0);
+            
+            // Добавляем в историю чата
+            const suggestionMessage: ChatMessage = {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: `✨ Предлагаю ${parsed.suggestions.length} варианта улучшения:`,
+              suggestions: parsed.suggestions,
+              originalFragment: fragment
+            };
+            setChatHistory(prev => [...prev, suggestionMessage]);
+          }
+        }
+      } catch (e) {
+        console.error('Ошибка парсинга JSON:', e);
+        toast({ title: 'Ошибка', description: 'Не удалось обработать ответ AI', variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error('Ошибка запроса предложений:', error);
+      toast({ title: 'Ошибка AI', description: 'Не удалось получить предложения', variant: 'destructive' });
+    } finally {
+      setIsAiResponding(false);
+    }
+  };
+
   // Выделение текста в главе
   const handleTextSelectedFromChapter = (idx: number, range: Range, text: string) => {
     if (text.trim().length < 2) return; // Игнорируем короткие выделения
@@ -160,7 +265,7 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
     setChatInput(""); // Очищаем поле ввода
 
     // Формируем контекст для AI
-    const apiMessages = currentHistory.map(({ id, suggestion, error, ...msg }) => msg);
+    const apiMessages = currentHistory.map(({ id, suggestions, error, ...msg }) => msg);
 
     // Добавляем системный промпт В ЗАВИСИМОСТИ ОТ КОНТЕКСТА
     let systemContent = "";
@@ -281,13 +386,9 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
                       
                       return {
                           ...msg,
-                          content: msg.content.replace(/\[SUGGESTION\][\s\S]*/, "").trim() || `Вариант ${variantNumber} готов:`,
-                          suggestion: {
-                              variant: variantNumber,
-                              original,
-                              text,
-                              status: 'pending' as const
-                          }
+                          content: `✨ Вариант ${variantNumber} готов:`,
+                          suggestions: [text], // Массив с одним вариантом
+                          originalFragment: original
                       };
                   }
               }
@@ -296,101 +397,167 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
       });
   };
 
-  // Отклонение предложения AI
-  const handleDenySuggestion = async (suggestion: AISuggestion) => {
-    // Отмечаем текущее предложение как отклоненное
-    setChatHistory(prev => prev.map(msg => ({
-      ...msg,
-      suggestion: msg.suggestion && msg.suggestion.variant === suggestion.variant ? 
-        { ...msg.suggestion, status: 'denied' as const } : msg.suggestion
-    })));
+  // Принятие предложения AI через Range API
+  const handleAcceptSuggestion = async (messageId: string, suggestionIndex: number) => {
+    const message = chatHistory.find(m => m.id === messageId);
+    if (!message || !message.suggestions || !selectedRange) return;
+    
+    const suggestion = message.suggestions[suggestionIndex];
+    
+    try {
+      // Удаляем выделенный контент
+      selectedRange.deleteContents();
+      
+      // Вставляем новый текстовый узел
+      const textNode = document.createTextNode(suggestion);
+      selectedRange.insertNode(textNode);
+      
+      // Обновляем состояние chapters из DOM
+      if (bookContentRef.current) {
+        const chapterElements = bookContentRef.current.querySelectorAll('.chapter');
+        const updatedChapters: string[] = [];
+        chapterElements.forEach(el => {
+          updatedChapters.push(el.innerHTML);
+        });
+        
+        if (updatedChapters.length > 0) {
+          setChapters(updatedChapters);
+        } else {
+          // Если нет отдельных глав, обновляем весь контент
+          setChapters([bookContentRef.current.innerHTML]);
+        }
+      }
+      
+      // Убираем предложения из чата (закрываем карточку)
+      setChatHistory(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, suggestions: undefined } : msg
+      ));
+      
+      // Сбрасываем состояние
+      setSelectedRange(null);
+      setSuggestions([]);
+      setVariantIndex(0);
+      
+      toast({ 
+        title: "✅ Изменение применено", 
+        description: `Текст успешно заменен на: "${suggestion.substring(0, 50)}${suggestion.length > 50 ? '...' : ''}"` 
+      });
 
-    // Проверяем, можем ли запросить следующий вариант
-    if (currentEditSession && currentEditSession.variantIndex < currentEditSession.maxVariants) {
-      // Автоматически запрашиваем следующий вариант
-      setTimeout(() => {
-        setChatInput("Предложите другой вариант");
-        handleSendMessage();
-      }, 500);
-    } else {
-      // Больше вариантов нет
-      const finalMessage: ChatMessage = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `❌ Больше вариантов нет (показано ${currentEditSession?.maxVariants || 3}). Выберите один из предложенных или оставьте как есть.`
-      };
-      setChatHistory(prev => [...prev, finalMessage]);
-      setCurrentEditSession(null);
+      // Сохраняем на сервере
+      try {
+        const token = await getToken();
+        const fullHtml = bookContentRef.current?.innerHTML || '';
+        await api.updateBookContent(bookId || runId || '', fullHtml, token || undefined);
+      } catch (error) {
+        console.error('Ошибка сохранения книги:', error);
+        toast({ title: 'Ошибка сохранения', variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error('Ошибка применения предложения:', error);
+      toast({
+        variant: "destructive",
+        title: "❌ Ошибка применения",
+        description: "Не удалось применить изменение. Попробуйте выделить текст заново.",
+      });
     }
   };
 
-  // Принятие предложения AI
-  const handleAcceptSuggestion = async (suggestion: AISuggestion) => {
-    // Нормализация текста для более точного поиска
-    const normalizeText = (text: string) => text.replace(/\s+/g, ' ').trim();
-    
-    let success = false;
-    let updatedChapters = [...chapters];
-    
-    // Сначала пробуем точное совпадение
-    for (let i = 0; i < updatedChapters.length; i++) {
-      if (updatedChapters[i].includes(suggestion.original)) {
-        updatedChapters[i] = updatedChapters[i].replace(suggestion.original, suggestion.text);
-        success = true;
-        break;
-      }
-    }
-    
-    // Если не найдено, пробуем нормализованный поиск
-    if (!success) {
-      const normalizedOriginal = normalizeText(suggestion.original);
-      for (let i = 0; i < updatedChapters.length; i++) {
-        const normalizedChapter = normalizeText(updatedChapters[i]);
-        const index = normalizedChapter.indexOf(normalizedOriginal);
-        if (index !== -1) {
-          // Находим позицию в оригинальном тексте
-          const beforeText = updatedChapters[i].substring(0, index);
-          const afterText = updatedChapters[i].substring(index + suggestion.original.length);
-          updatedChapters[i] = beforeText + suggestion.text + afterText;
-          success = true;
-          break;
-        }
-      }
-    }
+  // Отклонение предложения AI - показываем следующий вариант
+  const handleDenySuggestion = async (messageId: string) => {
+    const message = chatHistory.find(m => m.id === messageId);
+    if (!message || !message.suggestions) return;
 
-    if (success) {
-        setChapters(updatedChapters);
-        
-        // Обновляем статус предложения в чате
-        setChatHistory(prev => prev.map(msg => ({
-          ...msg,
-          suggestion: msg.suggestion && msg.suggestion.variant === suggestion.variant ? 
-            { ...msg.suggestion, status: 'accepted' as const } : msg.suggestion
-        })));
-        
-        // Сбрасываем сессию редактирования
-        setCurrentEditSession(null);
-        
-        toast({ 
-          title: "✅ Изменение применено", 
-          description: `Заменено: "${suggestion.original.substring(0, 50)}${suggestion.original.length > 50 ? '...' : ''}"` 
-        });
-
-        // Сохраняем на сервере
-        try {
-            const token = await getToken();
-            const fullHtml = `<div class="chapter">${updatedChapters.join('</div><div class="chapter">')}</div>`;
-            await api.updateBookContent(bookId || runId || '', fullHtml, token || undefined);
-        } catch (error) {
-            console.error('Ошибка сохранения книги:', error);
-            toast({ title: 'Ошибка сохранения', variant: 'destructive' });
-        }
+    const currentIndex = variantIndex;
+    const nextIndex = currentIndex + 1;
+    
+    if (nextIndex < message.suggestions.length) {
+      // Показываем следующий вариант
+      setVariantIndex(nextIndex);
+      
+      // Обновляем сообщение в чате
+      setChatHistory(prev => prev.map(msg => 
+        msg.id === messageId ? { 
+          ...msg, 
+          content: `✨ Вариант ${nextIndex + 1} из ${message.suggestions!.length}:` 
+        } : msg
+      ));
     } else {
+      // Больше вариантов нет - убираем карточку
+      setChatHistory(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, suggestions: undefined } : msg
+      ));
+      
+      const finalMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `❌ Больше вариантов нет (показано ${message.suggestions.length}). Попробуйте выделить другой фрагмент.`
+      };
+      setChatHistory(prev => [...prev, finalMessage]);
+      
+      // Сбрасываем состояние
+      setSelectedRange(null);
+      setSuggestions([]);
+      setVariantIndex(0);
+    }
+  };
+
+  // Общая функция для применения изменений в тексте через Range API
+  const applyTextChange = async (textToInsert: string) => {
+    if (!selectedRange) {
+      toast({
+        variant: "destructive",
+        title: "❌ Ошибка",
+        description: "Сначала выделите текст, который хотите заменить.",
+      });
+      return;
+    }
+
+    try {
+      // Шаг 1: Проверка контента перед вставкой
+      const token = await getToken();
+      const moderationResult = await api.moderateText(textToInsert, token || undefined);
+
+      if (moderationResult.flagged) {
         toast({
-            variant: "default",
-            title: "❌ Текст не найден",
-            description: "Не удалось найти оригинальный текст в книге. Попробуйте скопировать фрагмент заново.",
+          variant: "destructive",
+          title: "🚫 Недопустимый контент",
+          description: "Этот текст нарушает правила. Пожалуйста, введите другой вариант.",
         });
+        return; // Прерываем вставку
+      }
+
+      // Шаг 2: Если проверка пройдена, вставляем текст
+      selectedRange.deleteContents();
+      const textNode = document.createTextNode(textToInsert);
+      selectedRange.insertNode(textNode);
+
+      if (bookContentRef.current) {
+        const chapterElements = bookContentRef.current.querySelectorAll('.chapter');
+        const updatedChapters: string[] = [];
+        chapterElements.forEach(el => updatedChapters.push(el.innerHTML));
+        setChapters(updatedChapters.length > 0 ? updatedChapters : [bookContentRef.current.innerHTML]);
+      }
+
+      const fullHtml = bookContentRef.current?.innerHTML || '';
+      await api.updateBookContent(bookId || runId || '', fullHtml, token || undefined);
+      
+      toast({ 
+        title: "✅ Изменение применено", 
+        description: `Текст успешно обновлен.` 
+      });
+
+    } catch (error) {
+      console.error('Ошибка применения или сохранения:', error);
+      toast({
+        variant: "destructive",
+        title: "❌ Ошибка",
+        description: "Не удалось применить изменение.",
+      });
+    } finally {
+      setSelectedRange(null);
+      setSuggestions([]);
+      setVariantIndex(0);
+      setManualInput("");
     }
   };
 
@@ -425,7 +592,7 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
           </div>
         </div>
         
-        <div className="p-8 max-w-4xl mx-auto book-content overflow-y-auto" ref={bookContentRef}>
+        <div className="p-8 max-w-4xl mx-auto book-content overflow-y-auto" ref={bookContentRef} onMouseUp={handleMouseUp}>
           {chapters.map((html, idx)=>(
             <ChapterBlock
               key={idx}
@@ -446,110 +613,121 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
             <h2 className="font-semibold text-lg">AI Редактор</h2>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            📝 Скопируйте текст из книги, вставьте в чат и опишите, как его улучшить
+            🖱️ Выделите текст мышкой для получения предложений по улучшению.
           </p>
         </div>
 
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
-            {chatHistory.length === 0 && (
+            {chatHistory.length === 0 && !selectedRange && (
               <div className="text-center py-8 text-gray-500">
                 <div className="text-4xl mb-4">✍️</div>
                 <p className="font-medium mb-2">Как работать с AI-редактором:</p>
                 <div className="text-sm space-y-1 text-left max-w-sm mx-auto">
-                  <p>1. Скопируйте фрагмент текста из книги</p>
-                  <p>2. Вставьте в поле ниже</p>
-                  <p>3. Опишите, как улучшить (например: "сделать более поэтично")</p>
-                  <p>4. Выберите понравившийся вариант</p>
+                  <p>1. Выделите фрагмент текста мышкой.</p>
+                  <p>2. Появится карточка с вариантами от AI.</p>
+                  <p>3. Выберите лучший или впишите свой.</p>
+                  <p>4. Изменения применятся сразу в книгу.</p>
                 </div>
               </div>
             )}
             
             {chatHistory.map((message) => (
               <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`p-3 rounded-lg max-w-[90%] ${message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
-                  <p className="whitespace-pre-wrap">{message.content}</p>
-                  {message.suggestion && (
-                    <div className="mt-3">
-                      <div 
-                        className={`p-3 rounded-lg border ${
-                          message.suggestion.status === 'accepted' ? 'bg-green-50 border-green-200' :
-                          message.suggestion.status === 'denied' ? 'bg-red-50 border-red-200' :
-                          'bg-white/90 border-violet-200'
-                        }`}
-                      >
-                        <div className="text-xs text-gray-500 mb-1">Оригинал:</div>
-                        <p className="text-sm text-gray-600 line-through mb-2">{message.suggestion.original}</p>
-                        <div className="text-xs text-gray-500 mb-1">Вариант {message.suggestion.variant}:</div>
-                        <p className="text-sm font-medium text-gray-900 mb-3">{message.suggestion.text}</p>
-                        
-                        {message.suggestion.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
-                              onClick={() => handleAcceptSuggestion(message.suggestion!)}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              ✅ Применить
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleDenySuggestion(message.suggestion!)}
-                            >
-                              ❌ Отклонить
-                            </Button>
-                          </div>
-                        )}
-                        
-                        {message.suggestion.status === 'accepted' && (
-                          <div className="text-green-700 font-medium">✅ Применено</div>
-                        )}
-                        
-                        {message.suggestion.status === 'denied' && (
-                          <div className="text-red-700 font-medium">❌ Отклонено</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                <div className={`p-3 rounded-lg max-w-[90%] whitespace-pre-wrap ${message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                  {message.content}
                 </div>
               </div>
             ))}
-            {isAiResponding && (
+
+            {isAiResponding && !selectedRange && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-lg p-3">
+                <div className="bg-gray-100 rounded-lg p-3 flex items-center">
                   <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
-                  <span className="text-sm text-gray-600 ml-2">AI анализирует текст...</span>
+                  <span className="text-sm text-gray-600 ml-2">AI генерирует варианты...</span>
                 </div>
               </div>
             )}
           </div>
         </ScrollArea>
         
+        {/* Чат инпут остаётся для общих вопросов, но основная логика в плавающей карточке */}
         <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
           <div className="flex items-center gap-2">
             <Textarea
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              placeholder="Вставьте текст и опишите, как его улучшить..."
+              placeholder="Здесь можно задать общий вопрос AI..."
               className="flex-1 resize-none"
-              rows={2}
+              rows={1}
             />
-            <Button type="submit" disabled={isAiResponding || !chatInput.trim()}>
+            <Button type="submit" disabled={isAiResponding}>
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-xs text-gray-400 mt-1">
-            💡 Пример: "Она была красивая → сделать более поэтично"
-          </p>
         </form>
       </div>
+
+      {/* Плавающая карточка для редактирования */}
+      {selectedRange && (
+        <div className="fixed bottom-5 right-5 z-50 w-96 bg-white border border-gray-300 rounded-lg shadow-2xl p-4 animate-in fade-in-5 slide-in-from-bottom-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute top-2 right-2 h-7 w-7" 
+            onClick={() => {
+              setSelectedRange(null);
+              setSuggestions([]);
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+
+          <div className="text-sm font-medium mb-3">Редактирование фрагмента</div>
+
+          {isAiResponding ? (
+            <div className="flex items-center text-sm text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Ищем лучшие варианты...
+            </div>
+          ) : suggestions.length > 0 ? (
+            <div className="mb-3">
+              <div className="text-xs text-gray-500 mb-2">Вариант {variantIndex + 1} из {suggestions.length}:</div>
+              <p className="text-sm font-medium p-3 bg-blue-50 rounded border border-blue-200">
+                {suggestions[variantIndex]}
+              </p>
+              <div className="flex gap-2 mt-2">
+                <Button size="sm" onClick={() => applyTextChange(suggestions[variantIndex])} className="bg-green-600 hover:bg-green-700 text-white">
+                  ✅ Применить
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setVariantIndex(v => (v + 1) % suggestions.length)}>
+                  ➡️ Следующий
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 mb-3">Нет предложений от AI. Введите свой вариант.</p>
+          )}
+
+          <div className="border-t pt-3">
+            <label className="text-xs text-gray-500 mb-2 block">Или напишите свой вариант вручную:</label>
+            <Textarea
+              value={manualInput}
+              onChange={(e) => setManualInput(e.target.value)}
+              placeholder="Ваш текст..."
+              className="resize-none mb-2"
+              rows={2}
+            />
+            <Button 
+              onClick={() => applyTextChange(manualInput)} 
+              disabled={!manualInput.trim()}
+              className="w-full"
+            >
+              Вставить свой вариант
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
