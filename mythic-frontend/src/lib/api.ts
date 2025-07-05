@@ -57,6 +57,11 @@ const SaveBookResponseSchema = z.object({
   book_id: z.string().optional(),
 })
 
+const AISuggestionResponseSchema = z.object({
+  suggestion: z.string(),
+  confidence: z.number().optional(),
+})
+
 /* ──────────── TYPES ──────────── */
 export type StartScrapeResponse = z.infer<typeof StartScrapeResponseSchema>
 export type StatusResponse = z.infer<typeof StatusResponseSchema>
@@ -64,6 +69,7 @@ export type HealthResponse = z.infer<typeof HealthResponseSchema>
 export type UserBook = z.infer<typeof UserBookSchema>
 export type UserBooksResponse = z.infer<typeof UserBooksResponseSchema>
 export type SaveBookResponse = z.infer<typeof SaveBookResponseSchema>
+export type AISuggestionResponse = z.infer<typeof AISuggestionResponseSchema>
 
 /* ──────────── ERROR CLASS ──────────── */
 class ApiError extends Error {
@@ -229,5 +235,42 @@ export const api = {
     )
     if (!res.ok) throw new Error(res.statusText)
     await asBlobDownload(res, file)
+  },
+
+  /* ---------- AI suggestions ---------- */
+  async getAISuggestion(
+    selectedText: string,
+    bookContext: string,
+    token?: string,
+  ): Promise<AISuggestionResponse> {
+    const res = await fetch(`${BASE_URL}/ai/suggest`, {
+      method: 'POST',
+      headers: headersWithAuth(token),
+      body: JSON.stringify({
+        selected_text: selectedText,
+        book_context: bookContext,
+      }),
+    })
+    if (!res.ok)
+      throw new ApiError(await res.text(), res.status)
+    return AISuggestionResponseSchema.parse(await res.json())
+  },
+
+  async updateBookContent(
+    bookOrRunId: string,
+    updatedContent: string,
+    token?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${BASE_URL}/books/update-content`, {
+      method: 'POST',
+      headers: headersWithAuth(token),
+      body: JSON.stringify({
+        book_or_run_id: bookOrRunId,
+        updated_content: updatedContent,
+      }),
+    })
+    if (!res.ok)
+      throw new ApiError(await res.text(), res.status)
+    return res.json()
   },
 }

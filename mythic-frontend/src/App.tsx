@@ -3,6 +3,7 @@ import { ClerkProvider } from '@clerk/clerk-react'
 import { MainLayout } from './components/MainLayout'
 import { ProgressTracker } from './components/ProgressTracker'
 import { MyBooksLibrary } from './components/MyBooksLibrary'
+import { BookReader } from './components/BookReader'
 import { Toaster } from './components/ui/toaster'
 import './App.css'
 
@@ -13,13 +14,14 @@ if (!clerkPubKey) {
   throw new Error("Missing Publishable Key")
 }
 
-type AppView = 'main' | 'library' | 'progress';
+type AppView = 'main' | 'library' | 'progress' | 'reader';
 
 function App() {
   const [runId, setRunId] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isComplete, setIsComplete] = useState(false);
   const [currentView, setCurrentView] = useState<AppView>('main');
+  const [bookToRead, setBookToRead] = useState<{ bookId?: string; runId?: string } | null>(null);
 
   const handleStartScrape = (id: string) => {
     setRunId(id)
@@ -47,6 +49,16 @@ function App() {
     setCurrentView('main');
   }
 
+  const handleOpenBookReader = (bookId?: string, runId?: string) => {
+    setBookToRead({ bookId, runId });
+    setCurrentView('reader');
+  }
+
+  const handleBackFromReader = () => {
+    setBookToRead(null);
+    setCurrentView('library');
+  }
+
   if (currentView === 'progress' && runId && (isProcessing || isComplete)) {
     return (
       <ClerkProvider publishableKey={clerkPubKey}>
@@ -63,7 +75,23 @@ function App() {
   if (currentView === 'library') {
     return (
       <ClerkProvider publishableKey={clerkPubKey}>
-        <MyBooksLibrary onBack={handleBackToMain} />
+        <MyBooksLibrary 
+          onBack={handleBackToMain}
+          onOpenBook={handleOpenBookReader}
+        />
+        <Toaster />
+      </ClerkProvider>
+    )
+  }
+
+  if (currentView === 'reader' && bookToRead) {
+    return (
+      <ClerkProvider publishableKey={clerkPubKey}>
+        <BookReader 
+          bookId={bookToRead.bookId}
+          runId={bookToRead.runId}
+          onBack={handleBackFromReader}
+        />
         <Toaster />
       </ClerkProvider>
     )

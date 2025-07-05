@@ -9,11 +9,13 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     Integer,
+    JSON,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import UUID  # ← тип UUID для Postgres
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -24,19 +26,18 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    id: uuid.UUID | Column = Column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     clerk_user_id = Column(String, unique=True, nullable=False, index=True)
 
     email = Column(String, nullable=True)
     full_name = Column(String, nullable=True)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # связь 1-N → Book
     books = relationship("Book", back_populates="user", cascade="all, delete-orphan")
+    processing_sessions = relationship("ProcessingSession", back_populates="user")
 
 
 # ────────────────────────────────────
@@ -45,9 +46,7 @@ class User(Base):
 class Book(Base):
     __tablename__ = "books"
 
-    id: uuid.UUID | Column = Column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
     )
@@ -71,11 +70,11 @@ class Book(Base):
     has_html = Column(Boolean, default=False)
     has_pdf = Column(Boolean, default=False)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Доп. данные (JSON-строкой)
-    book_metadata = Column(Text)
+    book_metadata = Column(JSON)
 
     # связь N-1 → User
     user = relationship("User", back_populates="books")
@@ -89,9 +88,7 @@ class ProcessingSession(Base):
 
     __tablename__ = "processing_sessions"
 
-    id: uuid.UUID | Column = Column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     run_id = Column(String, unique=True, nullable=False, index=True)
     user_id = Column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
@@ -108,4 +105,4 @@ class ProcessingSession(Base):
     completed_at = Column(DateTime(timezone=True))
 
     # связь N-1 → User
-    user = relationship("User")
+    user = relationship("User", back_populates="processing_sessions")

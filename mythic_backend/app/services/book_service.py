@@ -1,6 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, cast
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import selectinload
+from sqlalchemy import String as SAString
 from ..models import User, Book
 from .user_service import UserService
 from typing import Optional, List, Dict, Any
@@ -8,6 +10,7 @@ from pathlib import Path
 import json
 import shutil
 import os
+import uuid
 
 class BookService:
     
@@ -59,10 +62,15 @@ class BookService:
     @staticmethod
     async def get_book_by_id(db: AsyncSession, book_id: str, clerk_user_id: str) -> Optional[Book]:
         """Получить книгу по ID (только если принадлежит пользователю)"""
+        try:
+            book_uuid = uuid.UUID(book_id)
+        except ValueError:
+            return None
+
         stmt = (
             select(Book)
-            .join(User)
-            .where(Book.id == book_id)
+            .join(User, User.id == Book.user_id)
+            .where(cast(Book.id, SAString) == str(book_uuid))
             .where(User.clerk_user_id == clerk_user_id)
         )
         result = await db.execute(stmt)
@@ -73,7 +81,7 @@ class BookService:
         """Получить книгу по run_id (только если принадлежит пользователю)"""
         stmt = (
             select(Book)
-            .join(User)
+            .join(User, User.id == Book.user_id)
             .where(Book.run_id == run_id)
             .where(User.clerk_user_id == clerk_user_id)
         )
@@ -89,7 +97,12 @@ class BookService:
         images_path: Optional[str] = None
     ) -> Optional[Book]:
         """Обновить пути к файлам книги"""
-        stmt = select(Book).where(Book.id == book_id)
+        try:
+            book_uuid = uuid.UUID(book_id)
+        except ValueError:
+            return None
+
+        stmt = select(Book).where(cast(Book.id, SAString) == str(book_uuid))
         result = await db.execute(stmt)
         book = result.scalar_one_or_none()
         
@@ -116,27 +129,34 @@ class BookService:
     @staticmethod
     async def delete_book(db: AsyncSession, book_id: str, clerk_user_id: str) -> bool:
         """Удалить книгу (только если принадлежит пользователю)"""
-        # Сначала получаем книгу с проверкой владельца
-        book = await BookService.get_book_by_id(db, book_id, clerk_user_id)
-        if not book:
+        book_to_delete = await BookService.get_book_by_id(db, book_id, clerk_user_id)
+        if not book_to_delete:
             return False
         
         # Удаляем файлы с диска
         try:
-            if book.html_path and Path(book.html_path).exists():
-                os.remove(book.html_path)
+            # Сначала получим полные пути из самой книги, если они существуют
+            html_path = getattr(book_to_delete, 'html_path', None)
+            pdf_path = getattr(book_to_delete, 'pdf_path', None)
+            images_path = getattr(book_to_delete, 'images_path', None)
             
-            if book.pdf_path and Path(book.pdf_path).exists():
-                os.remove(book.pdf_path)
+            if html_path and Path(html_path).exists():
+                os.remove(html_path)
             
-            if book.images_path and Path(book.images_path).exists():
-                shutil.rmtree(book.images_path)
+            if pdf_path and Path(pdf_path).exists():
+                os.remove(pdf_path)
+            
+            if images_path and Path(images_path).exists():
+                # Убедимся, что это директория, прежде чем удалять рекурсивно
+                if Path(images_path).is_dir():
+                    shutil.rmtree(images_path)
                 
         except Exception as e:
-            print(f"Ошибка удаления файлов книги {book_id}: {e}")
+            # Логируем ошибку, но не прерываем процесс удаления из БД
+            print(f"Ошибка при удалении файлов для книги {book_id}: {e}")
         
         # Удаляем запись из БД
-        await db.delete(book)
+        await db.delete(book_to_delete)
         await db.commit()
         return True
     

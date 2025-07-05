@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
+import { BookReader } from './BookReader';
 
 interface BookReadyDialogProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export function BookReadyDialog({
   const [isCopied, setIsCopied] = useState(false);
   const [bookContent, setBookContent] = useState<string>('');
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const { getToken } = useAuth();
 
   const profile = status?.profile;
@@ -121,6 +123,19 @@ export function BookReadyDialog({
     setTimeout(() => setIsCopied(false), 2000);
   };
   
+  if (isEditing && runId) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-full w-full h-full p-0 overflow-hidden">
+          <BookReader
+            runId={runId}
+            onBack={() => setIsEditing(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   if (!runId || !status) return null;
 
   return (
@@ -178,7 +193,7 @@ export function BookReadyDialog({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Button onClick={openBookInNewTab} size="lg" className="h-16">
                     <ExternalLink className="h-5 w-5 mr-2" />
                     <div className="text-left">
@@ -194,6 +209,16 @@ export function BookReadyDialog({
                       <div className="text-xs opacity-80">Сохранить на устройство</div>
                     </div>
                   </Button>
+
+                  {hasHtmlFile && (
+                    <Button onClick={() => setIsEditing(true)} variant="secondary" size="lg" className="h-16">
+                      ✏️
+                      <div className="text-left ml-2">
+                        <div className="font-semibold">Редактировать</div>
+                        <div className="text-xs opacity-80">С помощью AI</div>
+                      </div>
+                    </Button>
+                  )}
                 </div>
               </div>
             </TabsContent>

@@ -19,9 +19,10 @@ import { api, type UserBook} from '@/lib/api';
 
 interface MyBooksLibraryProps {
   onBack: () => void;
+  onOpenBook: (bookId?: string, runId?: string) => void;
 }
 
-export function MyBooksLibrary({ onBack }: MyBooksLibraryProps) {
+export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
   const [books, setBooks] = useState<UserBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,18 +54,7 @@ export function MyBooksLibrary({ onBack }: MyBooksLibraryProps) {
 
   const handleViewBook = async (book: UserBook) => {
     try {
-      const token = await getToken();
-      if (!token) {
-        toast({
-          title: "Ошибка",
-          description: "Нужно войти в аккаунт",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const url = api.getSavedBookViewUrl(book.id, token);
-      window.open(url, '_blank');
+      onOpenBook(book.id, undefined);
     } catch (err) {
       toast({
         title: "Ошибка",
