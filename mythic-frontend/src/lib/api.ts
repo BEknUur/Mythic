@@ -273,4 +273,8 @@ export const api = {
       throw new ApiError(await res.text(), res.status)
     return res.json()
   },
+
+  getEditChatUrl: () => {
+    return `${BASE_URL}/api/edit-chat`;
+  },
 }

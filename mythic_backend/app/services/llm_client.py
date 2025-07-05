@@ -49,7 +49,7 @@ def strip_cliches(text: str) -> str:
     return text
 
 def generate_text(prompt: str,
-                  model: str = "gpt-4o",
+                  model: str = "gpt-4.1-mini",
                   max_tokens: int = 1500,  # Возвращаем обратно к 1500 для качественных текстов
                   temperature: float = 0.8,  # Возвращаем к 0.8 для более творческих ответов
                   image_data: Optional[str] = None) -> str:

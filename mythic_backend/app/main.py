@@ -3,6 +3,23 @@ from fastapi import FastAPI, Request, BackgroundTasks, HTTPException, Depends
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+import re
+from dotenv import load_dotenv
+
+load_dotenv()  # Загружаем переменные из .env файла
+
+from app.routers import edit
+
+class NormalizePathMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Убираем повторяющиеся слеши из пути
+        path = request.scope['path']
+        if '//' in path:
+            request.scope['path'] = re.sub(r'/+', '/', path)
+        
+        response = await call_next(request)
+        return response
 
 import asyncio
 from app.services.image_processor import process_folder
@@ -29,23 +46,16 @@ from app.auth import clerk_auth
 log = logging.getLogger("api")
 app = FastAPI(title="Романтическая Летопись Любви", description="Создает красивые романтические книги на основе Instagram профилей для ваших любимых")
 
-# Создаем таблицы при запуске
-@app.on_event("startup")
-async def startup_event():
-    try:
-        create_tables()
-        log.info("База данных инициализирована")
-    except Exception as e:
-        log.warning(f"Предупреждение при инициализации БД: {e}")
-        # Не падаем, продолжаем работу
-
+app.add_middleware(NormalizePathMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://mythicai.me", "https://www.mythicai.me","https://9d44-95-56-238-194.ngrok-free.app","http://localhost:5173",     ],
+    allow_origins=["*", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(edit.router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

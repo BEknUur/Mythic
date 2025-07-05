@@ -6,11 +6,11 @@ class Settings(BaseSettings):
     ACTOR_ID: str 
     BACKEND_BASE: str
     
-    # Azure OpenAI Configuration - используем только GPT-4o
+   
     AZURE_OPENAI_API_KEY: str
-    AZURE_OPENAI_ENDPOINT: str = "https://text-to-text.openai.azure.com/"
+    AZURE_OPENAI_ENDPOINT: str = "https://astana.openai.azure.com/"
     AZURE_OPENAI_API_VERSION: str = "2024-12-01-preview"
-    AZURE_OPENAI_GPT4_DEPLOYMENT: str = "gpt-4o-2"
+    AZURE_OPENAI_GPT4_DEPLOYMENT: str = "gpt-4.1-mini"
     
     # Legacy OpenAI (if needed as backup)
     OPENAI_API_KEY: Optional[str] = None

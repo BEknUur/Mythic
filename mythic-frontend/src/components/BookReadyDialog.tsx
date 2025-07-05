@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -17,10 +16,12 @@ import {
   FileText,
   Check,
   Download,
+  Pencil,
 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
 import { BookReader } from './BookReader';
+import { EditChat } from './EditChat';
 
 interface BookReadyDialogProps {
   isOpen: boolean;
@@ -45,32 +46,29 @@ export function BookReadyDialog({
   const profile = status?.profile;
   const hasHtmlFile = status?.stages.book_generated || status?.files?.html;
 
-  // Загружаем содержимое книги для встроенного просмотра
-  useEffect(() => {
-    if (runId && hasHtmlFile && isOpen) {
-      loadBookContent();
-    }
-  }, [runId, hasHtmlFile, isOpen]);
-
-  const loadBookContent = async () => {
-    if (!runId) return;
-    
+  const loadBookContentForPreview = async () => {
+    if (!hasHtmlFile || !runId) return;
     setIsLoadingContent(true);
     try {
-      const token = await getToken();
-      const content = await api.getBookContent(runId, token || undefined);
-      setBookContent(content);
+        const token = await getToken();
+        const rawHtml = await api.getBookContent(runId, token || undefined);
+        const bodyMatch = rawHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+        let bodyContent = bodyMatch ? bodyMatch[1] : rawHtml;
+        bodyContent = bodyContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+        setBookContent(bodyContent);
     } catch (error) {
-      console.error('Error loading book content:', error);
-      toast({
-        title: 'Ошибка загрузки',
-        description: 'Не удалось загрузить содержимое книги',
-        variant: 'destructive',
-      });
+        console.error("Ошибка загрузки контента:", error);
+        toast({ title: "Ошибка", description: "Не удалось загрузить контент книги.", variant: "destructive" });
     } finally {
-      setIsLoadingContent(false);
+        setIsLoadingContent(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && hasHtmlFile) {
+        loadBookContentForPreview();
+    }
+  }, [isOpen, hasHtmlFile]);
 
   const openBookInNewTab = async () => {
     if (!runId) return;
@@ -122,15 +120,17 @@ export function BookReadyDialog({
     });
     setTimeout(() => setIsCopied(false), 2000);
   };
-  
-  if (isEditing && runId) {
+
+  const handleBackFromReader = () => {
+    setIsEditing(false);
+    onOpenChange(true);
+  };
+
+  if (isEditing) {
     return (
-      <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-full w-full h-full p-0 overflow-hidden">
-          <BookReader
-            runId={runId}
-            onBack={() => setIsEditing(false)}
-          />
+      <Dialog open={true} onOpenChange={(open) => !open && setIsEditing(false)}>
+        <DialogContent className="max-w-full w-full h-full max-h-full p-0 gap-0">
+          <BookReader runId={runId} onBack={handleBackFromReader} />
         </DialogContent>
       </Dialog>
     );
@@ -151,78 +151,62 @@ export function BookReadyDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          <Tabs defaultValue={hasHtmlFile ? "preview" : "actions"} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-slate-100">
-              {hasHtmlFile && <TabsTrigger value="preview">Предварительный просмотр</TabsTrigger>}
-              <TabsTrigger value="actions" className={!hasHtmlFile ? 'col-span-2' : ''}>
-                Действия
-              </TabsTrigger>
-            </TabsList>
-            
-            {hasHtmlFile && (
-              <TabsContent value="preview">
-                <div className="relative border bg-white rounded-lg overflow-hidden h-[60vh]">
-                  {isLoadingContent ? (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center space-y-2">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mx-auto"></div>
-                        <p className="text-sm text-muted-foreground">Загружаем вашу книгу...</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-full overflow-auto p-6 book-content">
-                      <div dangerouslySetInnerHTML={{ __html: bookContent }} />
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            )}
-           
-            <TabsContent value="actions">
-              <div className="space-y-4">
-                {/* Уведомление об автоматическом сохранении */}
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-2 text-green-800">
-                    <Check className="h-5 w-5" />
-                    <div>
-                      <p className="font-semibold">Книга автоматически сохранена!</p>
-                      <p className="text-sm text-green-700">
-                        Ваша книга уже добавлена в раздел "Мои книги" и доступна в любое время
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button onClick={openBookInNewTab} size="lg" className="h-16">
-                    <ExternalLink className="h-5 w-5 mr-2" />
-                    <div className="text-left">
-                      <div className="font-semibold">Открыть в новой вкладке</div>
-                      <div className="text-xs opacity-80">Полноэкранный режим</div>
-                    </div>
-                  </Button>
-                  
-                  <Button onClick={downloadBook} variant="outline" size="lg" className="h-16">
-                    <Download className="h-5 w-5 mr-2" />
-                    <div className="text-left">
-                      <div className="font-semibold">Скачать PDF</div>
-                      <div className="text-xs opacity-80">Сохранить на устройство</div>
-                    </div>
-                  </Button>
-
-                  {hasHtmlFile && (
-                    <Button onClick={() => setIsEditing(true)} variant="secondary" size="lg" className="h-16">
-                      ✏️
-                      <div className="text-left ml-2">
-                        <div className="font-semibold">Редактировать</div>
-                        <div className="text-xs opacity-80">С помощью AI</div>
-                      </div>
-                    </Button>
-                  )}
+          <div className="relative border bg-white rounded-lg overflow-hidden h-[60vh]">
+            {isLoadingContent ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center space-y-2">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mx-auto"></div>
+                  <p className="text-sm text-muted-foreground">Загружаем вашу книгу...</p>
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
+            ) : (
+              <div className="h-full overflow-auto p-6 book-content">
+                <div dangerouslySetInnerHTML={{ __html: bookContent }} />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2 text-green-800">
+                <Check className="h-5 w-5" />
+                <div>
+                  <p className="font-semibold">Книга автоматически сохранена!</p>
+                  <p className="text-sm text-green-700">
+                    Ваша книга уже добавлена в раздел "Мои книги" и доступна в любое время
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button onClick={openBookInNewTab} size="lg" className="h-16">
+                <ExternalLink className="h-5 w-5 mr-2" />
+                <div className="text-left">
+                  <div className="font-semibold">Открыть в новой вкладке</div>
+                  <div className="text-xs opacity-80">Полноэкранный режим</div>
+                </div>
+              </Button>
+              
+              <Button onClick={downloadBook} variant="outline" size="lg" className="h-16">
+                <Download className="h-5 w-5 mr-2" />
+                <div className="text-left">
+                  <div className="font-semibold">Скачать PDF</div>
+                  <div className="text-xs opacity-80">Сохранить на устройство</div>
+                </div>
+              </Button>
+
+              {hasHtmlFile && (
+                <Button onClick={() => setIsEditing(true)} variant="secondary" size="lg" className="h-16">
+                  <Pencil className="h-5 w-5 mr-2" />
+                  <div className="text-left">
+                    <div className="font-semibold">Редактировать</div>
+                    <div className="text-xs opacity-80">С помощью AI</div>
+                  </div>
+                </Button>
+              )}
+            </div>
+          </div>
 
           {profile && (
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm bg-slate-50/50 p-4 rounded-lg border">
