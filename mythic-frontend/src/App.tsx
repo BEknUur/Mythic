@@ -9,6 +9,7 @@ import { BookReader } from './components/BookReader'
 import { TikTokPage } from './components/TikTokPage'
 import { HelpPage } from './components/HelpPage'
 import { ComingSoonPage } from './components/ComingSoonPage'
+import { PricingPage } from './components/PricingPage'
 import { TourProvider, TourAlertDialog, TOUR_STEP_IDS, useTour } from '@/components/ui/tour'
 import { Toaster } from './components/ui/toaster'
 import './App.css'
@@ -116,6 +117,7 @@ function AppContent() {
             path="/library"
             element={<MyBooksLibrary onBack={handleBackToMain} onOpenBook={handleOpenBookReader} />}
           />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/fanfic" element={<FanficPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/help" element={<HelpPage />} />

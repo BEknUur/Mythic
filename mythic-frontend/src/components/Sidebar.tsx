@@ -15,7 +15,8 @@ import {
   HelpCircle,
   Menu,
   ChevronLeft,
-  Sparkles
+  Sparkles,
+  DollarSign
 } from 'lucide-react';
 import { TOUR_STEP_IDS } from './ui/tour';
 
@@ -152,6 +153,12 @@ const Sidebar: React.FC<SidebarProps> = () => {
                 <Link to="/library">
                   <Library className="h-5 w-5 text-amber-500" />
                   <span className="ml-3 font-medium">Мои книги</span>
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-50 transition-all duration-200 rounded-xl px-4">
+                <Link to="/pricing">
+                  <DollarSign className="h-5 w-5 text-green-500" />
+                  <span className="ml-3 font-medium">Тарифы</span>
                 </Link>
               </Button>
             </div>

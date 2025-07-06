@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus, Lock, MoveRight, Sparkles } from 'lucide-react';
+import { LogIn, UserPlus, Lock, MoveRight, Sparkles, Camera, Bot, BookHeart } from 'lucide-react';
 import { useUser, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 import { TOUR_STEP_IDS } from './ui/tour';
 import { ThemeToggle } from './theme-toggle';
@@ -50,7 +50,7 @@ export function Hero() {
         </Badge>
         
         <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-gray-50 mb-6 tracking-tighter tour-step-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
-          Превратите ваш <span className="text-purple-600 italic">Instagram</span><br /> в романтическую книгу
+          Превратите ваш <span className="text-purple-600 italic">Instagram</span><br /> в  книгу
         </h1>
         
         <p className="text-lg text-gray-500 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
@@ -70,8 +70,27 @@ export function Hero() {
           </Button>
         </div>
 
+        <div className="text-sm font-medium text-gray-500 dark:text-gray-400 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+          <div className="flex justify-center items-center gap-4 sm:gap-8">
+            <div className="flex items-center gap-2">
+              <Camera className="h-4 w-4 text-purple-500" />
+              <span>Анализ фото</span>
+            </div>
+            <div className="text-gray-300 dark:text-gray-600 font-mono text-sm">→</div>
+            <div className="flex items-center gap-2">
+              <Bot className="h-4 w-4 text-purple-500" />
+              <span>Магия ИИ</span>
+            </div>
+            <div className="text-gray-300 dark:text-gray-600 font-mono text-sm">→</div>
+            <div className="flex items-center gap-2">
+              <BookHeart className="h-4 w-4 text-purple-500" />
+              <span>Ваша книга</span>
+            </div>
+          </div>
+        </div>
+
         {!isSignedIn && (
-          <div className="mb-8">
+          <div className="mt-8">
             <div className="inline-flex items-center gap-2 text-sm text-gray-500">
               <Lock className="h-4 w-4" />
               Требуется регистрация для продолжения

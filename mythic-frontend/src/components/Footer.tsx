@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Instagram, Send, Twitter } from 'lucide-react';
+import { BookOpen, Instagram, Twitter, Linkedin, Heart, AtSign, MessageSquare } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -40,24 +40,36 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-gray-50 mb-4">Следите за нами</h3>
             <div className="flex space-x-4">
-              <a href="https://www.tiktok.com/@mythica.ai" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 transition-colors">
+              <a href="https://t.me/beknur_10" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                <MessageSquare className="h-6 w-6" />
+              </a>
+              <a href="https://x.com/ualihanuly60606?s=21" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                 <Twitter className="h-6 w-6" />
               </a>
-              <a href="https://www.instagram.com/mythic_aii/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 transition-colors">
+              <a href="https://www.instagram.com/mythic_aii/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                 <Instagram className="h-6 w-6" />
               </a>
-              <a href="https://www.threads.com/@mythic_aii" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 transition-colors">
-                <Send className="h-6 w-6" />
+              <a href="https://www.threads.com/@ualikhaanuly" className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                <AtSign className="h-6 w-6" />
+              </a>
+              <a href="https://www.linkedin.com/in/beknur-ualikhanuly-039704245/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                <Linkedin className="h-6 w-6" />
               </a>
             </div>
           </div>
         </div>
 
         <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 text-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            © {new Date().getFullYear()} Mythic AI. Все права защищены.
-          </p>
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-center items-center gap-2 mb-4 text-sm text-gray-500 dark:text-gray-400">
+            <span>Brought to you with</span>
+            <Heart className="h-4 w-4 text-red-500" fill="currentColor" />
+            <span>by</span>
+            <a href="https://github.com/BEknUur/" target="_blank" rel="noopener noreferrer" className="font-semibold text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+             Beknur4ka
+            </a>
+          </div>
+          
+          <div className="flex justify-center mt-8">
             <a href="https://nfactorial.school" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
               <span>Backed by</span>
               <div className="flex items-center gap-1.5">
