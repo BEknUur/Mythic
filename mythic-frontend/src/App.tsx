@@ -8,12 +8,18 @@ import { MyBooksLibrary } from './components/MyBooksLibrary'
 import { BookReader } from './components/BookReader'
 import { TikTokPage } from './components/TikTokPage'
 import { HelpPage } from './components/HelpPage'
+import { ComingSoonPage } from './components/ComingSoonPage'
 import { TourProvider, TourAlertDialog, TOUR_STEP_IDS, useTour } from '@/components/ui/tour'
 import { Toaster } from './components/ui/toaster'
 import './App.css'
 
 // Placeholder components
-const FanficPage = () => <div className="p-8"><h1>Написать фанфик</h1><p>Скоро здесь появится возможность создавать фанфики!</p></div>;
+const FanficPage = () => (
+  <ComingSoonPage 
+    title="Написать фанфик"
+    description="Этот раздел находится в активной разработке. Скоро здесь появится возможность создавать фанфики по любимым вселенным!"
+  />
+);
 const SettingsPage = () => <div className="p-8"><h1>Настройки</h1><p>Скоро здесь можно будет настроить приложение.</p></div>;
 
 function AppContent() {

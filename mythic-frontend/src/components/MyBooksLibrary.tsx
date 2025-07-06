@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 import { 
   Book, 
   Download, 
@@ -132,13 +133,13 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white p-6">
+      <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-4 mb-8">
             <Button
               variant="ghost"
               onClick={onBack}
-              className="text-gray-700 hover:text-black hover:bg-gray-100"
+              className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Назад
@@ -147,8 +148,8 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
           
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-600" />
-              <p className="text-gray-600">Загружаем ваши книги...</p>
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-600 dark:text-gray-400" />
+              <p className="text-gray-600 dark:text-gray-400">Загружаем ваши книги...</p>
             </div>
           </div>
         </div>
@@ -157,7 +158,7 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
   }
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -165,57 +166,57 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
             <Button
               variant="ghost" 
               onClick={onBack}
-              className="text-gray-700 hover:text-black hover:bg-gray-100"
+              className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Назад
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-black">Мои книги</h1>
-              <p className="text-gray-600">Все ваши созданные книги</p>
+              <h1 className="text-2xl font-bold text-black dark:text-white">Мои книги</h1>
+              <p className="text-gray-600 dark:text-gray-400">Все ваши созданные книги</p>
             </div>
           </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-gray-200">
+          <Card className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  <Book className="h-5 w-5 text-gray-700" />
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <Book className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-black">{books.length}</p>
-                  <p className="text-sm text-gray-600">книг</p>
+                  <p className="text-2xl font-bold text-black dark:text-white">{books.length}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">книг</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="border-gray-200">
+          <Card className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  <Download className="h-5 w-5 text-gray-700" />
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <Download className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-black">{books.filter(b => b.has_pdf).length}</p>
-                  <p className="text-sm text-gray-600">PDF файлов</p>
+                  <p className="text-2xl font-bold text-black dark:text-white">{books.filter(b => b.has_pdf).length}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">PDF файлов</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="border-gray-200">
+          <Card className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  <FileText className="h-5 w-5 text-gray-700" />
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <FileText className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-black">{books.filter(b => b.has_html).length}</p>
-                  <p className="text-sm text-gray-600">веб-версий</p>
+                  <p className="text-2xl font-bold text-black dark:text-white">{books.filter(b => b.has_html).length}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">веб-версий</p>
                 </div>
               </div>
             </CardContent>
@@ -224,8 +225,8 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
 
         {/* Error State */}
         {error && (
-          <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertDescription className="text-red-800">
+          <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20">
+            <AlertDescription className="text-red-800 dark:text-red-300">
               {error}
             </AlertDescription>
           </Alert>
@@ -233,18 +234,18 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
 
         {/* Empty State */}
         {!loading && books.length === 0 && (
-          <Card className="border-gray-200">
+          <Card className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
             <CardContent className="p-12 text-center">
               <div className="mb-4">
                 <Book className="h-16 w-16 mx-auto text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-black mb-2">Пока нет книг</h3>
-              <p className="text-gray-600 mb-6">
+              <h3 className="text-lg font-medium text-black dark:text-white mb-2">Пока нет книг</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Создайте свою первую книгу, чтобы она появилась здесь
               </p>
               <Button 
                 onClick={onBack}
-                className="bg-black text-white hover:bg-gray-800"
+                className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
               >
                 Создать книгу
               </Button>
@@ -252,82 +253,64 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
           </Card>
         )}
 
-        {/* Books Grid */}
-        {books.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {books.map((book) => (
-              <Card key={book.id} className="border-gray-200 hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-medium text-black line-clamp-2">
-                    {book.title}
-                  </CardTitle>
-                  <CardDescription className="text-gray-600">
-                    {book.profile_full_name && (
-                      <div className="flex items-center gap-1 mb-1">
-                        <User className="h-3 w-3" />
-                        <span className="text-sm">{book.profile_full_name}</span>
+        {/* Books List */}
+        <div className="space-y-6">
+          {books.map((book) => (
+            <Card key={book.id} className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Book Info */}
+                  <div className="flex-grow">
+                    <h2 className="text-xl font-bold text-black dark:text-white mb-2">{book.title}</h2>
+                    <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span>{book.user_name}</span>
                       </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span className="text-sm">{formatDate(book.created_at)}</span>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>{formatDate(book.created_at)}</span>
+                      </div>
                     </div>
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="pt-0">
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {book.has_html && (
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                        Веб-версия
-                      </span>
-                    )}
-                    {book.has_pdf && (
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                        PDF
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {book.has_html && <Badge variant="outline" className="border-blue-300 text-blue-600 dark:border-blue-700 dark:text-blue-400">Веб-версия</Badge>}
+                      {book.has_pdf && <Badge variant="outline" className="border-green-300 text-green-600 dark:border-green-700 dark:text-green-400">PDF</Badge>}
+                    </div>
                   </div>
-                  
-                  <div className="flex gap-2">
-                    {book.has_html && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleViewBook(book)}
-                        className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-black"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Читать
-                      </Button>
-                    )}
-                    
-                    {book.has_pdf && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDownloadBook(book)}
-                        className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-black"
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        PDF
-                      </Button>
-                    )}
-                    
-                    <Button
-                      size="sm"
+
+                  {/* Action Buttons */}
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleViewBook(book)}
+                      className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Читать
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleDownloadBook(book)}
+                      className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      disabled={!book.has_pdf}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      PDF
+                    </Button>
+                    <Button 
                       variant="ghost"
+                      size="icon"
                       onClick={() => handleDeleteBook(book)}
-                      className="text-gray-500 hover:text-red-600 hover:bg-red-50"
+                      className="text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -22,13 +22,13 @@ const StepAuthentication = () => (
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: -10 }}
   >
-    <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-      <User className="h-6 w-6 text-gray-500" />
+    <div className="mx-auto w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+      <User className="h-6 w-6 text-gray-500 dark:text-gray-400" />
     </div>
-    <h3 className="text-xl font-bold text-gray-900 mb-2">Требуется авторизация</h3>
-    <p className="text-gray-500 mb-6">Чтобы начать, войдите или зарегистрируйтесь.</p>
+    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-2">Требуется авторизация</h3>
+    <p className="text-gray-500 dark:text-gray-400 mb-6">Чтобы начать, войдите или зарегистрируйтесь.</p>
     <SignInButton mode="modal">
-      <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
+      <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-200">
         Войти в систему
       </Button>
     </SignInButton>
@@ -78,16 +78,16 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
       exit={{ opacity: 0, y: -10 }}
     >
       <div className="text-center mb-8">
-        <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <Book className="h-6 w-6 text-gray-500" />
+        <div className="mx-auto w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+          <Book className="h-6 w-6 text-gray-500 dark:text-gray-400" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900">Заполните детали</h3>
-        <p className="text-gray-500">Остался последний шаг до создания вашей книги.</p>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">Заполните детали</h3>
+        <p className="text-gray-500 dark:text-gray-400">Остался последний шаг до создания вашей книги.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="instagram-url" className="text-gray-600">Ссылка на Instagram профиль</Label>
+          <Label htmlFor="instagram-url" className="text-gray-600 dark:text-gray-400">Ссылка на Instagram профиль</Label>
           <div className="relative">
             <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
@@ -115,7 +115,7 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
           </Alert>
         )}
 
-        <Button type="submit" disabled={isLoading || !url.trim()} className="w-full h-12 text-base bg-gray-900 text-white hover:bg-gray-800">
+        <Button type="submit" disabled={isLoading || !url.trim()} className="w-full h-12 text-base bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-200">
           {isLoading ? (
             <>
               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
@@ -146,13 +146,13 @@ export function Form({ onStartScrape }: FormProps) {
   return (
     <section className="py-20 px-4">
       <div className="max-w-md mx-auto">
-        <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-lg shadow-gray-100/50">
+        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-8 shadow-lg shadow-gray-100/50 dark:shadow-black/50">
           <AnimatePresence mode="wait">
             {step === 'auth' && <StepAuthentication key="auth" />}
             {step === 'form' && <StepMainForm onStartScrape={onStartScrape} key="form" />}
           </AnimatePresence>
         </div>
-        <div className="mt-6 text-center text-sm text-gray-400">
+        <div className="mt-6 text-center text-sm text-gray-400 dark:text-gray-500">
           <p>Ваши данные в безопасности.</p>
         </div>
       </div>
