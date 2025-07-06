@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { ChapterBlock } from './ChapterBlock';
 import { Textarea } from '@/components/ui/textarea';
+import { Filter } from 'bad-words';
 
 interface BookReaderProps {
   bookId?: string;
@@ -56,13 +57,15 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
   const [selectedRange, setSelectedRange] = useState<Range | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [variantIndex, setVariantIndex] = useState(0);
-  const [manualInput, setManualInput] = useState("");
   
   const bookContentRef = useRef<HTMLDivElement>(null);
   const selectionRangeRef = useRef<Range | null>(null);
   const selectedChapterRef = useRef<number>(0);
   const { getToken } = useAuth();
   const { toast } = useToast();
+
+  // Инициализируем фильтр нецензурной лексики один раз
+  const filter = new Filter();
 
   // Загрузка содержимого книги
   useEffect(() => {
@@ -501,8 +504,11 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
     }
   };
 
-  // Общая функция для применения изменений в тексте через Range API
-  const applyTextChange = async (textToInsert: string) => {
+  /*
+   * ВСТАВКА ТЕКСТА В DOM + СОХРАНЕНИЕ
+   * Выполняет реальное изменение контента книги и сбрасывает локальный стейт
+   */
+  const doInsert = async (cleanText: string) => {
     if (!selectedRange) {
       toast({
         variant: "destructive",
@@ -513,24 +519,11 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
     }
 
     try {
-      // Шаг 1: Проверка контента перед вставкой
-      const token = await getToken();
-      const moderationResult = await api.moderateText(textToInsert, token || undefined);
-
-      if (moderationResult.flagged) {
-        toast({
-          variant: "destructive",
-          title: "🚫 Недопустимый контент",
-          description: "Этот текст нарушает правила. Пожалуйста, введите другой вариант.",
-        });
-        return; // Прерываем вставку
-      }
-
-      // Шаг 2: Если проверка пройдена, вставляем текст
+      // 1. Обновляем DOM через Range API
       selectedRange.deleteContents();
-      const textNode = document.createTextNode(textToInsert);
-      selectedRange.insertNode(textNode);
+      selectedRange.insertNode(document.createTextNode(cleanText));
 
+      // 2. Синхронизируем React-состояние глав
       if (bookContentRef.current) {
         const chapterElements = bookContentRef.current.querySelectorAll('.chapter');
         const updatedChapters: string[] = [];
@@ -538,14 +531,15 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         setChapters(updatedChapters.length > 0 ? updatedChapters : [bookContentRef.current.innerHTML]);
       }
 
+      // 3. Сохраняем новое содержимое на сервер
+      const token = await getToken();
       const fullHtml = bookContentRef.current?.innerHTML || '';
       await api.updateBookContent(bookId || runId || '', fullHtml, token || undefined);
-      
+
       toast({ 
         title: "✅ Изменение применено", 
-        description: `Текст успешно обновлен.` 
+        description: "Текст успешно обновлен." 
       });
-
     } catch (error) {
       console.error('Ошибка применения или сохранения:', error);
       toast({
@@ -554,11 +548,49 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         description: "Не удалось применить изменение.",
       });
     } finally {
+      // 4. Сброс локального состояния
       setSelectedRange(null);
       setSuggestions([]);
       setVariantIndex(0);
-      setManualInput("");
     }
+  };
+
+  /*
+   * Проверка текста (bad-words + Moderation API) и делегирование в doInsert
+   */
+  const applyTextChange = async (rawText: string) => {
+    const textToInsert = rawText.trim();
+    if (!textToInsert) return;
+
+    // 1. Локальный фильтр нецензурной лексики
+    if (filter.isProfane(textToInsert)) {
+      toast({
+        variant: "destructive",
+        title: "🚫 Недопустимый контент",
+        description: "Текст содержит запрещённые слова. Пожалуйста, исправьте его.",
+      });
+      return;
+    }
+
+    // 2. Дополнительная проверка через Moderation API
+    try {
+      const token = await getToken();
+      const moderationResult = await api.moderateText(textToInsert, token || undefined);
+      if (moderationResult.flagged) {
+        toast({
+          variant: "destructive",
+          title: "🚫 Недопустимый контент",
+          description: "Этот текст не прошёл модерацию. Попробуйте другой вариант.",
+        });
+        return;
+      }
+    } catch (err) {
+      // Если сервис недоступен, продолжим полагаясь только на локальный фильтр
+      console.error('Ошибка запроса модерации:', err);
+    }
+
+    // 3. Вставляем текст
+    await doInsert(textToInsert);
   };
 
   if (loading) {
@@ -651,7 +683,7 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
           </div>
         </ScrollArea>
         
-        {/* Чат инпут остаётся для общих вопросов, но основная логика в плавающей карточке */}
+        {/* Чат инпут остаётся для общих вопросов */}
         <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
           <div className="flex items-center gap-2">
             <Textarea
@@ -706,26 +738,8 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-500 mb-3">Нет предложений от AI. Введите свой вариант.</p>
+            <p className="text-sm text-gray-500 mb-3">Нет предложений от AI.</p>
           )}
-
-          <div className="border-t pt-3">
-            <label className="text-xs text-gray-500 mb-2 block">Или напишите свой вариант вручную:</label>
-            <Textarea
-              value={manualInput}
-              onChange={(e) => setManualInput(e.target.value)}
-              placeholder="Ваш текст..."
-              className="resize-none mb-2"
-              rows={2}
-            />
-            <Button 
-              onClick={() => applyTextChange(manualInput)} 
-              disabled={!manualInput.trim()}
-              className="w-full"
-            >
-              Вставить свой вариант
-            </Button>
-          </div>
         </div>
       )}
     </div>
