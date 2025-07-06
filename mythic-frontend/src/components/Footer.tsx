@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Instagram, Twitter, Linkedin, Heart, AtSign, MessageSquare } from 'lucide-react';
+import { Instagram, Twitter, Linkedin, Heart, AtSign, MessageSquare } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -9,7 +9,7 @@ export function Footer() {
           {/* Logo and About */}
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <BookOpen className="h-7 w-7 text-purple-600" />
+              <img src="/logo.png" alt="Mythic AI Logo" className="h-8 w-8" />
               <span className="text-xl font-bold text-gray-900 dark:text-gray-50">Mythic AI</span>
             </Link>
             <p className="text-gray-500 dark:text-gray-400 text-sm">

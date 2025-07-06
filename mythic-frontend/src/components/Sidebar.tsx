@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
@@ -16,9 +16,19 @@ import {
   Menu,
   ChevronLeft,
   Sparkles,
-  DollarSign
+  DollarSign,
+  LogOut,
+  User,
+  Compass,
+  Bot,
+  BookHeart,
+  BadgeHelp,
+  Ticket,
+  FileText,
+  LayoutGrid
 } from 'lucide-react';
 import { TOUR_STEP_IDS } from './ui/tour';
+import { useTour } from './ui/tour';
 
 interface SidebarProps {
   // onNavigation is no longer needed
@@ -26,6 +36,8 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const { startTour } = useTour();
+  const location = useLocation();
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -85,9 +97,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
         <div className="p-6 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                <BookOpen className="h-6 w-6 text-white" />
-              </div>
+              <img src="/logo.png" alt="Mythic AI Logo" className="h-10 w-10" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-gray-50">
                   Mythic AI

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Loader2, RefreshCw, AlertTriangle, Heart, Book, Camera, User, Lock, BookOpen, Newspaper } from 'lucide-react';
+import { CheckCircle, Loader2, RefreshCw, AlertTriangle, Heart, Book, Camera, User, Lock, BookOpen, Newspaper, X, ArrowLeft } from 'lucide-react';
 import { useUser, SignInButton, UserButton, useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
 import { BookReadyDialog } from './BookReadyDialog';
@@ -15,12 +15,42 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { motion } from 'framer-motion';
 
 interface ProgressTrackerProps {
   runId: string;
   onComplete: () => void;
   onReset: () => void;
 }
+
+const steps = [
+  { id: 'analysis', name: 'Анализ' },
+  { id: 'photos', name: 'Фотографии' },
+  { id: 'book', name: 'Книга' },
+];
+
+const stageMessages: Record<string, string[]> = {
+  initial: ["Начинаем магический ритуал..."],
+  analysis: [
+    "Анализируем ваш профиль, ищем скрытые сокровища...",
+    "Наши алгоритмы-гномы копаются в данных...",
+    "Составляем карту вашей уникальной истории...",
+    "Изучаем ваш стиль, чтобы книга была идеальной...",
+  ],
+  photos: [
+    "Собираем самые яркие моменты вашей жизни...",
+    "Каждая фотография - это глава вашей будущей книги...",
+    "Наши цифровые художники обрабатывают изображения...",
+    "Создаем визуальную палитру вашей истории...",
+  ],
+  book: [
+    "Сплетаем слова и образы в единое повествование...",
+    "Магия уже близко, последние штрихи...",
+    "Ваша книга почти готова к выходу в свет...",
+    "Переплетаем страницы вашей эпической саги...",
+  ],
+  ready: ["Ваша эпическая сага готова! Отправляйтесь в магическое приключение."]
+};
 
 const ProgressBar: React.FC<{ value: number; className?: string }> = ({ value, className }) => (
   <Progress value={value} className={className} />
@@ -65,12 +95,10 @@ const TypewriterText: React.FC<{ text: string; speed?: number; className?: strin
 export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerProps) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isManualChecking, setIsManualChecking] = useState(false);
-  const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [isBookReadyDialogOpen, setIsBookReadyDialogOpen] = useState(false);
-  const [visibleSteps, setVisibleSteps] = useState<number>(0);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [isCreatingBook, setIsCreatingBook] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState(stageMessages.initial[0]);
   const { toast } = useToast();
   const { isSignedIn, user } = useUser();
   const { getToken } = useAuth();
@@ -108,89 +136,73 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     );
   }
 
-  // Анимация появления шагов
+  const getCurrentStageKey = () => {
+    if (!status) return 'initial';
+    if (status.stages.book_generated) return 'ready';
+    if (isCreatingBook) return 'book';
+    if (status.stages.images_downloaded) return 'book';
+    if (status.stages.data_collected) return 'photos';
+    return 'analysis';
+  };
+
   useEffect(() => {
-    if (status) {
-      const completedSteps = Object.values(status.stages).filter(Boolean).length;
-      let stepIndex = 0;
-      const interval = setInterval(() => {
-        if (stepIndex <= completedSteps) {
-          setVisibleSteps(stepIndex);
-          stepIndex++;
-        } else {
-          clearInterval(interval);
-        }
-      }, 800);
-      
-      return () => clearInterval(interval);
-    }
-  }, [status]);
+    const stageKey = getCurrentStageKey();
+    const messages = stageMessages[stageKey];
+    const messageInterval = setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * messages.length);
+      setCurrentMessage(status?.message || messages[randomIndex]);
+    }, 4500);
 
-  const handleStatusUpdate = (currentStatus: StatusResponse) => {
-    const newStatus = { ...currentStatus };
+    return () => clearInterval(messageInterval);
+  }, [status, isCreatingBook]);
+
+  const handleStatusUpdate = (newStatus: StatusResponse) => {
     setStatus(newStatus);
-    setLastChecked(new Date());
 
-    // Показываем диалог выбора формата, когда фотографии загружены, но книга еще не создана
+    const apiMessage = newStatus.message;
+    const stageKey = getCurrentStageKey();
+    const messages = stageMessages[stageKey];
+    const randomIndex = Math.floor(Math.random() * messages.length);
+    setCurrentMessage(apiMessage || messages[randomIndex]);
+
     if (newStatus.stages.images_downloaded && !newStatus.stages.book_generated && !showFormatDialog && !isCreatingBook) {
       setShowFormatDialog(true);
-      return;
     }
 
     if (newStatus.stages.book_generated && !isBookReadyDialogOpen) {
-        setIsBookReadyDialogOpen(true);
-        onComplete();
+      setIsBookReadyDialogOpen(true);
+      onComplete();
     }
   };
 
-  const checkStatusManually = async () => {
-    setIsManualChecking(true);
-    try {
-      const token = await getToken();
-      const currentStatus = await api.getStatus(runId, token || undefined);
-      handleStatusUpdate(currentStatus);
-    } catch (error) {
-      setError('Ошибка при проверке статуса');
-      toast({
-        title: "Ошибка",
-        description: "Не удалось проверить статус книги",
-        variant: "destructive",
-      });
-    } finally {
-      setIsManualChecking(false);
-    }
-  };
-
-  const createBookWithFormat = async (format: string) => {
+  const createBookWithFormat = async (format: 'classic' | 'magazine') => {
     setShowFormatDialog(false);
     setIsCreatingBook(true);
-    
+    toast({
+      title: "Отличный выбор!",
+      description: `Начинаем создание вашей книги в ${format === 'classic' ? 'классическом' : 'журнальном'} формате.`,
+    });
     try {
       const token = await getToken();
       await api.createBook(runId, format, token || undefined);
-      
-      toast({
-        title: "Создание книги началось",
-        description: `Создаем книгу в формате: ${format === 'classic' ? 'классическом' : format === 'magazine' ? 'журнальном' : 'зин'}`,
-      });
     } catch (error) {
       console.error('Error creating book:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось начать создание книги",
+        description: "Не удалось начать создание книги.",
         variant: "destructive",
       });
       setIsCreatingBook(false);
+      setShowFormatDialog(true);
     }
   };
 
   useEffect(() => {
-    let retryCount = 0;
-    const maxRetries = 5;
     let isCancelled = false;
 
     const pollStatus = async () => {
-      if (isBookReady || isCancelled) return;
+      if (isCancelled || showFormatDialog || isCreatingBook || (status?.stages.book_generated ?? false)) return;
+      
       try {
         const token = await getToken();
         const currentStatus = await api.getStatus(runId, token || undefined);
@@ -198,376 +210,154 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
           handleStatusUpdate(currentStatus);
         }
       } catch (err) {
-        retryCount++;
-        if (retryCount >= maxRetries) {
-          setError('Автоматическая проверка остановлена. Проверьте статус вручную.');
-        }
+        console.error("Polling error:", err);
+        setError('Не удалось обновить статус. Обновите страницу через несколько минут.');
       }
     };
 
     pollStatus();
-    const interval = setInterval(pollStatus, 5000);
+    const intervalId = setInterval(pollStatus, 7000);
 
     return () => {
       isCancelled = true;
-      clearInterval(interval);
+      clearInterval(intervalId);
     };
-  }, [runId, onComplete, isBookReady, getToken]);
+  }, [runId, onComplete, status, showFormatDialog, isCreatingBook, getToken]);
+  
+  const progressValue = status ? (Object.values(status.stages).filter(Boolean).length / Object.keys(status.stages).length) * 100 : 0;
+  
+  const bookStyle = status?.style === 'fantasy' ? 'эпическую фэнтези-книгу' : 
+                   status?.style === 'humor' ? 'уморительную комедию' : 
+                   'уникальную историю';
 
-  const getHumanStatus = (stageKey: string, isCompleted: boolean) => {
-    const stages: Record<string, { inProgress: string; completed: string }> = {
-      data_collected: {
-        inProgress: 'изучаем ваш профиль',
-        completed: 'профиль изучен'
-      },
-      images_downloaded: {
-        inProgress: 'собираем ваши фотографии',
-        completed: 'фотографии собраны'
-      },
-      book_generated: {
-        inProgress: status?.style === 'fantasy' ? 'создаем эпическую сагу' :
-                    status?.style === 'humor' ? 'создаем веселую книгу' :
-                    'создаем вашу историю',
-        completed: status?.style === 'fantasy' ? 'сага готова' :
-                   status?.style === 'humor' ? 'книга готова' :
-                   'книга готова'
-      }
-    };
-    
-    return isCompleted ? stages[stageKey]?.completed : stages[stageKey]?.inProgress;
+  const getCurrentStepIndex = () => {
+    if (!status) return 0;
+    if (status.stages.book_generated) return 2;
+    if (status.stages.images_downloaded) return 2; // On book generation
+    if (status.stages.data_collected) return 1;
+    return 0;
   };
-
-  const getCurrentPhrase = () => {
-    if (!status) return 'начинаем работу...';
-    
-    // Показываем только романтические сообщения от API
-    if (status.message) {
-      return status.message;
-    }
-    
-    // Простые статусы без лишних деталей
-    if (status.stages.book_generated) return 'книга готова';
-    if (status.stages.images_downloaded) return 'создаем книгу';
-    if (status.stages.data_collected) return 'загружаем фотографии';
-    return 'анализируем профиль';
-  };
-
+  const currentStepIndex = getCurrentStepIndex();
+  
   return (
-    <>
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
-          <Card className="bg-white border border-border shadow-lg">
-            <CardHeader className="text-center relative">
-              {/* Информация о пользователе в правом верхнем углу */}
-              <div className="absolute top-4 right-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {user?.firstName || 'Пользователь'}
-                  </span>
-                  <UserButton />
-                </div>
-              </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950 p-4">
+      <div className="w-full max-w-2xl">
+        <header className="flex justify-end mb-8">
+          <UserButton afterSignOutUrl="/" />
+        </header>
 
-              {/* Минималистичная иконка */}
-              <div className="mx-auto w-16 h-16 bg-gray-100 border-2 border-gray-200 rounded-full flex items-center justify-center mb-6 relative">
-                {status?.stages.book_generated ? (
-                  <Book className="h-8 w-8 text-gray-600" />
-                ) : status?.style === 'fantasy' ? (
-                  <span className="text-2xl animate-pulse">⚔️</span>
-                ) : status?.style === 'humor' ? (
-                  <span className="text-2xl animate-pulse">😄</span>
-                ) : (
-                  <Heart className="h-8 w-8 text-gray-600 animate-pulse" />
-                )}
-              </div>
-
-              <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
-                {status?.style === 'fantasy' ? 'Создаем эпическую фэнтези-книгу' :
-                 status?.style === 'humor' ? 'Создаем веселую юмористическую книгу' :
-                 'Создаем вашу историю любви'}
-              </CardTitle>
-              <CardDescription className="text-gray-600 text-lg leading-relaxed">
-                {status?.style === 'fantasy' ? 'Наш искусственный интеллект анализирует ваш Instagram и создает эпическую фэнтези-хронику о великом герое' :
-                 status?.style === 'humor' ? 'Наш искусственный интеллект анализирует ваш Instagram и создает веселую юмористическую биографию' :
-                 'Наш искусственный интеллект анализирует ваш Instagram и создает персональную романтическую книгу'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="text-center">
-                <Button
-                  onClick={checkStatusManually}
-                  disabled={isManualChecking}
-                  variant="outline"
-                  className="h-14 px-8 border-gray-200 hover:bg-gray-50"
+        <Card className="w-full bg-white dark:bg-gray-900 shadow-xl rounded-2xl border-gray-100 dark:border-gray-800">
+          <CardHeader className="text-center items-center pt-8">
+            <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center mb-4">
+              <Book className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+            </div>
+            <CardTitle className="text-3xl font-bold text-gray-900 dark:text-gray-50">Создаем {bookStyle}</CardTitle>
+            <CardDescription className="text-lg text-gray-500 dark:text-gray-400 mt-2">
+              Наш искусственный интеллект анализирует ваш Instagram и создает {bookStyle}-хронику о великом герое.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-8 pb-8">
+            <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-4 text-center my-8">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Сейчас происходит:</p>
+              <p className="font-medium text-gray-800 dark:text-gray-200 h-10 flex items-center justify-center">
+                <motion.span
+                  key={currentMessage}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
                 >
-                  {isManualChecking ? (
-                    <Loader2 className="h-5 w-5 mr-3 animate-spin text-gray-500" />
-                  ) : (
-                    <RefreshCw className="h-5 w-5 mr-3 text-gray-500" />
-                  )}
-                  {isManualChecking ? 'проверяем статус' : 'обновить статус'}
-                </Button>
-                {lastChecked && (
-                  <p className="text-sm text-gray-400 mt-2">
-                    последняя проверка: {lastChecked.toLocaleTimeString()}
-                  </p>
-                )}
-              </div>
+                  {currentMessage}
+                </motion.span>
+              </p>
+            </div>
 
-              {/* Живой статус */}
-              {status && (
-                <div className="bg-gray-50 p-8 rounded-lg border border-gray-100">
-                  <h4 className="font-semibold mb-6 text-gray-800 text-lg flex items-center gap-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                    Сейчас происходит:
-                  </h4>
-                  
-                  {/* Романтическое сообщение от API */}
-                  {status.message && !status.stages.book_generated && (
-                    <div className="mb-6 p-5 bg-white rounded-lg border border-gray-100 shadow-sm">
-                      <p className="text-gray-700 italic text-base leading-relaxed font-medium">
-                        <TypewriterText 
-                          text={status.message} 
-                          speed={60}
-                          className="inline"
-                        />
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="space-y-4 text-base">
-                    <div className={`flex items-center justify-between transition-all duration-700 ${visibleSteps >= 1 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
-                      <span className="text-gray-700 flex items-center gap-3 font-medium">
-                        <div className="w-8 h-8 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center">
-                          <User className="w-4 h-4 text-gray-500" />
-                        </div>
-                        анализ профиля
-                      </span>
-                      <span className={`font-semibold transition-colors duration-300 ${status.stages.data_collected ? 'text-gray-800' : 'text-gray-400'}`}>
-                        {getHumanStatus('data_collected', status.stages.data_collected)}
-                      </span>
-                    </div>
-                    <div className={`flex items-center justify-between transition-all duration-700 delay-300 ${visibleSteps >= 2 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
-                      <span className="text-gray-700 flex items-center gap-3 font-medium">
-                        <div className="w-8 h-8 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center">
-                          <Camera className="w-4 h-4 text-gray-500" />
-                        </div>
-                        сбор фотографий
-                      </span>
-                      <span className={`font-semibold transition-colors duration-300 ${status.stages.images_downloaded ? 'text-gray-800' : 'text-gray-400'}`}>
-                        {getHumanStatus('images_downloaded', status.stages.images_downloaded) || 'ожидание'}
-                      </span>
-                    </div>
-                    <div className={`flex items-center justify-between transition-all duration-700 delay-600 ${visibleSteps >= 3 ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'}`}>
-                      <span className="text-gray-700 flex items-center gap-3 font-medium">
-                        <div className="w-8 h-8 bg-gray-100 border border-gray-200 rounded-full flex items-center justify-center">
-                          <Book className="w-4 h-4 text-gray-500" />
-                        </div>
-                        создание книги
-                      </span>
-                      <span className={`font-semibold transition-colors duration-300 ${status.stages.book_generated ? 'text-gray-800' : 'text-gray-400'}`}>
-                        {status.stages.book_generated ? 
-                          getHumanStatus('book_generated', status.stages.book_generated) : 
-                          isCreatingBook ? 'создаем книгу...' : 'ожидание выбора формата'}
-                      </span>
-                    </div>
+            <Progress value={progressValue} className="mb-2 h-2" />
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-8">{currentMessage}</p>
+            
+            <div className="flex justify-between items-center">
+              {steps.map((step, index) => (
+                <div key={step.id} className="flex flex-col items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                      index <= currentStepIndex
+                        ? 'bg-purple-600 border-purple-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400'
+                    } transition-colors duration-500`}
+                  >
+                    {index < currentStepIndex ? <CheckCircle className="w-5 h-5" /> : index + 1}
                   </div>
-                </div>
-              )}
-
-              {/* Прогресс */}
-              <div className="space-y-6">
-                <ProgressBar 
-                  value={status ? (Object.values(status.stages).filter(Boolean).length / 3) * 100 : 0} 
-                  className="h-2"
-                />
-                <p className="text-center text-lg text-gray-600 italic transition-all duration-500">
-                  {getCurrentPhrase()}
-                </p>
-              </div>
-
-              {/* Детальные шаги - светлые */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className={`text-center p-4 rounded-lg border transition-all duration-500 ${
-                  status?.stages.data_collected 
-                    ? 'bg-gray-800 text-white border-gray-800' 
-                    : 'bg-gray-50 border-gray-200'
-                }`}>
-                  <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                    status?.stages.data_collected ? 'bg-white text-gray-800' : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {status?.stages.data_collected ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <span className="text-sm font-bold">1</span>
-                    )}
-                  </div>
-                  <span className={`block text-sm font-medium ${
-                    status?.stages.data_collected ? 'text-white' : 'text-gray-600'
-                  }`}>
-                    анализ
-                  </span>
-                </div>
-                
-                <div className={`text-center p-4 rounded-lg border transition-all duration-500 ${
-                  status?.stages.images_downloaded 
-                    ? 'bg-gray-800 text-white border-gray-800' 
-                    : 'bg-gray-50 border-gray-200'
-                }`}>
-                  <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                    status?.stages.images_downloaded ? 'bg-white text-gray-800' : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {status?.stages.images_downloaded ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <span className="text-sm font-bold">2</span>
-                    )}
-                  </div>
-                  <span className={`block text-sm font-medium ${
-                    status?.stages.images_downloaded ? 'text-white' : 'text-gray-600'
-                  }`}>
-                    фотографии
-                  </span>
-                </div>
-                
-                <div className={`text-center p-4 rounded-lg border transition-all duration-500 ${
-                  status?.stages.book_generated 
-                    ? 'bg-gray-800 text-white border-gray-800' 
-                    : 'bg-gray-50 border-gray-200'
-                }`}>
-                  <div className={`w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                    status?.stages.book_generated ? 'bg-white text-gray-800' : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {status?.stages.book_generated ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <span className="text-sm font-bold">3</span>
-                    )}
-                  </div>
-                  <span className={`block text-sm font-medium ${
-                    status?.stages.book_generated ? 'text-white' : 'text-gray-600'
-                  }`}>
-                    книга
-                  </span>
-                </div>
-              </div>
-
-              {/* Превью профиля */}
-              {status?.profile && (
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-                  <h3 className="font-semibold text-gray-800 mb-3 text-lg flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-gray-600" />
-                    профиль найден
-                  </h3>
-                  <p className="text-base text-gray-700 mb-1">
-                    <span className="font-semibold text-gray-800">{status.profile.fullName}</span> 
-                    <span className="text-gray-500 ml-2">@{status.profile.username}</span>
-                  </p>
-                  <p className="text-sm text-gray-500 flex items-center gap-4 flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      {status.profile.followers.toLocaleString()} подписчиков
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Camera className="w-4 h-4" />
-                      {status.profile.posts} постов
-                    </span>
-                    {status.profile.stories && status.profile.stories > 0 && (
-                      <span className="flex items-center gap-1">
-                        <span className="text-sm">📖</span>
-                        {status.profile.stories} историй
-                      </span>
-                    )}
+                  <p className={`mt-2 text-sm font-medium ${
+                      index <= currentStepIndex ? 'text-gray-800 dark:text-gray-200' : 'text-gray-400'
+                    } transition-colors duration-500`}
+                  >
+                    {step.name}
                   </p>
                 </div>
-              )}
+              ))}
+            </div>
 
-              {/* Кнопка возврата */}
-              <div className="text-center pt-6 border-t border-gray-100">
-                <Button
-                  onClick={onReset}
-                  variant="ghost"
-                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                >
-                  ← вернуться к форме
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="mt-12 text-center border-t border-gray-100 dark:border-gray-800 pt-6">
+              <Button onClick={onReset} variant="ghost" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Вернуться и создать новую книгу
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
-      {/* Диалог выбора формата книги */}
-      <Dialog open={showFormatDialog} onOpenChange={setShowFormatDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-center">
-              Выберите формат книги
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Данные собраны! Теперь выберите, в каком формате создать вашу книгу.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            {/* Классический формат */}
-            <div 
-              className="border rounded-lg p-6 cursor-pointer hover:border-blue-500 transition-colors"
-              onClick={() => createBookWithFormat('classic')}
-            >
-              <div className="flex items-center justify-center mb-4">
-                <Book className="h-12 w-12 text-blue-600" />
+      {/* Format Selection Dialog */}
+      {showFormatDialog && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl m-4"
+          >
+            <div className="p-8 text-center">
+              <div className="flex justify-end">
+                <Button variant="ghost" size="icon" onClick={() => setShowFormatDialog(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </Button>
               </div>
-              <h3 className="font-semibold text-lg text-center mb-2">Классическая книга</h3>
-              <p className="text-sm text-gray-600 text-center">
-                Традиционный формат с главами, красивым дизайном и плавным повествованием
-              </p>
-            </div>
-            
-            {/* Журнальный формат */}
-            <div 
-              className="border rounded-lg p-6 cursor-pointer hover:border-purple-500 transition-colors"
-              onClick={() => createBookWithFormat('magazine')}
-            >
-              <div className="flex items-center justify-center mb-4">
-                <Newspaper className="h-12 w-12 text-purple-600" />
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50 mb-2">Выберите формат книги</h2>
+              <p className="text-gray-500 dark:text-gray-400 mb-8">Данные собраны! Теперь выберите, в каком формате создать вашу книгу.</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button
+                  onClick={() => createBookWithFormat('classic')}
+                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300"
+                >
+                  <Book className="w-8 h-8 text-purple-600 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Классическая книга</h3>
+                  <p className="text-gray-500 dark:text-gray-400">Традиционный формат с главами, красивым дизайном и плавным повествованием.</p>
+                </button>
+                <button
+                  onClick={() => createBookWithFormat('magazine')}
+                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300"
+                >
+                  <Newspaper className="w-8 h-8 text-purple-600 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Журнальный формат</h3>
+                  <p className="text-gray-500 dark:text-gray-400">Стильный журнальный дизайн с обложкой, оглавлением и разворотами как в модном издании.</p>
+                </button>
               </div>
-              <h3 className="font-semibold text-lg text-center mb-2">Журнальный формат</h3>
-              <p className="text-sm text-gray-600 text-center">
-                Стильный журнальный дизайн с обложкой, оглавлением и разворотами как в модном издании
-              </p>
+              <div className="mt-8">
+                <Button variant="ghost" onClick={() => setShowFormatDialog(false)} className="text-gray-500 dark:text-gray-400">Отмена</Button>
+              </div>
             </div>
-          </div>
-          
-          <div className="mt-6 text-center">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowFormatDialog(false)}
-              className="mr-4"
-            >
-              Отмена
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-      
-      <BookReadyDialog
-        isOpen={isBookReadyDialogOpen}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            setIsBookReadyDialogOpen(false);
-          }
-        }}
-        runId={runId}
-        status={status}
-      />
-    </>
+          </motion.div>
+        </div>
+      )}
+
+      {isBookReadyDialogOpen && status && (
+        <BookReadyDialog
+          isOpen={isBookReadyDialogOpen}
+          onOpenChange={(isOpen) => !isOpen && setIsBookReadyDialogOpen(false)}
+          runId={runId}
+          status={status}
+        />
+      )}
+    </div>
   );
 } 
