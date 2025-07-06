@@ -21,7 +21,7 @@ import {
 import { useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
 import { BookReader } from './BookReader';
-import { EditChat } from './EditChat';
+
 
 interface BookReadyDialogProps {
   isOpen: boolean;
@@ -143,10 +143,14 @@ export function BookReadyDialog({
       <DialogContent className="max-w-4xl max-h-[90vh] bg-white border-none rounded-xl shadow-2xl">
         <DialogHeader className="text-center pt-4">
           <DialogTitle className="text-3xl font-normal text-violet-600">
-            Книга готова!
+            {status?.style === 'fantasy' ? 'Эпическая книга готова!' :
+             status?.style === 'humor' ? 'Веселая книга готова!' :
+             'Книга готова!'}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Ваша персональная история создана и готова к просмотру.
+            {status?.style === 'fantasy' ? 'Ваша персональная фэнтези-хроника создана и готова к прочтению.' :
+             status?.style === 'humor' ? 'Ваша юмористическая биография создана и готова поднять настроение.' :
+             'Ваша персональная история создана и готова к просмотру.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -226,6 +230,12 @@ export function BookReadyDialog({
                 <FileText className="h-4 w-4 text-slate-400" />
                 <span className="font-medium text-black">Постов:</span> {profile.posts}
               </div>
+              {profile.stories && profile.stories > 0 && (
+                <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                  <span className="text-slate-400">📖</span>
+                  <span className="font-medium text-black">Историй:</span> {profile.stories}
+                </div>
+              )}
             </div>
           )}
 

@@ -9,7 +9,7 @@ log = logging.getLogger("downloader")
 
 # ─────────────────── сбор ссылок ────────────────────────────────────────────
 def _collect_urls(items: List[Dict]) -> List[str]:
-    """Ищем displayUrl и images во всех latestPosts и childPosts."""
+    """Ищем displayUrl и images во всех latestPosts, childPosts и stories."""
     urls: list[str] = []
 
     def walk(post: Dict):
@@ -20,8 +20,20 @@ def _collect_urls(items: List[Dict]) -> List[str]:
             walk(child)
 
     for root in items:
+        # Собираем URL из постов
         for p in root.get("latestPosts", []):
             walk(p)
+        
+        # Собираем URL из сторисов
+        for story in root.get("stories", []):
+            if story.get("displayUrl"):
+                urls.append(story["displayUrl"])
+            # Если есть массив изображений в сторисе
+            if story.get("images"):
+                urls.extend(story["images"])
+            # Если есть видео превью в сторисе
+            if story.get("videoUrl"):
+                urls.append(story["videoUrl"])
 
     # удаляем дубликаты, сохраняя порядок
     seen = set()

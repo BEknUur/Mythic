@@ -14,6 +14,7 @@ const ProfileSchema = z.object({
   fullName: z.string(),
   followers: z.number(),
   posts: z.number(),
+  stories: z.number().optional(),
 })
 
 const StagesSchema = z.object({

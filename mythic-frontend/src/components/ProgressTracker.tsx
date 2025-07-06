@@ -187,8 +187,12 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         completed: 'фотографии собраны'
       },
       book_generated: {
-        inProgress: 'создаем вашу историю',
-        completed: 'книга готова'
+        inProgress: status?.style === 'fantasy' ? 'создаем эпическую сагу' :
+                    status?.style === 'humor' ? 'создаем веселую книгу' :
+                    'создаем вашу историю',
+        completed: status?.style === 'fantasy' ? 'сага готова' :
+                   status?.style === 'humor' ? 'книга готова' :
+                   'книга готова'
       }
     };
     
@@ -230,6 +234,10 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               <div className="mx-auto w-16 h-16 bg-gray-100 border-2 border-gray-200 rounded-full flex items-center justify-center mb-6 relative">
                 {status?.stages.book_generated ? (
                   <Book className="h-8 w-8 text-gray-600" />
+                ) : status?.style === 'fantasy' ? (
+                  <span className="text-2xl animate-pulse">⚔️</span>
+                ) : status?.style === 'humor' ? (
+                  <span className="text-2xl animate-pulse">😄</span>
                 ) : (
                   <Heart className="h-8 w-8 text-gray-600 animate-pulse" />
                 )}
@@ -422,7 +430,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                     <span className="font-semibold text-gray-800">{status.profile.fullName}</span> 
                     <span className="text-gray-500 ml-2">@{status.profile.username}</span>
                   </p>
-                  <p className="text-sm text-gray-500 flex items-center gap-4">
+                  <p className="text-sm text-gray-500 flex items-center gap-4 flex-wrap">
                     <span className="flex items-center gap-1">
                       <User className="w-4 h-4" />
                       {status.profile.followers.toLocaleString()} подписчиков
@@ -431,6 +439,12 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                       <Camera className="w-4 h-4" />
                       {status.profile.posts} постов
                     </span>
+                    {status.profile.stories && status.profile.stories > 0 && (
+                      <span className="flex items-center gap-1">
+                        <span className="text-sm">📖</span>
+                        {status.profile.stories} историй
+                      </span>
+                    )}
                   </p>
                 </div>
               )}

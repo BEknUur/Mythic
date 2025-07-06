@@ -906,6 +906,26 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
                 'alt': post.get('alt', '')
             })
     
+    # AI-анализ для первых 3 рилсов
+    from app.services.media_analyzer import MediaAnalysisRequest, analyze_media_item
+    analyzed_reels = []
+    for reel in video_content[:3]:
+        try:
+            req = MediaAnalysisRequest(
+                image_path=None,
+                caption=reel.get('caption',''),
+                alt_text=reel.get('alt',''),
+                media_type='reel'
+            )
+            res = analyze_media_item(req)
+            reel['analysis'] = res.description
+            reel['mood'] = res.mood
+            analyzed_reels.append(reel)
+        except Exception as e:
+            print(f"media_analyzer reel error: {e}")
+            reel['analysis'] = 'Динамичный момент, наполненный энергией'
+            analyzed_reels.append(reel)
+    
     # Обрабатываем изображения (умный выбор - не подряд, а разнообразно)
     processed_images = []
     detected_gender = "unknown"
@@ -975,7 +995,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
                         img_str = base64.b64encode(buffer.getvalue()).decode()
                         processed_images.append(f"data:image/jpeg;base64,{img_str}")
                         
-                        # БЫСТРЫЙ FALLBACK вместо медленного анализа фото
+                        # Быстрый fallback на случай ошибок
                         quick_photo_analysis = [
                             "Взгляд полон жизни и искренности",
                             "Естественная красота без фильтров", 
@@ -984,10 +1004,19 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
                             "Харизма и энергетика через экран",
                             "Стиль и грация в каждом движении"
                         ][i % 6]
+                        # AI анализ фото
+                        try:
+                            from app.services.media_analyzer import MediaAnalysisRequest, analyze_media_item
+                            req = MediaAnalysisRequest(image_path=img_path)
+                            ai_result = analyze_media_item(req)
+                            photo_analysis = ai_result.description
+                        except Exception as e:
+                            print(f"media_analyzer error: {e}")
+                            photo_analysis = quick_photo_analysis
                         
                         selected_photo_data.append({
                             'index': idx + 1,  # Номер фото в профиле
-                            'analysis': quick_photo_analysis,  # Быстрый fallback
+                            'analysis': photo_analysis,
                             'image': f"data:image/jpeg;base64,{img_str}"
                         })
                         
@@ -1004,8 +1033,8 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         'bio': bio,
         'captions': real_captions[:5],  # Первые 5 подписей
         'locations': locations[:3],     # Первые 3 локации
-        'video_content': video_content[:3],  # Первые 3 видео
-        'has_videos': len(video_content) > 0,
+        'video_content': analyzed_reels[:3],  # проанализированные рилсы
+        'has_videos': len(analyzed_reels) > 0,
         'selected_photos': selected_photo_data  # Данные о выбранных фото
     }
     

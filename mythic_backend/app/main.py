@@ -79,7 +79,8 @@ async def start_scrape(
         "directUrls":     [clean_url],
         "resultsType":    "details",
         "scrapeComments": False,
-        
+        "scrapeStories": True,  # Добавляем сбор сторисов
+        "storiesLimit": 5,      # Ограничиваем до 5 сторисов
         "resultsLimit":   200,
     }
 
@@ -283,6 +284,8 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
             "Собираю пазл твоей личности из сотен маленьких деталей...",
             "Анализирую энергетику в каждом кадре — ты излучаешь особый свет...",
             "Изучаю тонкости — как ты смотришь, улыбаешься, позируешь...",
+            "Анализирую твои сторисы — они показывают настоящие моменты жизни...",
+            "Изучаю твои истории — в них столько спонтанности и искренности...",
             "Готовлю материал для книги — каждая страница будет уникальной...",
             "Создаю концепцию твоей истории — она достойна красивых слов..."
         ]
@@ -316,7 +319,8 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
                     "username": profile.get("username"),
                     "fullName": profile.get("fullName"),
                     "followers": profile.get("followersCount"),
-                    "posts": len(profile.get("latestPosts", []))
+                    "posts": len(profile.get("latestPosts", [])),
+                    "stories": len(profile.get("stories", []))
                 }
         except:
             pass
