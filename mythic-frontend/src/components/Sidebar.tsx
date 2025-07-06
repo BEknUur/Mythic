@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   Sparkles
 } from 'lucide-react';
-import './FloatingBook.css';
+import { TOUR_STEP_IDS } from './ui/tour';
 
 interface SidebarProps {
   // onNavigation is no longer needed
@@ -33,37 +33,37 @@ const Sidebar: React.FC<SidebarProps> = () => {
   return (
     <>
       {/* Floating Books Animation with beautiful covers */}
-      <div className="floating-book-container">
+      {/* <div className="floating-book-container"> */}
         {/* Book 1 - Сердца в цифровом мире */}
-        <div className="floating-book">
+        {/* <div className="floating-book">
           <div className="book-pages"></div>
           
-        </div>
+        </div> */}
         
         {/* Book 2 - Мистерии прошлого */}
-        <div className="floating-book">
+        {/* <div className="floating-book">
           <div className="book-pages"></div>
           
-        </div>
+        </div> */}
         
         {/* Book 3 - Космические приключения */}
-        <div className="floating-book">
+        {/* <div className="floating-book">
           <div className="book-pages"></div>
          
-        </div>
+        </div> */}
         
         {/* Book 4 - Философия души */}
-        <div className="floating-book">
+        {/* <div className="floating-book">
           <div className="book-pages"></div>
         
-        </div>
+        </div> */}
         
         {/* Book 5 - Магия повседневности */}
-        <div className="floating-book">
+        {/* <div className="floating-book">
           <div className="book-pages"></div>
          
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
 
       {/* Mobile backdrop */}
       {!isCollapsed && (
@@ -114,7 +114,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
               Создать
             </h3>
             <div className="space-y-2">
-              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4">
+              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4 tour-step-2">
                 <Link to="/generate">
                   <BookOpen className="h-5 w-5 text-purple-500" />
                   <span className="ml-3 font-medium">Создать книгу</span>
@@ -148,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
               Библиотека
             </h3>
             <div className="space-y-2">
-              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4">
+              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4" id={TOUR_STEP_IDS.MY_BOOKS_BUTTON}>
                 <Link to="/library">
                   <Library className="h-5 w-5 text-amber-500" />
                   <span className="ml-3 font-medium">Мои книги</span>

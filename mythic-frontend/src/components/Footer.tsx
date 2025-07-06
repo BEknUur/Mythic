@@ -57,6 +57,17 @@ export function Footer() {
           <p className="text-sm text-gray-500">
             © {new Date().getFullYear()} Mythic AI. Все права защищены.
           </p>
+          <div className="flex justify-center mt-4">
+            <a href="https://nfactorial.school" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+              <span>Backed by</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="font-sans text-white font-bold text-xs">n<span className="inline-block -scale-y-100">!</span></span>
+                </div>
+                <span className="font-semibold">nFactorial</span>
+              </div>
+            </a>
+          </div>
         </div>
       </div>
     </footer>

@@ -9,6 +9,7 @@ import { useUser, SignInButton, useAuth } from '@clerk/clerk-react';
 import { api } from '@/lib/api';
 import { StylePicker } from './StylePicker';
 import { AnimatePresence, motion } from 'framer-motion';
+import { TOUR_STEP_IDS } from './ui/tour';
 
 interface FormProps {
   onStartScrape: (runId: string) => void;
@@ -33,43 +34,6 @@ const StepAuthentication = () => (
     </SignInButton>
   </motion.div>
 );
-
-const StepConnectionCheck = ({ onConnect }: { onConnect: () => void }) => {
-  const [isChecking, setIsChecking] = useState(false);
-  const { toast } = useToast();
-
-  const handleCheck = async () => {
-    setIsChecking(true);
-    try {
-      await api.healthCheck();
-      toast({ title: "Успех!", description: "Соединение с сервером установлено." });
-      onConnect();
-    } catch (error) {
-      toast({ title: "Ошибка", description: "Не удалось подключиться к серверу.", variant: "destructive" });
-    } finally {
-      setIsChecking(false);
-    }
-  };
-
-  return (
-    <motion.div
-      className="text-center"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-    >
-      <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-        <Server className="h-6 w-6 text-gray-500" />
-      </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">Проверка соединения</h3>
-      <p className="text-gray-500 mb-6">Давайте убедимся, что наш сервис готов к работе.</p>
-      <Button onClick={handleCheck} disabled={isChecking} size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
-        {isChecking ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : null}
-        {isChecking ? 'Проверяем...' : 'Проверить соединение'}
-      </Button>
-    </motion.div>
-  );
-};
 
 const StepMainForm = ({ onStartScrape }: FormProps) => {
   const [url, setUrl] = useState('');
@@ -123,16 +87,17 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="instagram-url">Ссылка на Instagram профиль</Label>
+          <Label htmlFor="instagram-url" className="text-gray-600">Ссылка на Instagram профиль</Label>
           <div className="relative">
-            <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
-              id="instagram-url"
+              id={TOUR_STEP_IDS.INSTAGRAM_INPUT}
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://instagram.com/username"
-              className="pl-10 h-12"
+              placeholder="https://instagram.com/yourprofile"
+              className="pl-10"
+              required
               disabled={isLoading}
             />
           </div>
@@ -167,26 +132,23 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
 
 
 export function Form({ onStartScrape }: FormProps) {
-  const [step, setStep] = useState<'auth' | 'connect' | 'form'>('auth');
+  const [step, setStep] = useState<'auth' | 'form'>('auth');
   const { isSignedIn } = useUser();
 
   useEffect(() => {
     if (isSignedIn) {
-      setStep('connect');
+      setStep('form');
     } else {
       setStep('auth');
     }
   }, [isSignedIn]);
   
-  const handleConnect = () => setStep('form');
-
   return (
     <section className="py-20 px-4">
       <div className="max-w-md mx-auto">
         <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-lg shadow-gray-100/50">
           <AnimatePresence mode="wait">
             {step === 'auth' && <StepAuthentication key="auth" />}
-            {step === 'connect' && <StepConnectionCheck onConnect={handleConnect} key="connect" />}
             {step === 'form' && <StepMainForm onStartScrape={onStartScrape} key="form" />}
           </AnimatePresence>
         </div>

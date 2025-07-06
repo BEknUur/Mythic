@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, Navigate } from 'react-router-dom'
 import { MainLayout } from './components/MainLayout'
 import { HomePage } from './components/HomePage'
@@ -8,6 +8,7 @@ import { MyBooksLibrary } from './components/MyBooksLibrary'
 import { BookReader } from './components/BookReader'
 import { TikTokPage } from './components/TikTokPage'
 import { HelpPage } from './components/HelpPage'
+import { TourProvider, TourAlertDialog, TOUR_STEP_IDS, useTour } from '@/components/ui/tour'
 import { Toaster } from './components/ui/toaster'
 import './App.css'
 
@@ -19,6 +20,53 @@ function AppContent() {
   const navigate = useNavigate();
   const [runId, setRunId] = useState<string | null>(null);
   const [bookToRead, setBookToRead] = useState<{ bookId?: string; runId?: string } | null>(null);
+  const [showTourDialog, setShowTourDialog] = useState(true);
+  const { setSteps } = useTour();
+
+  useEffect(() => {
+    // Define the steps for the tour
+    setSteps([
+      {
+        selectorId: TOUR_STEP_IDS.START_CREATING_BUTTON,
+        path: "/",
+        position: "bottom",
+        content: (
+          <div className="space-y-2">
+            <h3 className="font-medium">Начните здесь!</h3>
+            <p className="text-sm text-muted-foreground">
+              Нажмите эту кнопку, чтобы перейти на страницу создания вашей уникальной книги.
+            </p>
+          </div>
+        ),
+      },
+      {
+        selectorId: TOUR_STEP_IDS.INSTAGRAM_INPUT,
+        path: "/generate",
+        position: "bottom",
+        content: (
+          <div className="space-y-2">
+            <h3 className="font-medium">Вставьте ссылку</h3>
+            <p className="text-sm text-muted-foreground">
+              Это основное поле, куда нужно вставить ссылку на Instagram-профиль.
+            </p>
+          </div>
+        ),
+      },
+      {
+        selectorId: TOUR_STEP_IDS.MY_BOOKS_BUTTON,
+        path: "/library",
+        position: "right",
+        content: (
+          <div className="space-y-2">
+            <h3 className="font-medium">Ваша библиотека</h3>
+            <p className="text-sm text-muted-foreground">
+              Готовые книги будут ждать вас здесь. Вы сможете их почитать или скачать.
+            </p>
+          </div>
+        ),
+      },
+    ]);
+  }, [setSteps]);
 
   const handleStartScrape = (id: string) => {
     setRunId(id);
@@ -94,12 +142,17 @@ function AppContent() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       <Toaster />
+      <TourAlertDialog isOpen={showTourDialog} setIsOpen={setShowTourDialog} />
     </>
   );
 }
 
 function App() {
-  return <AppContent />;
+  return (
+    <TourProvider>
+      <AppContent />
+    </TourProvider>
+  );
 }
 
 export default App;

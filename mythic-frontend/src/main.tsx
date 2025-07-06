@@ -19,7 +19,7 @@ createRoot(document.getElementById('root')!).render(
       afterSignUpUrl="/generate"
     >
       <BrowserRouter>
-        <App />
+    <App />
       </BrowserRouter>
     </ClerkProvider>
   </StrictMode>,

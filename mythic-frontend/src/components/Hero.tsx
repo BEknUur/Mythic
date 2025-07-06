@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, Lock, MoveRight, Sparkles } from 'lucide-react';
 import { useUser, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
+import { TOUR_STEP_IDS } from './ui/tour';
 
 export function Hero() {
   const { isSignedIn, user } = useUser();
@@ -47,7 +48,7 @@ export function Hero() {
           Создано с любовью и AI
         </Badge>
         
-        <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tighter" style={{ fontFamily: 'Manrope, sans-serif' }}>
+        <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tighter tour-step-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
           Превратите ваш <span className="text-purple-600 italic">Instagram</span><br /> в романтическую книгу
         </h1>
         
@@ -57,13 +58,13 @@ export function Hero() {
         </p>
 
         <div className="flex justify-center items-center gap-4 mb-12">
-          <Link to="/generate">
+          <Link to="/generate" id={TOUR_STEP_IDS.START_CREATING_BUTTON}>
             <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800 shadow-lg px-8 py-6 text-lg group">
               Начать создание
               <MoveRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
             </Button>
           </Link>
-          <Button variant="link" className="text-gray-600">
+          <Button variant="link" className="text-gray-600" onClick={() => window.dispatchEvent(new CustomEvent('start-tour'))}>
             Как это работает?
           </Button>
         </div>
