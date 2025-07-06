@@ -67,7 +67,8 @@ def health_check():
 # ───────────── /start-scrape ────────────────────────────────
 @app.get("/start-scrape")
 async def start_scrape(
-    url: AnyUrl, 
+    url: AnyUrl,
+    style: str = 'romantic',
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -108,6 +109,12 @@ async def start_scrape(
     run_dir.mkdir(parents=True, exist_ok=True)
     user_meta = {"user_id": clerk_user_id, "created_at": datetime.datetime.now().isoformat()}
     (run_dir / "user_meta.json").write_text(json.dumps(user_meta, ensure_ascii=False), encoding="utf-8")
+    
+    # Сохраняем выбранный стиль (простым текстовым файлом)
+    try:
+        (run_dir / "style.txt").write_text(style, encoding="utf-8")
+    except Exception as e:
+        print(f"❌ Не удалось сохранить стиль: {e}")
     
     log.info("Actor started runId=%s for user=%s", run_id, clerk_user_id)
     return {"runId": run_id, "message": "Начинаю исследовать вашу личность... Это займет несколько минут"}
@@ -166,8 +173,16 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
         imgs      = await process_folder(images_dir)
         comments  = collect_texts(run_dir / "posts.json")
         
-        # Создаем книгу (без user_id, он будет извлечен из файла)
-        build_romantic_book(run_id, imgs, comments, "classic", user_id=None)
+        # Определяем стиль книги
+        style_file = run_dir / "style.txt"
+        style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
+
+        try:
+            from app.styles import build_book as build_style_book
+            build_style_book(style, run_id, imgs, comments, "classic", user_id=None)
+        except Exception as e:
+            print(f"❌ Ошибка генерации книги в стиле {style}: {e}. Падаем обратно на романтику.")
+            build_romantic_book(run_id, imgs, comments, "classic", user_id=None)
         
         # Автоматически сохраняем книгу в БД
         if clerk_user_id:
@@ -197,6 +212,7 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
     images_dir = run_dir / "images"
     html_file = run_dir / "book.html"
     pdf_file = run_dir / "book.pdf"
+    style_file = run_dir / "style.txt"
     
     log.info(f"Status check for {run_id} by user {current_user.get('sub')}")
     
@@ -204,24 +220,58 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
     images_downloaded = images_dir.exists() and any(images_dir.glob("*"))
     book_generated = html_file.exists()
 
+    # Читаем стиль книги
+    book_style = "romantic"  # по умолчанию
+    if style_file.exists():
+        try:
+            book_style = style_file.read_text(encoding="utf-8").strip()
+        except:
+            pass
+
     message = "Начинаю путешествие по вашему профилю..."
 
     if book_generated:
-        message = "Твоя персональная книга готова! Читай с удовольствием"
+        style_messages = {
+            "romantic": "Твоя персональная романтическая книга готова! Читай с удовольствием",
+            "fantasy": "Твоя эпическая фэнтези-сага готова! Отправляйся в магическое приключение",
+            "humor": "Твоя веселая юмористическая книга готова! Готовься смеяться"
+        }
+        message = style_messages.get(book_style, "Твоя персональная книга готова! Читай с удовольствием")
     elif images_downloaded:
-        romantic_generation_messages = [
-            "Пишу историю нашего знакомства — как твоя фотография остановила меня среди тысяч других...",
-            "Описываю впечатления от твоих фото — каждое рассказывает отдельную историю...",
-            "Делюсь наблюдениями о твоих видео — там столько жизни и энергии...",
-            "Создаю главу об особенных моментах — тех, что врезались в память...",
-            "Пишу финальные пожелания — слова, которые хотел сказать лично...",
-            "Анализирую композицию твоих кадров — ты видишь мир по-особенному...",
-            "Изучаю детали в каждом фото — твой взгляд, улыбку, настроение...",
-            "Собираю самые искренние слова для твоей персональной книги...",
-            "Добавляю последние штрихи — чтобы каждая страница была идеальной...",
-            "Создаю подарок, который останется с тобой навсегда..."
-        ]
-        message = random.choice(romantic_generation_messages)
+        style_generation_messages = {
+            "romantic": [
+                "Пишу романтическую историю специально для тебя...",
+                "Создаю поэтичные главы о твоей красоте...",
+                "Подбираю самые нежные слова для каждой страницы...",
+                "Вплетаю твои фотографии в романтическое повествование...",
+                "Создаю книгу, которая растопит сердце...",
+                "Пишу признания в любви на каждой странице...",
+                "Превращаю твои моменты в романтическую сагу...",
+                "Создаю литературный шедевр о твоей душе..."
+            ],
+            "fantasy": [
+                "Создаю эпическую фэнтези-сагу о великом герое...",
+                "Пишу хроники твоих магических приключений...",
+                "Вплетаю древние заклинания в повествование...",
+                "Создаю легенду о твоих героических подвигах...",
+                "Пишу о твоей власти над стихиями...",
+                "Создаю эпос достойный великих героев...",
+                "Превращаю твою историю в магическую сказку...",
+                "Пишу о твоем союзе с драконами и духами..."
+            ],
+            "humor": [
+                "Пишу веселую комедийную биографию...",
+                "Создаю юмористическую летопись твоих приключений...",
+                "Добавляю смешные истории на каждую страницу...",
+                "Превращаю обычные моменты в комедийные сценки...",
+                "Пишу с улыбкой и хорошим настроением...",
+                "Создаю книгу, которая заставит смеяться...",
+                "Добавляю позитивные шутки и ироничные замечания...",
+                "Пишу о твоем таланте поднимать настроение..."
+            ]
+        }
+        messages = style_generation_messages.get(book_style, style_generation_messages["romantic"])
+        message = random.choice(messages)
     elif data_collected:
         # Более личные сообщения об изучении
         analysis_messages = [
@@ -241,6 +291,7 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
     status_info = {
         "runId": run_id,
         "message": message,
+        "style": book_style,
         "stages": {
             "data_collected": data_collected,
             "images_downloaded": images_downloaded,

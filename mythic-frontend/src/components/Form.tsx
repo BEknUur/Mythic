@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Instagram, CheckCircle, AlertCircle, Loader2, Lock } from 'lucide-react';
 import { useUser, SignInButton, useAuth } from '@clerk/clerk-react';
 import { api } from '@/lib/api';
+import { StylePicker } from './StylePicker';
 
 interface FormProps {
   onStartScrape: (runId: string) => void;
@@ -19,6 +20,7 @@ export function Form({ onStartScrape }: FormProps) {
   const [error, setError] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
+  const [style, setStyle] = useState('romantic');
   const { toast } = useToast();
   const { isSignedIn } = useUser();
   const { getToken } = useAuth();
@@ -79,10 +81,10 @@ export function Form({ onStartScrape }: FormProps) {
 
     try {
       const token = await getToken();
-      const result = await api.startScrape(url, token || undefined);
+      const result = await api.startScrape(url, style, token || undefined);
       toast({
         title: "Начинаем создание книги",
-        description: "Ваш запрос принят в обработку",
+        description: `Ваш запрос принят. Стиль: ${style}`,
       });
       onStartScrape(result.runId);
     } catch (error) {
@@ -171,6 +173,12 @@ export function Form({ onStartScrape }: FormProps) {
                     disabled={isLoading || !isSignedIn}
                   />
                 </div>
+              </div>
+
+              {/* Style Picker */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-black">Стиль книги</Label>
+                <StylePicker value={style} onChange={setStyle} />
               </div>
 
               {error && (

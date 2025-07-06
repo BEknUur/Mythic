@@ -20,6 +20,8 @@ import {
   Zap
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { StylePicker, STYLES } from './StylePicker';
+import { useAuth } from '@clerk/clerk-react';
 
 interface InstagramFormProps {
   onScrapeStart: (runId: string) => void;
@@ -31,7 +33,9 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
   const [error, setError] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
+  const [style, setStyle] = useState<string>('romantic');
   const { toast } = useToast();
+  const { getToken } = useAuth();
 
   const validateInstagramUrl = (url: string): boolean => {
     const instagramUrlPattern = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/;
@@ -83,10 +87,11 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
     setError('');
 
     try {
-      const result = await api.startScrape(url);
+      const token = await getToken?.();
+      const result = await api.startScrape(url, style, token || undefined);
       toast({
         title: "🚀 Начинаем создание книги!",
-        description: "Ваш запрос принят, создаем романтическую книгу",
+        description: `Ваш запрос принят, создаем "${STYLES.find(s=>s.value===style)?.label}" книгу`,
       });
       onScrapeStart(result.runId);
     } catch (error) {
@@ -233,6 +238,14 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
                 <p className="text-sm text-gray-500">
                   Например: https://instagram.com/username или https://www.instagram.com/username
                 </p>
+              </div>
+
+              {/* Style Picker */}
+              <div className="space-y-2">
+                <Label htmlFor="style-picker" className="text-sm font-medium text-black">
+                  Стиль книги
+                </Label>
+                <StylePicker value={style} onChange={setStyle} />
               </div>
 
               {error && (

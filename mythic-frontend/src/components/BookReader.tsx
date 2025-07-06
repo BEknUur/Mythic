@@ -216,27 +216,26 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
     }
   };
 
-  // Выделение текста в главе
+ 
   const handleTextSelectedFromChapter = (idx: number, range: Range, text: string) => {
-    if (text.trim().length < 2) return; // Игнорируем короткие выделения
+    if (text.trim().length < 2) return; 
     selectionRangeRef.current = range;
     selectedChapterRef.current = idx;
     
-    // Больше не предзаполняем поле ввода автоматически
-    // Просто сохраняем информацию о выделении для использования в чате
+  
   };
 
-  // Отправка сообщения в чат
+ 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) {
-      e.preventDefault(); // Предотвращаем перезагрузку страницы
+      e.preventDefault();
     }
     
     if (!chatInput.trim()) return;
     
     setIsAiResponding(true);
     
-    // Создаем или обновляем сессию редактирования
+    
     let editSession = currentEditSession;
     if (selectionRangeRef.current) {
       const selectedText = selectionRangeRef.current.toString();

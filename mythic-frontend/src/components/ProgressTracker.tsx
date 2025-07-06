@@ -236,10 +236,14 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               </div>
 
               <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
-                Создаем вашу историю любви
+                {status?.style === 'fantasy' ? 'Создаем эпическую фэнтези-книгу' :
+                 status?.style === 'humor' ? 'Создаем веселую юмористическую книгу' :
+                 'Создаем вашу историю любви'}
               </CardTitle>
               <CardDescription className="text-gray-600 text-lg leading-relaxed">
-                Наш искусственный интеллект анализирует ваш Instagram и создает персональную романтическую книгу
+                {status?.style === 'fantasy' ? 'Наш искусственный интеллект анализирует ваш Instagram и создает эпическую фэнтези-хронику о великом герое' :
+                 status?.style === 'humor' ? 'Наш искусственный интеллект анализирует ваш Instagram и создает веселую юмористическую биографию' :
+                 'Наш искусственный интеллект анализирует ваш Instagram и создает персональную романтическую книгу'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">

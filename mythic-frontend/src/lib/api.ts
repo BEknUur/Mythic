@@ -25,6 +25,7 @@ const StagesSchema = z.object({
 const StatusResponseSchema = z.object({
   runId: z.string(),
   message: z.string(),
+  style: z.string().optional(),
   stages: StagesSchema,
   profile: ProfileSchema.optional(),
   files: z.record(z.string()).default({}),
@@ -112,12 +113,15 @@ export const api = {
   /* ---------- instagram → apify ---------- */
   async startScrape(
     instagramUrl: string,
+    style: string = 'romantic',
     token?: string,
   ): Promise<StartScrapeResponse> {
-    const res = await fetch(
-      `${BASE_URL}/start-scrape?url=${encodeURIComponent(instagramUrl)}`,
-      { headers: headersWithAuth(token) },
-    )
+    const url = new URL(`${BASE_URL}/start-scrape`);
+    url.searchParams.set('url', instagramUrl);
+    url.searchParams.set('style', style);
+    const res = await fetch(url.toString(), {
+      headers: headersWithAuth(token),
+    })
     if (!res.ok)
       throw new ApiError(await res.text(), res.status)
     return StartScrapeResponseSchema.parse(await res.json())
