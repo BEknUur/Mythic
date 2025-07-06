@@ -1574,7 +1574,7 @@ async def create_book(request: Request, background: BackgroundTasks, current_use
     try:
         body = await request.json()
         run_id = body.get("runId")
-        book_format = body.get("format", "classic")  # "classic" или "zine"
+        book_format = body.get("format", "classic")  # classic | zine | magazine
         
         if not run_id:
             raise HTTPException(400, "runId обязателен")
@@ -1611,11 +1611,21 @@ async def create_book(request: Request, background: BackgroundTasks, current_use
             except:
                 pass
         
-        build_romantic_book(run_id, imgs, comments, book_format, user_id)
+        # Определяем стиль книги
+        style_file = run_dir / "style.txt"
+        style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
+        
+        # Создаем книгу в соответствующем стиле
+        try:
+            from app.styles import build_book as build_style_book
+            build_style_book(style, run_id, imgs, comments, book_format, user_id)
+        except Exception as e:
+            print(f"❌ Ошибка генерации книги в стиле {style}: {e}. Падаем обратно на романтику.")
+            build_romantic_book(run_id, imgs, comments, book_format, user_id)
 
     background.add_task(_build)
 
-    format_name = "классическую книгу" if book_format == "classic" else "мозаичный зин"
+    format_name = "классическую книгу" if book_format == "classic" else "мозаичный зин" if book_format == "zine" else "журнал"
     return {"status": "processing", "runId": run_id, "format": book_format, "message": f"Создание {format_name} началось! Скоро будет готова"}
 
 # Модели для работы с книгами пользователя

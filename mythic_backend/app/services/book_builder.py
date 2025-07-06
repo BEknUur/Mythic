@@ -101,7 +101,7 @@ def analyze_profile_data(posts_data: list) -> dict:
 def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format: str = "classic", user_id: str = None):
     """Создание HTML книги (с выбором формата: classic или zine)"""
     try:
-        # Загружаем данные профиля
+        
         run_dir = Path("data") / run_id
         posts_json = run_dir / "posts.json"
         images_dir = run_dir / "images"
@@ -111,11 +111,11 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
         else:
             posts_data = []
         
-        # Анализируем профиль СНАЧАЛА
+        
         analysis = analyze_profile_data(posts_data)
         username = analysis.get("username", "...")
         
-        # Ждем загрузки изображений и собираем их
+        
         actual_images = []
         if images_dir.exists():
             # Собираем все изображения из папки
@@ -148,6 +148,10 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
             # Мозаичный зин - короткий контент
             content = generate_zine_content(analysis, actual_images)
             html = create_zine_html(content, analysis, actual_images)
+        elif book_format == "magazine":
+            # Полноценный журнальный формат с обложкой, оглавлением и разворотами
+            from app.utils.magazine import create_magazine_html
+            html = create_magazine_html(analysis, actual_images, style="romantic")
         else:
             content = {"format": "literary"}  
             html = create_literary_instagram_book_html(content, analysis, actual_images)
@@ -318,19 +322,19 @@ def apply_dream_pastel_effect(img: Image.Image) -> Image.Image:
         if img.mode != 'RGB':
             img = img.convert('RGB')
         
-        # Лёгкое размытие
+      
         img = img.filter(ImageFilter.GaussianBlur(1.2))
         
-        # Цветовая коррекция в теплые тона
+        
         enhancer = ImageEnhance.Color(img)
         img = enhancer.enhance(1.15)
         
-        # Создаем теплый overlay
-        overlay = Image.new('RGBA', img.size, (255, 220, 210, 25))  # peach #ffdcd2
+       
+        overlay = Image.new('RGBA', img.size, (255, 220, 210, 25)) 
         img = img.convert('RGBA')
         img = Image.alpha_composite(img, overlay)
         
-        # Добавляем grain только если numpy доступен
+        
         if NUMPY_AVAILABLE:
             try:
                 noise = np.random.randint(0, 15, (img.size[1], img.size[0], 3), dtype=np.uint8)

@@ -1,43 +1,62 @@
-import { Instagram, Send } from 'lucide-react';
-
-const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M12.528 8.007a2.5 2.5 0 1 1-5.001-0c0-1.803 1.156-3.372 2.854-3.837.24-.066.49-.098.747-.098v5.928Z" />
-    <path d="M12.528 8.007V1.99a2.5 2.5 0 1 0-5 0v10.53a2.5 2.5 0 1 0 5 0V8.007Z" />
-    <path d="M18.03 12.527a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" />
-  </svg>
-);
+import { Link } from 'react-router-dom';
+import { BookOpen, Instagram, Send, Twitter } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="bg-gray-50 border-t border-gray-200">
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
-          <p className="text-sm text-gray-600">
-            © {new Date().getFullYear()} Mythic. Все права защищены.
-          </p>
-          <div className="flex space-x-4">
-            <a href="https://www.instagram.com/mythic_aii/" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-900">
-              <Instagram className="h-6 w-6" />
-            </a>
-            <a href="https://www.tiktok.com/@mythicaai?_t=ZM-8xRdRje7ZIs&_r=1" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-900">
-              <TikTokIcon className="h-6 w-6" />
-            </a>
-            <a href="https://www.threads.com/@ualikhaanuly?igshid=NTc4MTIwNjQ2YQ==" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-900">
-              <Send className="h-6 w-6" />
-            </a>
+    <footer className="bg-white border-t border-gray-100">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Logo and About */}
+          <div className="md:col-span-1">
+            <Link to="/" className="flex items-center gap-2 mb-4">
+              <BookOpen className="h-7 w-7 text-purple-600" />
+              <span className="text-xl font-bold text-gray-900">Mythic AI</span>
+            </Link>
+            <p className="text-gray-500 text-sm">
+              Превращаем ваши цифровые воспоминания в вечные истории.
+            </p>
           </div>
+
+          {/* Navigation Links */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-4">Навигация</h3>
+            <ul className="space-y-3">
+              <li><Link to="/" className="text-gray-500 hover:text-purple-600 transition-colors">Главная</Link></li>
+              <li><Link to="/generate" className="text-gray-500 hover:text-purple-600 transition-colors">Создать книгу</Link></li>
+              <li><Link to="/library" className="text-gray-500 hover:text-purple-600 transition-colors">Мои книги</Link></li>
+            </ul>
+          </div>
+
+          {/* Help Links */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-4">Помощь</h3>
+            <ul className="space-y-3">
+              <li><Link to="/help" className="text-gray-500 hover:text-purple-600 transition-colors">FAQ</Link></li>
+              <li><a href="mailto:support@mythicai.com" className="text-gray-500 hover:text-purple-600 transition-colors">Поддержка</a></li>
+            </ul>
+          </div>
+          
+          {/* Social Links */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-4">Следите за нами</h3>
+            <div className="flex space-x-4">
+              <a href="https://www.tiktok.com/@mythica.ai" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 transition-colors">
+                <Twitter className="h-6 w-6" />
+              </a>
+              <a href="https://www.instagram.com/mythic_aii/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 transition-colors">
+                <Instagram className="h-6 w-6" />
+              </a>
+              <a href="https://www.threads.com/@mythic_aii" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 transition-colors">
+                <Send className="h-6 w-6" />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12 pt-8 border-t border-gray-100 text-center">
+          <p className="text-sm text-gray-500">
+            © {new Date().getFullYear()} Mythic AI. Все права защищены.
+          </p>
         </div>
       </div>
     </footer>

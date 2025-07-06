@@ -8,7 +8,7 @@ log = logging.getLogger("apify")
 _client = ApifyClient(settings.APIFY_TOKEN)
 
 
-# helper: camelCase → snake_case
+
 def _normalize_webhooks(webhooks: list[dict]) -> list[dict]:
     out = []
     for wh in webhooks:

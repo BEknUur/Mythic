@@ -4,10 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Loader2, RefreshCw, AlertTriangle, Heart, Book, Camera, User, Lock } from 'lucide-react';
+import { CheckCircle, Loader2, RefreshCw, AlertTriangle, Heart, Book, Camera, User, Lock, BookOpen, Newspaper } from 'lucide-react';
 import { useUser, SignInButton, UserButton, useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
 import { BookReadyDialog } from './BookReadyDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface ProgressTrackerProps {
   runId: string;
@@ -62,6 +69,8 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [isBookReadyDialogOpen, setIsBookReadyDialogOpen] = useState(false);
   const [visibleSteps, setVisibleSteps] = useState<number>(0);
+  const [showFormatDialog, setShowFormatDialog] = useState(false);
+  const [isCreatingBook, setIsCreatingBook] = useState(false);
   const { toast } = useToast();
   const { isSignedIn, user } = useUser();
   const { getToken } = useAuth();
@@ -122,6 +131,12 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     setStatus(newStatus);
     setLastChecked(new Date());
 
+    // Показываем диалог выбора формата, когда фотографии загружены, но книга еще не создана
+    if (newStatus.stages.images_downloaded && !newStatus.stages.book_generated && !showFormatDialog && !isCreatingBook) {
+      setShowFormatDialog(true);
+      return;
+    }
+
     if (newStatus.stages.book_generated && !isBookReadyDialogOpen) {
         setIsBookReadyDialogOpen(true);
         onComplete();
@@ -143,6 +158,29 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       });
     } finally {
       setIsManualChecking(false);
+    }
+  };
+
+  const createBookWithFormat = async (format: string) => {
+    setShowFormatDialog(false);
+    setIsCreatingBook(true);
+    
+    try {
+      const token = await getToken();
+      await api.createBook(runId, format, token || undefined);
+      
+      toast({
+        title: "Создание книги началось",
+        description: `Создаем книгу в формате: ${format === 'classic' ? 'классическом' : format === 'magazine' ? 'журнальном' : 'зин'}`,
+      });
+    } catch (error) {
+      console.error('Error creating book:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось начать создание книги",
+        variant: "destructive",
+      });
+      setIsCreatingBook(false);
     }
   };
 
@@ -335,7 +373,9 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                         создание книги
                       </span>
                       <span className={`font-semibold transition-colors duration-300 ${status.stages.book_generated ? 'text-gray-800' : 'text-gray-400'}`}>
-                        {getHumanStatus('book_generated', status.stages.book_generated) || 'ожидание'}
+                        {status.stages.book_generated ? 
+                          getHumanStatus('book_generated', status.stages.book_generated) : 
+                          isCreatingBook ? 'создаем книгу...' : 'ожидание выбора формата'}
                       </span>
                     </div>
                   </div>
@@ -463,6 +503,60 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
           </Card>
         </div>
       </div>
+      
+      {/* Диалог выбора формата книги */}
+      <Dialog open={showFormatDialog} onOpenChange={setShowFormatDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl text-center">
+              Выберите формат книги
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Данные собраны! Теперь выберите, в каком формате создать вашу книгу.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            {/* Классический формат */}
+            <div 
+              className="border rounded-lg p-6 cursor-pointer hover:border-blue-500 transition-colors"
+              onClick={() => createBookWithFormat('classic')}
+            >
+              <div className="flex items-center justify-center mb-4">
+                <Book className="h-12 w-12 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-lg text-center mb-2">Классическая книга</h3>
+              <p className="text-sm text-gray-600 text-center">
+                Традиционный формат с главами, красивым дизайном и плавным повествованием
+              </p>
+            </div>
+            
+            {/* Журнальный формат */}
+            <div 
+              className="border rounded-lg p-6 cursor-pointer hover:border-purple-500 transition-colors"
+              onClick={() => createBookWithFormat('magazine')}
+            >
+              <div className="flex items-center justify-center mb-4">
+                <Newspaper className="h-12 w-12 text-purple-600" />
+              </div>
+              <h3 className="font-semibold text-lg text-center mb-2">Журнальный формат</h3>
+              <p className="text-sm text-gray-600 text-center">
+                Стильный журнальный дизайн с обложкой, оглавлением и разворотами как в модном издании
+              </p>
+            </div>
+          </div>
+          
+          <div className="mt-6 text-center">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFormatDialog(false)}
+              className="mr-4"
+            >
+              Отмена
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       
       <BookReadyDialog
         isOpen={isBookReadyDialogOpen}

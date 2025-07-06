@@ -296,5 +296,21 @@ export const api = {
         throw new Error('Moderation request failed');
     }
     return response.json();
-  }
+  },
+
+  /* ---------- book creation ---------- */
+  async createBook(
+    runId: string,
+    format: string = 'classic',
+    token?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${BASE_URL}/create-book`, {
+      method: 'POST',
+      headers: headersWithAuth(token),
+      body: JSON.stringify({ runId: runId, format: format }),
+    })
+    if (!res.ok)
+      throw new ApiError(await res.text(), res.status)
+    return res.json()
+  },
 }

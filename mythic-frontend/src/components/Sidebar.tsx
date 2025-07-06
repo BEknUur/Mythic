@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
@@ -19,18 +20,14 @@ import {
 import './FloatingBook.css';
 
 interface SidebarProps {
-  onNavigation: (section: string) => void;
+  // onNavigation is no longer needed
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onNavigation }) => {
+const Sidebar: React.FC<SidebarProps> = () => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
-  };
-
-  const handleNavClick = (section: string) => {
-    onNavigation(section);
   };
 
   return (
@@ -86,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigation }) => {
         {/* Header */}
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
@@ -96,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigation }) => {
                 </h1>
                 <p className="text-sm text-gray-500">Создаём истории</p>
               </div>
-            </div>
+            </Link>
             
             <Button
               variant="ghost"
@@ -117,45 +114,30 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigation }) => {
               Создать
             </h3>
             <div className="space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('create-book')}
-              >
-                <BookOpen className="h-5 w-5 text-purple-500" />
-                <span className="ml-3 font-medium">Создать книгу</span>
+              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4">
+                <Link to="/generate">
+                  <BookOpen className="h-5 w-5 text-purple-500" />
+                  <span className="ml-3 font-medium">Создать книгу</span>
+                </Link>
               </Button>
 
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('book-to-tiktok')}
-              >
-                <Video className="h-5 w-5 text-red-500" />
-                <div className="flex items-center justify-between w-full ml-3">
-                  <span className="font-medium">Книга → TikTok</span>
-                  <Badge variant="secondary" className="bg-red-100 text-red-700 text-xs px-2 py-1">
-                    Новое
-                  </Badge>
-                </div>
+              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4">
+                <Link to="/tiktok">
+                  <Video className="h-5 w-5 text-red-500" />
+                  <div className="flex items-center justify-between w-full ml-3">
+                    <span className="font-medium">Книга → TikTok</span>
+                    <Badge variant="secondary" className="bg-red-100 text-red-700 text-xs px-2 py-1">
+                      Новое
+                    </Badge>
+                  </div>
+                </Link>
               </Button>
 
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('write-fanfic')}
-              >
-                <PenTool className="h-5 w-5 text-blue-500" />
-                <span className="ml-3 font-medium">Написать фанфик</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('generate-comic')}
-              >
-                <FileImage className="h-5 w-5 text-green-500" />
-                <span className="ml-3 font-medium">Генерировать комикс</span>
+              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4">
+                <Link to="/fanfic">
+                  <PenTool className="h-5 w-5 text-blue-500" />
+                  <span className="ml-3 font-medium">Написать фанфик</span>
+                </Link>
               </Button>
             </div>
           </div>
@@ -166,48 +148,26 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigation }) => {
               Библиотека
             </h3>
             <div className="space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('my-books')}
-              >
-                <Library className="h-5 w-5 text-amber-500" />
-                <span className="ml-3 font-medium">Мои книги</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('gallery')}
-              >
-                <Image className="h-5 w-5 text-indigo-500" />
-                <span className="ml-3 font-medium">Галерея</span>
+              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4">
+                <Link to="/library">
+                  <Library className="h-5 w-5 text-amber-500" />
+                  <span className="ml-3 font-medium">Мои книги</span>
+                </Link>
               </Button>
             </div>
           </div>
 
           {/* Settings Section */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-              Настройки
-            </h3>
+           
             <div className="space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('settings')}
-              >
-                <Settings className="h-5 w-5 text-gray-500" />
-                <span className="ml-3 font-medium">Настройки</span>
-              </Button>
+              
 
-              <Button
-                variant="ghost"
-                className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4"
-                onClick={() => handleNavClick('help')}
-              >
-                <HelpCircle className="h-5 w-5 text-gray-500" />
-                <span className="ml-3 font-medium">Помощь</span>
+              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 rounded-xl px-4">
+                <Link to="/help">
+                  <HelpCircle className="h-5 w-5 text-gray-500" />
+                  <span className="ml-3 font-medium">Помощь</span>
+                </Link>
               </Button>
             </div>
           </div>
