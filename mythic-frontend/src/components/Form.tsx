@@ -42,7 +42,7 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
   const [style, setStyle] = useState('romantic');
   const { toast } = useToast();
   const { getToken } = useAuth();
-  
+
   const validateInstagramUrl = (url: string): boolean => {
     const pattern = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/;
     return pattern.test(url);
@@ -83,49 +83,49 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
         </div>
         <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">Заполните детали</h3>
         <p className="text-gray-500 dark:text-gray-400">Остался последний шаг до создания вашей книги.</p>
-      </div>
+              </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
+              <div className="space-y-2">
           <Label htmlFor="instagram-url" className="text-gray-600 dark:text-gray-400">Ссылка на Instagram профиль</Label>
-          <div className="relative">
+                <div className="relative">
             <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <Input
+                  <Input
               id={TOUR_STEP_IDS.INSTAGRAM_INPUT}
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
               placeholder="https://instagram.com/yourprofile"
               className="pl-10"
               required
               disabled={isLoading}
-            />
-          </div>
-        </div>
+                  />
+                </div>
+              </div>
 
-        <div className="space-y-2">
+              <div className="space-y-2">
           <Label>Выберите стиль книги</Label>
-          <StylePicker value={style} onChange={setStyle} />
-        </div>
+                <StylePicker value={style} onChange={setStyle} />
+              </div>
 
-        {error && (
+              {error && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
+                  <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+                </Alert>
+              )}
 
         <Button type="submit" disabled={isLoading || !url.trim()} className="w-full h-12 text-base bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-200">
-          {isLoading ? (
-            <>
+                {isLoading ? (
+                  <>
               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               Создаем...
-            </>
-          ) : (
-            'Создать книгу'
-          )}
-        </Button>
-      </form>
+                  </>
+                ) : (
+                  'Создать книгу'
+                )}
+              </Button>
+            </form>
     </motion.div>
   );
 };
@@ -154,7 +154,7 @@ export function Form({ onStartScrape }: FormProps) {
         </div>
         <div className="mt-6 text-center text-sm text-gray-400 dark:text-gray-500">
           <p>Ваши данные в безопасности.</p>
-        </div>
+            </div>
       </div>
     </section>
   );

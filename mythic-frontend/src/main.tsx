@@ -23,7 +23,7 @@ createRoot(document.getElementById('root')!).render(
     >
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <BrowserRouter>
-          <App />
+    <App />
         </BrowserRouter>
       </ThemeProvider>
     </ClerkProvider>

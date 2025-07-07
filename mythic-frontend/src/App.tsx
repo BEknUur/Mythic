@@ -88,11 +88,11 @@ function AppContent() {
   const handleShowLibrary = () => {
     navigate('/library');
   };
-  
+
   const handleBackToMain = () => {
     navigate('/');
   };
-  
+
   const handleOpenBookReader = (bookId?: string, runId?: string) => {
     setBookToRead({ bookId, runId });
     navigate('/reader');
@@ -103,7 +103,7 @@ function AppContent() {
     navigate('/library');
   };
 
-  return (
+    return (
     <>
       <Routes>
         <Route element={<MainLayout />}>
@@ -111,12 +111,12 @@ function AppContent() {
           <Route 
             path="/generate" 
             element={<GeneratePage onStartScrape={handleStartScrape} />} 
-          />
+        />
           <Route path="/tiktok" element={<TikTokPage />} />
           <Route 
             path="/library"
             element={<MyBooksLibrary onBack={handleBackToMain} onOpenBook={handleOpenBookReader} />}
-          />
+        />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/fanfic" element={<FanficPage />} />
           <Route path="/settings" element={<SettingsPage />} />
@@ -137,15 +137,15 @@ function AppContent() {
           path="/reader"
           element={
             bookToRead ? (
-              <BookReader 
-                bookId={bookToRead.bookId} 
-                runId={bookToRead.runId} 
-                onBack={handleBackFromReader} 
-              />
+        <BookReader 
+          bookId={bookToRead.bookId}
+          runId={bookToRead.runId}
+          onBack={handleBackFromReader}
+        />
             ) : (
               <Navigate to="/library" />
-            )
-          }
+    )
+  }
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

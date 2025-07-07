@@ -255,7 +255,7 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
 
         {/* Books List */}
         <div className="space-y-6">
-          {books.map((book) => (
+            {books.map((book) => (
             <Card key={book.id} className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row gap-6">
@@ -277,27 +277,27 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
                       {book.has_pdf && <Badge variant="outline" className="border-green-300 text-green-600 dark:border-green-700 dark:text-green-400">PDF</Badge>}
                     </div>
                   </div>
-
+                  
                   {/* Action Buttons */}
                   <div className="flex-shrink-0 flex items-center gap-2">
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleViewBook(book)}
+                      <Button
+                        variant="outline"
+                        onClick={() => handleViewBook(book)}
                       className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    >
+                      >
                       <Eye className="h-4 w-4 mr-2" />
-                      Читать
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => handleDownloadBook(book)}
+                        Читать
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleDownloadBook(book)}
                       className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       disabled={!book.has_pdf}
-                    >
+                      >
                       <Download className="h-4 w-4 mr-2" />
-                      PDF
-                    </Button>
-                    <Button 
+                        PDF
+                      </Button>
+                    <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteBook(book)}
@@ -306,11 +306,11 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
       </div>
     </div>
   );

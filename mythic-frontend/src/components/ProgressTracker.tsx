@@ -152,7 +152,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       const randomIndex = Math.floor(Math.random() * messages.length);
       setCurrentMessage(status?.message || messages[randomIndex]);
     }, 4500);
-
+      
     return () => clearInterval(messageInterval);
   }, [status, isCreatingBook]);
 
@@ -170,8 +170,8 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     }
 
     if (newStatus.stages.book_generated && !isBookReadyDialogOpen) {
-      setIsBookReadyDialogOpen(true);
-      onComplete();
+        setIsBookReadyDialogOpen(true);
+        onComplete();
     }
   };
 
@@ -223,7 +223,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       clearInterval(intervalId);
     };
   }, [runId, onComplete, status, showFormatDialog, isCreatingBook, getToken]);
-  
+
   const progressValue = status ? (Object.values(status.stages).filter(Boolean).length / Object.keys(status.stages).length) * 100 : 0;
   
   const bookStyle = status?.style === 'fantasy' ? 'эпическую фэнтези-книгу' : 
@@ -238,10 +238,10 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     return 0;
   };
   const currentStepIndex = getCurrentStepIndex();
-  
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950 p-4">
-      <div className="w-full max-w-2xl">
+        <div className="w-full max-w-2xl">
         <header className="flex justify-end mb-8">
           <UserButton afterSignOutUrl="/" />
         </header>
@@ -250,12 +250,12 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
           <CardHeader className="text-center items-center pt-8">
             <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center mb-4">
               <Book className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-            </div>
+              </div>
             <CardTitle className="text-3xl font-bold text-gray-900 dark:text-gray-50">Создаем {bookStyle}</CardTitle>
             <CardDescription className="text-lg text-gray-500 dark:text-gray-400 mt-2">
               Наш искусственный интеллект анализирует ваш Instagram и создает {bookStyle}-хронику о великом герое.
-            </CardDescription>
-          </CardHeader>
+              </CardDescription>
+            </CardHeader>
           <CardContent className="px-8 pb-8">
             <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-4 text-center my-8">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Сейчас происходит:</p>
@@ -268,8 +268,8 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                 >
                   {currentMessage}
                 </motion.span>
-              </p>
-            </div>
+                </p>
+              </div>
 
             <Progress value={progressValue} className="mb-2 h-2" />
             <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-8">{currentMessage}</p>
@@ -300,10 +300,10 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               <Button onClick={onReset} variant="ghost" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Вернуться и создать новую книгу
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
       </div>
       
       {/* Format Selection Dialog */}
@@ -334,7 +334,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                   <p className="text-gray-500 dark:text-gray-400">Традиционный формат с главами, красивым дизайном и плавным повествованием.</p>
                 </button>
                 <button
-                  onClick={() => createBookWithFormat('magazine')}
+              onClick={() => createBookWithFormat('magazine')}
                   className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300"
                 >
                   <Newspaper className="w-8 h-8 text-purple-600 mb-4" />
@@ -347,16 +347,16 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               </div>
             </div>
           </motion.div>
-        </div>
+          </div>
       )}
 
       {isBookReadyDialogOpen && status && (
-        <BookReadyDialog
-          isOpen={isBookReadyDialogOpen}
+      <BookReadyDialog
+        isOpen={isBookReadyDialogOpen}
           onOpenChange={(isOpen) => !isOpen && setIsBookReadyDialogOpen(false)}
-          runId={runId}
-          status={status}
-        />
+        runId={runId}
+        status={status}
+      />
       )}
     </div>
   );

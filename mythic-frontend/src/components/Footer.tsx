@@ -39,7 +39,7 @@ export function Footer() {
           {/* Social Links */}
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-gray-50 mb-4">Следите за нами</h3>
-            <div className="flex space-x-4">
+          <div className="flex space-x-4">
               <a href="https://t.me/beknur_10" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                 <MessageSquare className="h-6 w-6" />
               </a>
@@ -47,8 +47,8 @@ export function Footer() {
                 <Twitter className="h-6 w-6" />
               </a>
               <a href="https://www.instagram.com/mythic_aii/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                <Instagram className="h-6 w-6" />
-              </a>
+              <Instagram className="h-6 w-6" />
+            </a>
               <a href="https://www.threads.com/@ualikhaanuly" className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                 <AtSign className="h-6 w-6" />
               </a>

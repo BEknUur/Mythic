@@ -1,4 +1,6 @@
+"use client";
 import React from 'react';
+import { motion } from 'framer-motion';
 
 const testimonials = [
   {
@@ -52,25 +54,39 @@ export function Testimonials() {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <div 
-              key={index}
-              className="p-8 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/80 animate-fade-in-up"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="flex items-center gap-4 mb-4">
-                <img src={testimonial.avatar} alt={testimonial.name} className="w-12 h-12 rounded-full object-cover" />
-                <div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-50">{testimonial.name}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{testimonial.handle}</p>
+        {/* Горизонтальный бесконечный скролл */}
+        <div className="overflow-hidden w-full">
+          <motion.div
+            className="flex gap-8"
+            animate={{ x: ["0%", "-100%"] }}
+            transition={{ repeat: Infinity, repeatType: "loop", duration: 40, ease: "linear" }}
+          >
+            {[...testimonials, ...testimonials].map((testimonial, index) => (
+              <div
+                key={index}
+                className="min-w-[320px] p-8 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/80"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <img
+                    src={testimonial.avatar}
+                    alt={testimonial.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-50">
+                      {testimonial.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {testimonial.handle}
+                    </p>
+                  </div>
                 </div>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {testimonial.text}
+                </p>
               </div>
-              <p className="text-gray-700 dark:text-gray-300">
-                {testimonial.text}
-              </p>
-            </div>
-          ))}
+            ))}
+          </motion.div>
         </div>
       </div>
     </section>
