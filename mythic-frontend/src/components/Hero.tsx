@@ -106,7 +106,7 @@ export function Hero() {
         {/* Right: Mock-up */}
         <div className="w-full md:w-1/2 flex justify-center md:justify-end animate-slide-in-right">
           <div className="relative transform translate-x-8 md:translate-x-0 hover:translate-x-0 transition-transform duration-300">
-            <PhoneMockup />
+            <PhoneMockup src="photo.png" />
           </div>
         </div>
       </div>
