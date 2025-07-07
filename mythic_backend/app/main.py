@@ -135,7 +135,7 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
     dataset_id = payload.get("datasetId")
     if not dataset_id:
         run = await fetch_run(run_id)
-        dataset_id = run.get("defaultDatasetId")         
+        dataset_id = run.get("defaultDatasetId")
 
     if not dataset_id:
         raise HTTPException(500, "datasetId unresolved")
@@ -145,62 +145,11 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "posts.json").write_text(json.dumps(items, ensure_ascii=False, indent=2))
 
-    # Получаем user_id из метаданых
-    clerk_user_id = None
-    user_meta_file = run_dir / "user_meta.json"
-    if user_meta_file.exists():
-        try:
-            user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
-            clerk_user_id = user_meta.get("user_id")
-        except:
-            pass
-
     # --- качаем картинки ---------------------------------------------------------------
     images_dir = run_dir / "images"
     background.add_task(download_photos, items, images_dir)
 
-    async def _build():
-        print("💕 Ожидаем завершения загрузки изображений...")
-        await asyncio.sleep(5)
-        
-        # Проверяем загрузку изображений несколько раз
-        for attempt in range(10):
-            if images_dir.exists() and any(images_dir.glob("*")):
-                print(f"📸 Найдены изображения в папке {images_dir}")
-                break
-            print(f"⏳ Попытка {attempt + 1}/10: ждем загрузки изображений...")
-            await asyncio.sleep(2)
-
-        imgs      = await process_folder(images_dir)
-        comments  = collect_texts(run_dir / "posts.json")
-        
-        # Определяем стиль книги
-        style_file = run_dir / "style.txt"
-        style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
-
-        try:
-            from app.styles import build_book as build_style_book
-            build_style_book(style, run_id, imgs, comments, "classic", user_id=None)
-        except Exception as e:
-            print(f"❌ Ошибка генерации книги в стиле {style}: {e}. Падаем обратно на романтику.")
-            build_romantic_book(run_id, imgs, comments, "classic", user_id=None)
-        
-        # Автоматически сохраняем книгу в БД
-        if clerk_user_id:
-            try:
-                # Создаем новую сессию для background task
-                from app.database import AsyncSessionLocal
-                async with AsyncSessionLocal() as db_session:
-                    await BookService.create_book_from_run(
-                        db=db_session,
-                        run_id=run_id,
-                        clerk_user_id=clerk_user_id
-                    )
-                    print(f"📚 Книга {run_id} автоматически сохранена в БД для пользователя {clerk_user_id}")
-            except Exception as e:
-                print(f"❌ Ошибка автосохранения книги в БД: {e}")
-
-    background.add_task(_build)
+    log.info(f"Webhook для {run_id} завершен. Данные получены, изображения загружаются в фоне.")
 
     return {"status": "processing", "runId": run_id, "message": "Собираю данные, чтобы понять вашу душу... Скоро начну создавать книгу"}
 
@@ -1263,67 +1212,50 @@ def status_page(runId: str):
         const progressText = document.getElementById('progressText');
         const resultContainer = document.getElementById('resultContainer');
         const downloadButtons = document.getElementById('downloadButtons');
-        
-        const stages = [
-            { text: 'Изучаю твои фотографии с особым вниманием...', progress: 20 },
-            { text: 'Рассматриваю твои видео — столько энергии в них...', progress: 40 },
-            { text: 'Пишу личные слова специально для тебя...', progress: 60 },
-            { text: 'Добавляю романтические штрихи в твою книгу...', progress: 80 },
-            { text: 'Создаю финальную версию твоего подарка...', progress: 95 }
-        ];
-        
-        let currentStage = 0;
-        
-        // Функция анимации печатающейся машинки
-        function typewriterAnimation(element, text, speed = 80) {
-            return new Promise((resolve) => {
-                element.textContent = '';
-                let i = 0;
-                
-                function typeChar() {
-                    if (i < text.length) {
-                        element.textContent += text.charAt(i);
-                        i++;
-                        setTimeout(typeChar, speed);
-                    } else {
-                        resolve();
-                    }
-                }
-                
-                typeChar();
-            });
-        }
-        
-        async function updateProgress() {
-            if (currentStage < stages.length) {
-                const stage = stages[currentStage];
-                progressFill.style.width = stage.progress + '%';
-                
-                // Анимируем появление романтического текста
-                await typewriterAnimation(progressText, stage.text, 60);
-                
-                currentStage++;
-                setTimeout(updateProgress, 4000); // Увеличил время для просмотра анимации
-            }
-        }
-        
-        async function checkStatus() {
+        const statusMessage = document.querySelector('.status-message');
+        let intervalId = null;
+
+        const checkStatus = async () => {
             try {
-                const response = await fetch(`/status/${runId}`);
+                // Используем query-параметр, чтобы избежать проблем с кешированием
+                const response = await fetch(`/status/${runId}?t=${new Date().getTime()}`);
+                if (!response.ok) {
+                    // Если получаем ошибку (например, 401 Unauthorized), останавливаем запросы
+                    console.error("Status check failed:", response.statusText);
+                    if (intervalId) clearInterval(intervalId);
+                    statusMessage.textContent = "Не удалось проверить статус. Пожалуйста, обновите страницу.";
+                    return;
+                }
+
                 const status = await response.json();
                 
-                // Не перезаписываем сообщения stages, пока книга не готова
+                // Обновляем сообщение о статусе на основе ответа
+                if (status.message) {
+                    progressText.textContent = status.message;
+                }
+
+                // Обновляем прогресс-бар
+                let progress = 10; // Начальный прогресс
+                if (status.stages.data_collected) progress = 30;
+                if (status.stages.images_downloaded) progress = 60;
+                if (status.stages.book_generated) progress = 100;
+                progressFill.style.width = `${progress}%`;
                 
+
                 if (status.stages.book_generated) {
+                    if (intervalId) clearInterval(intervalId);
+                    
                     progressFill.style.width = '100%';
                     progressText.textContent = 'Готово! ✨';
                     
                     setTimeout(() => {
                         document.querySelector('.progress-container').style.display = 'none';
                         document.querySelector('.heart-loading').style.display = 'none';
-                        document.querySelector('.status-message').textContent = 'Романтическая книга создана с любовью! 💝';
+                        statusMessage.textContent = status.message || 'Романтическая книга создана с любовью! 💝';
                         resultContainer.style.display = 'block';
                         
+                        downloadButtons.innerHTML = ''; // Очищаем кнопки перед добавлением
+
                         if (status.files.html) {
                             const viewBtn = document.createElement('a');
                             viewBtn.href = status.files.html;
@@ -1342,17 +1274,17 @@ def status_page(runId: str):
                             downloadButtons.appendChild(downloadBtn);
                         }
                     }, 1000);
-                } else {
-                    setTimeout(checkStatus, 3000);
                 }
             } catch (error) {
-                setTimeout(checkStatus, 5000);
+                console.error("Ошибка при проверке статуса:", error);
+                // Не останавливаем таймер при сетевой ошибке, чтобы он мог восстановиться
             }
-        }
-        
-        // Запускаем обновление прогресса и проверку статуса
-        updateProgress();
-        setTimeout(checkStatus, 5000);
+        };
+
+        // Запускаем первую проверку немедленно
+        checkStatus();
+        // Устанавливаем интервал для последующих проверок
+        intervalId = setInterval(checkStatus, 3000);
     """
     
     html_content = f"""
@@ -1547,7 +1479,7 @@ def status_page(runId: str):
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <p class="progress-text" id="progressText">Собираем фотографии...</p>
+            <p class="progress-text" id="progressText">Подключаюсь к вашему вдохновению...</p>
         </div>
         
         <div class="result-container" id="resultContainer">

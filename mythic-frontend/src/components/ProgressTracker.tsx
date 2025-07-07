@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -201,17 +201,15 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
   };
 
   useEffect(() => {
-    let isCancelled = false;
+    if (!runId || showFormatDialog || (status && status.stages.book_generated)) {
+        return;
+    }
 
     const pollStatus = async () => {
-      if (isCancelled || showFormatDialog) return;
-      
       try {
         const token = await getToken();
         const currentStatus = await api.getStatus(runId, token || undefined);
-        if (!isCancelled) {
-          handleStatusUpdate(currentStatus);
-        }
+        handleStatusUpdate(currentStatus);
       } catch (err) {
         console.error("Polling error:", err);
         setError('Не удалось обновить статус. Обновите страницу через несколько минут.');
@@ -219,10 +217,9 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     };
 
     pollStatus();
-    const intervalId = setInterval(pollStatus, 7000);
+    const intervalId = setInterval(pollStatus, 5000);
 
     return () => {
-      isCancelled = true;
       clearInterval(intervalId);
     };
   }, [runId, onComplete, status, showFormatDialog, getToken]);
