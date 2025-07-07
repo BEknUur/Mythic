@@ -1482,496 +1482,484 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{book_title}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400;1,700&family=Merriweather:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     
     <style>
-    :root {{
-        --paper: #fefcf8;
-        --ink: #2c2a26;
-        --soft-ink: #5a5652;
-        --accent: #8b4513;
-        --gold: #d4af8c;
-        --shadow: rgba(60, 50, 40, 0.15);
-        --warm-cream: #f9f7f4;
+    /* 1. Формат A5 и поля для PDF */
+    @page {{
+        size: A5 portrait;
+        margin: 20mm 15mm;
+        @bottom-center {{
+            content: counter(page);
+            font-size: 0.8rem;
+            color: #777;
+            font-family: 'Cormorant Garamond', serif;
+        }}
     }}
     
+    /* 2. Основные стили документа */
     body {{
-        font-family: 'Times New Roman', 'Georgia', serif;
-        background: var(--paper);
-        color: var(--ink);
-        line-height: 1.6;
-        font-size: 16px;
         margin: 0;
         padding: 0;
-        max-width: 800px;
-        margin: 0 auto;
+        background: #fefcf7;
+        font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+        color: #333;
+        counter-reset: page;
+        font-size: 16px;
+        line-height: 1.6;
     }}
     
-    .memoir-page {{
-        min-height: 95vh;
-        padding: 2.5cm 2.5cm 3cm 2.5cm;
-        background: white;
-        box-shadow: 0 8px 40px var(--shadow);
-        margin: 15px auto;
-        page-break-after: always;
+    /* 3. Страницы книги */
+    .book-page {{
         position: relative;
-        border-left: 3px solid var(--gold);
+        width: 100%;
+        min-height: 100vh;
+        background: #fefcf7;
+        box-shadow: 0 0 8px rgba(0,0,0,0.1);
+        padding: 0;
+        page-break-after: always;
+        page-break-inside: avoid;
     }}
     
-    .memoir-page:last-child {{
+    .book-page:last-child {{
         page-break-after: auto;
     }}
     
-    /* Обложка как личный подарок */
-    .cover-memoir {{
-        text-align: center;
-        padding: 4cm 2cm;
-        background: linear-gradient(135deg, var(--paper) 0%, var(--warm-cream) 100%);
-        border: 2px solid var(--gold);
-        border-left: 6px solid var(--accent);
-    }}
-    
-    .cover-title, .cover-subtitle, .cover-epigraph, .memoir-author {{
-        max-width: none;
-        width: 100%;
-        margin: 0;
-        padding: 0;
+    /* 4. Контейнер содержимого страницы */
+    .page-content {{
+        padding: 40px 30px;
+        height: calc(100vh - 80px);
         box-sizing: border-box;
     }}
     
-    .cover-title {{
-        font-family: 'Times New Roman', serif;
-        font-size: 2.8rem;
-        font-weight: bold;
-        color: var(--ink);
-        margin-bottom: 1.5rem;
-        letter-spacing: 1px;
+    /* 5. Абзацы как в настоящей книге */
+    .book-text {{
+        text-indent: 1.2em;
+        margin: 0 0 1em 0;
+        line-height: 1.65;
+        hyphens: auto;
+        text-align: justify;
+        font-size: 16px;
+        color: #2c2a26;
+    }}
+    
+    .book-text:first-child {{
+        text-indent: 0;
+    }}
+    
+    /* 6. Заголовки глав в книжном стиле */
+    .chapter-number {{
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #888;
+        margin-bottom: 0.3em;
+        font-weight: 400;
+        font-family: 'Crimson Text', serif;
+    }}
+    
+    .chapter-title {{
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0 0 1.5em 0;
+        border-bottom: 1px solid #d4af8c;
+        padding-bottom: 0.3em;
+        color: #5a3e36;
+        font-family: 'Cormorant Garamond', serif;
         line-height: 1.3;
     }}
     
+    /* 7. Обложка */
+    .cover-page {{
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #fefcf7 0%, #f9f7f4 100%);
+        border: none;
+    }}
+    
+    .cover-title {{
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c2a26;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+        text-align: center;
+    }}
+    
     .cover-subtitle {{
-        font-family: 'Times New Roman', serif;
+        font-family: 'Crimson Text', serif;
         font-style: italic;
-        font-size: 1.2rem;
-        color: var(--soft-ink);
-        margin-bottom: 2.5rem;
+        font-size: 1.1rem;
+        color: #5a5652;
+        margin-bottom: 2rem;
     }}
     
-    .cover-epigraph {{
+    .cover-dedication {{
         font-style: italic;
-        color: var(--soft-ink);
-        border-top: 1px solid var(--gold);
-        border-bottom: 1px solid var(--gold);
-        padding: 2rem 1rem;
-        max-width: 450px;
-        margin: 0 auto 2.5rem auto;
-        position: relative;
-        font-size: 1.1rem;
+        color: #5a5652;
+        border-top: 1px solid #d4af8c;
+        border-bottom: 1px solid #d4af8c;
+        padding: 1.5rem 1rem;
+        max-width: 300px;
+        margin: 0 auto 2rem auto;
         line-height: 1.5;
+        font-size: 1rem;
     }}
     
-    .memoir-author {{
-        font-size: 1.1rem;
-        color: var(--soft-ink);
+    .cover-author {{
+        font-size: 1rem;
+        color: #5a5652;
         margin-top: 2rem;
         line-height: 1.4;
     }}
     
-    /* Заголовки глав */
-    .chapter-header {{
-        margin-bottom: 2.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid var(--gold);
-    }}
-    
-    .chapter-number {{
-        font-family: 'Times New Roman', serif;
-        font-size: 0.9rem;
-        color: var(--soft-ink);
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 0.8rem;
-    }}
-    
-    .chapter-title {{
-        font-family: 'Times New Roman', serif;
-        font-size: 2rem;
-        font-weight: bold;
-        color: var(--accent);
-        margin: 0;
-        font-style: italic;
-    }}
-    
-    /* Параграфы как в настоящей книге */
-    .memoir-text {{
-        white-space: pre-line;
-        text-align: justify;
-        line-height: 1.7;
-        font-size: 16px;
-        letter-spacing: 0.2px;
-        text-indent: 1.5em;
-        margin-bottom: 1.2em;
-        hyphens: auto;
-        word-spacing: 0.1em;
-    }}
-    
-    .memoir-text p {{
-        margin-bottom: 1.2em;
-        text-indent: 1.5em;
-    }}
-    
-    .memoir-text p:first-child {{
-        text-indent: 0;
-    }}
-    
-    /* Изображения как в книге */
-    .memoir-photo {{
-        margin: 2.5rem 0;
+    /* 8. Фотографии в книжном стиле */
+    .book-photo {{
+        margin: 2rem 0;
         text-align: center;
         page-break-inside: avoid;
     }}
     
     .photo-frame {{
         display: inline-block;
-        padding: 15px;
-        background: var(--warm-cream);
-        border-radius: 8px;
-        box-shadow: 0 4px 20px var(--shadow);
-        border: 1px solid var(--gold);
+        padding: 8px;
+        background: white;
+        border: 1px solid #d4af8c;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        max-width: 100%;
     }}
     
     .photo-frame img {{
         max-width: 100%;
-        max-height: 300px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
+        max-height: 200px;
+        border: none;
+        display: block;
     }}
     
     .photo-caption {{
-        font-family: 'Times New Roman', serif;
+        font-family: 'Crimson Text', serif;
         font-style: italic;
-        font-size: 0.9rem;
-        color: var(--soft-ink);
-        margin-top: 1rem;
-        text-align: center;
-        max-width: 400px;
-        margin-left: auto;
-        margin-right: auto;
-        line-height: 1.4;
-    }}
-    
-    /* Финальная страница */
-    .memoir-finale {{
-        text-align: center;
-        margin-top: 3rem;
-        padding: 2.5rem 2rem;
-        background: var(--warm-cream);
-        border-radius: 8px;
-        border: 1px solid var(--gold);
-    }}
-    
-    .memoir-signature {{
-        font-family: 'Times New Roman', serif;
-        font-style: italic;
-        font-size: 1.2rem;
-        color: var(--accent);
-        margin-top: 1.5rem;
-        line-height: 1.4;
-    }}
-    
-    /* Метаданные */
-    .memoir-meta {{
-        margin-top: 2.5rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--gold);
         font-size: 0.85rem;
-        color: var(--soft-ink);
+        color: #5a5652;
+        margin-top: 0.8rem;
         text-align: center;
-        line-height: 1.5;
+        line-height: 1.3;
     }}
     
-    /* Оглавление */
-    .table-of-contents {{
-        margin: 2.5rem 0;
-        padding: 2rem;
-        background: var(--warm-cream);
-        border-radius: 8px;
-        border: 1px solid var(--gold);
+    /* 9. Оглавление */
+    .toc-container {{
+        padding: 40px 30px;
     }}
     
     .toc-title {{
-        font-family: 'Times New Roman', serif;
-        font-size: 1.6rem;
-        color: var(--accent);
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.8rem;
+        color: #5a3e36;
         text-align: center;
         margin-bottom: 2rem;
-        font-weight: bold;
+        border-bottom: 1px solid #d4af8c;
+        padding-bottom: 0.5rem;
     }}
     
-    .toc-item {{
+    .toc-entry {{
         margin-bottom: 0.8rem;
-        padding: 0.4rem 0;
-        border-bottom: 1px dotted var(--gold);
+        padding: 0.3rem 0;
+        border-bottom: 1px dotted #d4af8c;
         display: flex;
         justify-content: space-between;
+        align-items: baseline;
         font-size: 0.95rem;
     }}
     
     .toc-chapter {{
         font-weight: 500;
-        color: var(--ink);
+        color: #2c2a26;
     }}
     
-    .toc-page {{
-        color: var(--soft-ink);
+    .toc-page-num {{
+        color: #5a5652;
         font-style: italic;
     }}
     
-    @media (max-width: 768px) {{
-        .memoir-page {{
-            padding: 2cm 1.5cm;
-            margin: 10px;
+    /* 10. Финальная страница */
+    .finale-section {{
+        text-align: center;
+        margin-top: 3rem;
+        padding: 2rem;
+        background: #f9f7f4;
+        border: 1px solid #d4af8c;
+        border-radius: 4px;
+    }}
+    
+    .finale-signature {{
+        font-family: 'Crimson Text', serif;
+        font-style: italic;
+        font-size: 1.1rem;
+        color: #5a3e36;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }}
+    
+    .finale-meta {{
+        font-size: 0.8rem;
+        color: #888;
+        margin-top: 1.5rem;
+        line-height: 1.4;
+    }}
+    
+    /* 11. Выделения текста */
+    .book-text b {{
+        font-weight: 600;
+        color: #5a3e36;
+    }}
+    
+    .book-text em {{
+        font-style: italic;
+        color: #5a5652;
+    }}
+    
+    /* 12. Медиа-запросы для веба */
+    @media screen {{
+        .book-page {{
+            max-width: 500px;
+            margin: 20px auto;
+            border-radius: 4px;
+            min-height: auto;
         }}
         
-        .cover-title {{
-            font-size: 2.2rem;
-        }}
-        
-        .chapter-title {{
-            font-size: 1.6rem;
-        }}
-        
-        .memoir-text {{
-            font-size: 15px;
+        .page-content {{
+            height: auto;
+            min-height: 400px;
         }}
     }}
     
     @media print {{
         body {{
             background: white;
-            margin: 0;
         }}
         
-        .memoir-page {{
+        .book-page {{
             box-shadow: none;
             margin: 0;
-            border: none;
-        }}
-        
-        .photo-frame {{
-            transform: none;
+            border-radius: 0;
         }}
     }}
     </style>
 </head>
 <body>
 
-<!-- ОБЛОЖКА ПОДАРКА -->
-<div class="memoir-page cover-memoir">
-    <h1 class="cover-title">{book_title}</h1>
-    <p class="cover-subtitle">Персональная книга в подарок</p>
-    
-    <div class="cover-epigraph">
-        Дорогой {full_name},<br>
-        эта книга написана специально для тебя<br>
-        с большой любовью и восхищением
-    </div>
-    
-    <div class="memoir-author">
-        <strong>Для:</strong> {full_name}<br>
-        <small>@{username}</small><br>
-        <small>С особой теплотой</small>
-    </div>
-</div>
-    
-<!-- ОГЛАВЛЕНИЕ -->
-<div class="memoir-page">
-    <div class="table-of-contents">
-        <h2 class="toc-title">Что внутри этой книги</h2>
+<!-- ОБЛОЖКА -->
+<section class="book-page cover-page">
+    <div class="page-content">
+        <h1 class="cover-title">{book_title}</h1>
+        <p class="cover-subtitle">Персональная книга в подарок</p>
         
-        <div class="toc-item">
-            <span class="toc-chapter">История знакомства</span>
-            <span class="toc-page">3</span>
+        <div class="cover-dedication">
+            Дорогой {full_name},<br>
+            эта книга написана специально для тебя<br>
+            с большой любовью и восхищением
         </div>
         
-        <div class="toc-item">
-            <span class="toc-chapter">Первые впечатления</span>
-            <span class="toc-page">4</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Твой взгляд на мир</span>
-            <span class="toc-page">5</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Моменты, которые запомнились</span>
-            <span class="toc-page">6</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Твоя энергетика</span>
-            <span class="toc-page">7</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">О красоте и стиле</span>
-            <span class="toc-page">8</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Твоя загадочность</span>
-            <span class="toc-page">9</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Влияние на меня</span>
-            <span class="toc-page">10</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Мои наблюдения</span>
-            <span class="toc-page">11</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Пожелания и благодарность</span>
-            <span class="toc-page">12</span>
+        <div class="cover-author">
+            <strong>Для:</strong> {full_name}<br>
+            <small>@{username}</small><br>
+            <small>С особой теплотой</small>
         </div>
     </div>
-</div>
+</section>
 
-<!-- ГЛАВА 1: ИСТОРИЯ ЗНАКОМСТВА -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ОГЛАВЛЕНИЕ -->
+<section class="book-page">
+    <div class="toc-container">
+        <h2 class="toc-title">Содержание</h2>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">История знакомства</span>
+            <span class="toc-page-num">3</span>
+        </div>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">Первые впечатления</span>
+            <span class="toc-page-num">4</span>
+        </div>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">Твой взгляд на мир</span>
+            <span class="toc-page-num">5</span>
+        </div>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">Моменты, которые запомнились</span>
+            <span class="toc-page-num">6</span>
+        </div>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">Твоя энергетика</span>
+            <span class="toc-page-num">7</span>
+        </div>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">О красоте и стиле</span>
+            <span class="toc-page-num">8</span>
+        </div>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">Твоя загадочность</span>
+            <span class="toc-page-num">9</span>
+        </div>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">Влияние на меня</span>
+            <span class="toc-page-num">10</span>
+        </div>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">Мои наблюдения</span>
+            <span class="toc-page-num">11</span>
+        </div>
+        
+        <div class="toc-entry">
+            <span class="toc-chapter">Пожелания и благодарность</span>
+            <span class="toc-page-num">12</span>
+        </div>
+    </div>
+</section>
+
+<!-- ГЛАВА 1 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава первая</div>
         <h2 class="chapter-title">История знакомства</h2>
+        
+        <div class="book-text">{chapters['meeting']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Твоя красота"></div><div class="photo-caption">В этом взгляде — целая вселенная</div></div>' if processed_images else ''}
     </div>
-    
-    <div class="memoir-text">{chapters['meeting']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Твоя красота"></div><div class="photo-caption">В этом взгляде - целая вселенная</div></div>' if processed_images else ''}
-</div>
+</section>
 
-<!-- ГЛАВА 2: ПЕРВЫЕ ВПЕЧАТЛЕНИЯ -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ГЛАВА 2 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава вторая</div>
         <h2 class="chapter-title">Первые впечатления</h2>
+        
+        <div class="book-text">{chapters['first_impression']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[1]}" alt="Твоя особенность"></div><div class="photo-caption">Красота, которая не нуждается в словах</div></div>' if len(processed_images) > 1 else ''}
     </div>
-    
-    <div class="memoir-text">{chapters['first_impression']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[1]}" alt="Твоя особенность"></div><div class="photo-caption">Красота, которая не нуждается в словах</div></div>' if len(processed_images) > 1 else ''}
-</div>
+</section>
 
-<!-- ГЛАВА 3: ТВОЙ ВЗГЛЯД НА МИР -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ГЛАВА 3 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава третья</div>
         <h2 class="chapter-title">Твой взгляд на мир</h2>
+        
+        <div class="book-text">{chapters['world_view']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[2]}" alt="Как ты видишь мир"></div><div class="photo-caption">Сияние души, которое видно даже через экран</div></div>' if len(processed_images) > 2 else ''}
     </div>
-    
-    <div class="memoir-text">{chapters['world_view']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[2]}" alt="Как ты видишь мир"></div><div class="photo-caption">Сияние души, которое видно даже через экран</div></div>' if len(processed_images) > 2 else ''}
-</div>
+</section>
 
-<!-- ГЛАВА 4: МОМЕНТЫ, КОТОРЫЕ ЗАПОМНИЛИСЬ -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ГЛАВА 4 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава четвертая</div>
         <h2 class="chapter-title">Моменты, которые запомнились</h2>
+        
+        <div class="book-text">{chapters['memorable_moments']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[3]}" alt="Запомнившиеся моменты"></div><div class="photo-caption">Мгновение, которое хочется растянуть на вечность</div></div>' if len(processed_images) > 3 else ''}
     </div>
-    
-    <div class="memoir-text">{chapters['memorable_moments']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[3]}" alt="Запомнившиеся моменты"></div><div class="photo-caption">Мгновение, которое хочется растянуть на вечность</div></div>' if len(processed_images) > 3 else ''}
-</div>
+</section>
 
-<!-- ГЛАВА 5: ТВОЯ ЭНЕРГЕТИКА -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ГЛАВА 5 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава пятая</div>
         <h2 class="chapter-title">Твоя энергетика</h2>
+        
+        <div class="book-text">{chapters['energy']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[4]}" alt="Твоя энергетика"></div><div class="photo-caption">Энергия света, что делает мир ярче</div></div>' if len(processed_images) > 4 else ''}
     </div>
-    
-    <div class="memoir-text">{chapters['energy']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[4]}" alt="Твоя энергетика"></div><div class="photo-caption">Энергия света, что делает мир ярче</div></div>' if len(processed_images) > 4 else ''}
-</div>
+</section>
 
-<!-- ГЛАВА 6: О КРАСОТЕ И СТИЛЕ -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ГЛАВА 6 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава шестая</div>
         <h2 class="chapter-title">О красоте и стиле</h2>
+        
+        <div class="book-text">{chapters['beauty_style']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[5]}" alt="Твоя красота и стиль"></div><div class="photo-caption">Гармония, созданная самой природой</div></div>' if len(processed_images) > 5 else ''}
     </div>
-    
-    <div class="memoir-text">{chapters['beauty_style']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[5]}" alt="Твоя красота и стиль"></div><div class="photo-caption">Гармония, созданная самой природой</div></div>' if len(processed_images) > 5 else ''}
-</div>
+</section>
 
-<!-- ГЛАВА 7: ТВОЯ ЗАГАДОЧНОСТЬ -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ГЛАВА 7 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава седьмая</div>
         <h2 class="chapter-title">Твоя загадочность</h2>
+        
+        <div class="book-text">{chapters['mystery']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[6]}" alt="Твоя загадочность"></div><div class="photo-caption">Глубина, в которой хочется утонуть</div></div>' if len(processed_images) > 6 else ''}
     </div>
-    
-    <div class="memoir-text">{chapters['mystery']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[6]}" alt="Твоя загадочность"></div><div class="photo-caption">Глубина, в которой хочется утонуть</div></div>' if len(processed_images) > 6 else ''}
-</div>
+</section>
 
-<!-- ГЛАВА 8: ВЛИЯНИЕ НА МЕНЯ -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ГЛАВА 8 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава восьмая</div>
         <h2 class="chapter-title">Влияние на меня</h2>
+        
+        <div class="book-text">{chapters['influence_on_me']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[7]}" alt="Твое влияние"></div><div class="photo-caption">Образ, что изменил мое восприятие мира</div></div>' if len(processed_images) > 7 else ''}
     </div>
-    
-    <div class="memoir-text">{chapters['influence_on_me']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[7]}" alt="Твое влияние"></div><div class="photo-caption">Образ, что изменил мое восприятие мира</div></div>' if len(processed_images) > 7 else ''}
-</div>
+</section>
 
-<!-- ГЛАВА 9: МОИ НАБЛЮДЕНИЯ -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ГЛАВА 9 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава девятая</div>
         <h2 class="chapter-title">Мои наблюдения</h2>
+        
+        <div class="book-text">{chapters['observations']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[8]}" alt="Мои наблюдения"></div><div class="photo-caption">Совершенство в каждой детали</div></div>' if len(processed_images) > 8 else ''}
     </div>
-    
-    <div class="memoir-text">{chapters['observations']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[8]}" alt="Мои наблюдения"></div><div class="photo-caption">Совершенство в каждой детали</div></div>' if len(processed_images) > 8 else ''}
-</div>
+</section>
 
-<!-- ГЛАВА 10: ПОЖЕЛАНИЯ И БЛАГОДАРНОСТЬ -->
-<div class="memoir-page">
-    <div class="chapter-header">
+<!-- ГЛАВА 10 -->
+<section class="book-page">
+    <div class="page-content">
         <div class="chapter-number">Глава десятая</div>
         <h2 class="chapter-title">Пожелания и благодарность</h2>
-    </div>
-    
-    <div class="memoir-text">{chapters['gratitude_wishes']}</div>
-    
-    {f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[9]}" alt="Благодарность"></div><div class="photo-caption">Оставайся таким же прекрасным, {full_name}</div></div>' if len(processed_images) > 9 else f'<div class="memoir-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Благодарность"></div><div class="photo-caption">Оставайся таким же прекрасным, {full_name}</div></div>' if processed_images else ''}
-    
-    <div class="memoir-finale">
-        <div class="memoir-signature">
-            Написано с любовью специально для {full_name}<br>
-            <em>Твой тайный поклонник</em>
-        </div>
         
-        <div class="memoir-meta">
-            Книга создана с помощью Mythic<br>
-            "Каждый человек заслуживает красивых слов о себе"
+        <div class="book-text">{chapters['gratitude_wishes']}</div>
+        
+        {f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[9]}" alt="Благодарность"></div><div class="photo-caption">Оставайся таким же прекрасным, {full_name}</div></div>' if len(processed_images) > 9 else f'<div class="book-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Благодарность"></div><div class="photo-caption">Оставайся таким же прекрасным, {full_name}</div></div>' if processed_images else ''}
+        
+        <div class="finale-section">
+            <div class="finale-signature">
+                Написано с любовью специально для {full_name}<br>
+                <em>Твой тайный поклонник</em>
+            </div>
+            
+            <div class="finale-meta">
+                Книга создана с помощью Mythic<br>
+                "Каждый человек заслуживает красивых слов о себе"
+            </div>
         </div>
     </div>
-</div>
+</section>
 
 </body>
 </html>"""
