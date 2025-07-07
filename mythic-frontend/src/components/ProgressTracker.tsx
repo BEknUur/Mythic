@@ -169,9 +169,12 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       setShowFormatDialog(true);
     }
 
-    if (newStatus.stages.book_generated && !isBookReadyDialogOpen) {
+    if (newStatus.stages.book_generated) {
+      setIsCreatingBook(false);
+      if (!isBookReadyDialogOpen) {
         setIsBookReadyDialogOpen(true);
         onComplete();
+      }
     }
   };
 
@@ -201,7 +204,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     let isCancelled = false;
 
     const pollStatus = async () => {
-      if (isCancelled || showFormatDialog || isCreatingBook || (status?.stages.book_generated ?? false)) return;
+      if (isCancelled || showFormatDialog) return;
       
       try {
         const token = await getToken();
@@ -222,7 +225,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       isCancelled = true;
       clearInterval(intervalId);
     };
-  }, [runId, onComplete, status, showFormatDialog, isCreatingBook, getToken]);
+  }, [runId, onComplete, status, showFormatDialog, getToken]);
 
   const progressValue = status ? (Object.values(status.stages).filter(Boolean).length / Object.keys(status.stages).length) * 100 : 0;
   
@@ -260,19 +263,15 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
             <div className="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-4 text-center my-8">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Сейчас происходит:</p>
               <p className="font-medium text-gray-800 dark:text-gray-200 h-10 flex items-center justify-center">
-                <motion.span
+                <TypewriterText 
+                  text={currentMessage} 
+                  speed={50}
                   key={currentMessage}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  {currentMessage}
-                </motion.span>
-                </p>
-              </div>
+                />
+              </p>
+            </div>
 
-            <Progress value={progressValue} className="mb-2 h-2" />
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-8">{currentMessage}</p>
+            <Progress value={progressValue} className="mb-8 h-2" />
             
             <div className="flex justify-between items-center">
               {steps.map((step, index) => (
