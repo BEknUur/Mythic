@@ -96,6 +96,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isBookReadyDialogOpen, setIsBookReadyDialogOpen] = useState(false);
+  const [hasShownBookDialog, setHasShownBookDialog] = useState(false);
   const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [isCreatingBook, setIsCreatingBook] = useState(false);
   const [currentMessage, setCurrentMessage] = useState(stageMessages.initial[0]);
@@ -169,12 +170,11 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       setShowFormatDialog(true);
     }
 
-    if (newStatus.stages.book_generated) {
+    if (newStatus.stages.book_generated && !hasShownBookDialog) {
       setIsCreatingBook(false);
-      if (!isBookReadyDialogOpen) {
-        setIsBookReadyDialogOpen(true);
-        onComplete();
-      }
+      setIsBookReadyDialogOpen(true);
+      setHasShownBookDialog(true);
+      onComplete();
     }
   };
 
@@ -352,7 +352,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       {isBookReadyDialogOpen && status && (
       <BookReadyDialog
         isOpen={isBookReadyDialogOpen}
-          onOpenChange={(isOpen) => !isOpen && setIsBookReadyDialogOpen(false)}
+        onOpenChange={setIsBookReadyDialogOpen}
         runId={runId}
         status={status}
       />
