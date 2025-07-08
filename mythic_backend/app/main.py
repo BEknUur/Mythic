@@ -186,7 +186,8 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
             "fantasy": "Твоя эпическая фэнтези-сага готова! Отправляйся в магическое приключение",
             "humor": "Твоя веселая юмористическая книга готова! Готовься смеяться"
         }
-        message = style_messages.get(book_style, "Твоя персональная книга готова! Читай с удовольствием")
+        messages = style_messages.get(book_style, style_messages["romantic"])
+        message = random.choice(messages)
     elif images_downloaded:
         style_generation_messages = {
             "romantic": [
@@ -1506,7 +1507,7 @@ async def create_book(request: Request, background: BackgroundTasks, current_use
     try:
         body = await request.json()
         run_id = body.get("runId")
-        book_format = body.get("format", "classic")  # classic | zine | magazine
+        book_format = body.get("format", "classic")  
         
         if not run_id:
             raise HTTPException(400, "runId обязателен")

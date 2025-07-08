@@ -686,14 +686,9 @@ def build_book(run_id: str, images, comments, book_format: str = 'classic', user
                 actual_images.append(img_file)
     
     # Генерируем контент в зависимости от формата
-    if book_format == "magazine":
-        # Журнальный формат с обложкой, оглавлением и разворотами
-        from app.utils.magazine import create_magazine_html
-        html = create_magazine_html(analysis, actual_images, style="fantasy")
-    else:
-        # Классический формат
-        chapters = generate_fantasy_chapters(analysis, actual_images)
-        html = create_fantasy_html(analysis, chapters, actual_images)
+    # Классический формат
+    chapters = generate_fantasy_chapters(analysis, actual_images)
+    html = create_fantasy_html(analysis, chapters, actual_images)
     
     # Сохраняем
     html_file = run_dir / "book.html"

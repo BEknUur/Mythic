@@ -106,6 +106,38 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
 
   const isBookReady = status?.stages.book_generated || false;
 
+  const getCurrentStageKey = useCallback(() => {
+    if (!status) return 'initial';
+    if (status.stages.book_generated) return 'ready';
+    if (isCreatingBook) return 'book';
+    if (status.stages.images_downloaded) return 'book';
+    if (status.stages.data_collected) return 'photos';
+    return 'analysis';
+  }, [status, isCreatingBook]);
+
+  useEffect(() => {
+    const stageKey = getCurrentStageKey();
+    const messages = stageMessages[stageKey];
+    
+    // Сразу установить первое сообщение для нового этапа
+    const currentApiMessage = status?.message;
+    if (currentApiMessage) {
+        // Если с бэкенда пришло сообщение, используем его, чтобы показать первоначальный статус
+        setCurrentMessage(currentApiMessage);
+    } else {
+        // Иначе — первое из списка для этапа
+        setCurrentMessage(messages[0]);
+    }
+
+    const messageInterval = setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * messages.length);
+      setCurrentMessage(messages[randomIndex]);
+    }, 3000); // Меняем сообщение каждые 3 секунды
+      
+    return () => clearInterval(messageInterval);
+  }, [status, isCreatingBook, getCurrentStageKey]);
+
+
   // Если пользователь не авторизован, показываем предупреждение
   if (!isSignedIn) {
     return (
@@ -137,34 +169,8 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     );
   }
 
-  const getCurrentStageKey = () => {
-    if (!status) return 'initial';
-    if (status.stages.book_generated) return 'ready';
-    if (isCreatingBook) return 'book';
-    if (status.stages.images_downloaded) return 'book';
-    if (status.stages.data_collected) return 'photos';
-    return 'analysis';
-  };
-
-  useEffect(() => {
-    const stageKey = getCurrentStageKey();
-    const messages = stageMessages[stageKey];
-    const messageInterval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * messages.length);
-      setCurrentMessage(status?.message || messages[randomIndex]);
-    }, 4500);
-      
-    return () => clearInterval(messageInterval);
-  }, [status, isCreatingBook]);
-
   const handleStatusUpdate = (newStatus: StatusResponse) => {
     setStatus(newStatus);
-
-    const apiMessage = newStatus.message;
-    const stageKey = getCurrentStageKey();
-    const messages = stageMessages[stageKey];
-    const randomIndex = Math.floor(Math.random() * messages.length);
-    setCurrentMessage(apiMessage || messages[randomIndex]);
 
     if (newStatus.stages.images_downloaded && !newStatus.stages.book_generated && !showFormatDialog && !isCreatingBook) {
       setShowFormatDialog(true);
@@ -178,12 +184,12 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     }
   };
 
-  const createBookWithFormat = async (format: 'classic' | 'magazine') => {
+  const createBookWithFormat = async (format: 'classic') => {
     setShowFormatDialog(false);
     setIsCreatingBook(true);
     toast({
       title: "Отличный выбор!",
-      description: `Начинаем создание вашей книги в ${format === 'classic' ? 'классическом' : 'журнальном'} формате.`,
+      description: `Начинаем создание вашей книги в классическом формате.`,
     });
     try {
       const token = await getToken();
@@ -323,19 +329,11 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <button
                   onClick={() => createBookWithFormat('classic')}
-                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300"
+                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300 md:col-span-2"
                 >
                   <Book className="w-8 h-8 text-purple-600 mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Классическая книга</h3>
                   <p className="text-gray-500 dark:text-gray-400">Традиционный формат с главами, красивым дизайном и плавным повествованием.</p>
-                </button>
-                <button
-              onClick={() => createBookWithFormat('magazine')}
-                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300"
-                >
-                  <Newspaper className="w-8 h-8 text-purple-600 mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Журнальный формат</h3>
-                  <p className="text-gray-500 dark:text-gray-400">Стильный журнальный дизайн с обложкой, оглавлением и разворотами как в модном издании.</p>
                 </button>
               </div>
               <div className="mt-8">

@@ -99,7 +99,7 @@ def analyze_profile_data(posts_data: list) -> dict:
     return analysis
 
 def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format: str = "classic", user_id: str = None):
-    """Создание HTML книги (с выбором формата: classic или zine)"""
+    """Создание HTML книги"""
     try:
         
         run_dir = Path("data") / run_id
@@ -144,17 +144,8 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
         print(random.choice(romantic_photo_messages))
         
         # Генерируем контент в зависимости от формата
-        if book_format == "zine":
-            # Мозаичный зин - короткий контент
-            content = generate_zine_content(analysis, actual_images)
-            html = create_zine_html(content, analysis, actual_images)
-        elif book_format == "magazine":
-            # Полноценный журнальный формат с обложкой, оглавлением и разворотами
-            from app.utils.magazine import create_magazine_html
-            html = create_magazine_html(analysis, actual_images, style="romantic")
-        else:
-            content = {"format": "literary"}  
-            html = create_literary_instagram_book_html(content, analysis, actual_images)
+        content = {"format": "literary"}  
+        html = create_literary_instagram_book_html(content, analysis, actual_images)
         
         out = Path("data") / run_id
         out.mkdir(parents=True, exist_ok=True)
@@ -299,13 +290,8 @@ def build_romantic_book(run_id: str, images: list[Path], texts: str, book_format
             </body>
             </html>
             """
-            out = Path("data") / run_id
-            out.mkdir(parents=True, exist_ok=True)
-            
-            html_file = out / "book.html"
+            html_file = Path("data") / run_id / "book.html"
             html_file.write_text(basic_html, encoding="utf-8")
-            
-            print(f"Создана запасная версия книги: {out / 'book.html'}")
             
         except Exception as final_error:
             print(f"Критическая ошибка: {final_error}")
@@ -355,246 +341,71 @@ def apply_dream_pastel_effect(img: Image.Image) -> Image.Image:
     except Exception as e:
         print(f"❌ Ошибка при применении Dream-Pastel эффекта: {e}")
         # Возвращаем оригинальное изображение при ошибке
-        try:
-            return img.convert('RGB') if img.mode != 'RGB' else img
-        except:
-            # Создаем простое изображение-заглушку
-            placeholder = Image.new('RGB', (400, 300), (240, 240, 240))
-            return placeholder
+        return img.convert('RGB') if img.mode != 'RGB' else img
 
 def create_collage_spread(img1: Image.Image, img2: Image.Image, caption: str) -> str:
-    """Создает коллаж-разворот из двух фотографий"""
-    try:
-        # Проверяем валидность изображений
-        if img1 is None or img2 is None:
-            print("❌ Одно из изображений для коллажа отсутствует")
-            return ""
-            
-        if img1.size[0] == 0 or img1.size[1] == 0 or img2.size[0] == 0 or img2.size[1] == 0:
-            print("❌ Недопустимый размер изображений для коллажа")
-            return ""
-        
-        # Создаем холст для коллажа
-        canvas_width = 1200
-        canvas_height = 800
-        canvas = Image.new('RGB', (canvas_width, canvas_height), (255, 250, 245))
-        
-        # Подготавливаем изображения
-        img1_size = (500, 350)
-        img2_size = (500, 350)
-        
-        # Безопасное изменение размера
-        try:
-            img1 = img1.resize(img1_size, Image.Resampling.LANCZOS)
-            img2 = img2.resize(img2_size, Image.Resampling.LANCZOS)
-        except Exception as resize_error:
-            print(f"❌ Ошибка при изменении размера: {resize_error}")
-            return ""
-        
-        # Применяем dream-pastel эффект
-        img1 = apply_dream_pastel_effect(img1)
-        img2 = apply_dream_pastel_effect(img2)
-        
-        # Размещаем изображения с небольшим поворотом
-        try:
-            img1_rotated = img1.rotate(-2, expand=True, fillcolor=(255, 250, 245))
-            img2_rotated = img2.rotate(3, expand=True, fillcolor=(255, 250, 245))
-            
-            # Позиционируем на холсте
-            pos1 = (50, 150)
-            pos2 = (650, 200)
-            
-            canvas.paste(img1_rotated, pos1)
-            canvas.paste(img2_rotated, pos2)
-        except Exception as rotation_error:
-            print(f"❌ Ошибка при повороте изображений: {rotation_error}")
-            # Размещаем без поворота
-            canvas.paste(img1, (50, 150))
-            canvas.paste(img2, (650, 200))
-        
-        # Добавляем подпись посередине
-        try:
-            draw = ImageDraw.Draw(canvas)
-            try:
-                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
-            except:
-                font = ImageFont.load_default()
-            
-            # Текст с тенью
-            text_x = canvas_width // 2
-            text_y = canvas_height - 100
-            
-            # Обрезаем слишком длинный caption
-            if len(caption) > 50:
-                caption = caption[:47] + "..."
-            
-            # Тень
-            draw.text((text_x + 2, text_y + 2), caption, font=font, fill=(0, 0, 0, 100), anchor="mm")
-            # Основной текст
-            draw.text((text_x, text_y), caption, font=font, fill=(80, 60, 40), anchor="mm")
-        except Exception as text_error:
-            print(f"❌ Ошибка при добавлении текста: {text_error}")
-        
-        # Конвертируем в base64
-        buffer = BytesIO()
-        canvas.save(buffer, format='JPEG', quality=92)
-        img_str = base64.b64encode(buffer.getvalue()).decode()
-        return f"data:image/jpeg;base64,{img_str}"
-        
-    except Exception as e:
-        print(f"❌ Ошибка при создании коллажа: {e}")
-        return ""
+    """Создает HTML-блок для разворота с коллажом из двух фото и подписью."""
+    
+    # Конвертируем изображения в base64
+    img1_base64 = base64.b64encode(img1.tobytes()).decode()
+    img2_base64 = base64.b64encode(img2.tobytes()).decode()
+    
+    collage_html = f"""
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Коллаж</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }}
+        .collage-container {{
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }}
+        .photo-container {{
+            width: 48%;
+            position: relative;
+        }}
+        .photo-container img {{
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }}
+        .caption {{
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 5px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="collage-container">
+        <div class="photo-container">
+            <img src="data:image/jpeg;base64,{img1_base64}" alt="Фото 1">
+            <div class="caption">{caption}</div>
+        </div>
+        <div class="photo-container">
+            <img src="data:image/jpeg;base64,{img2_base64}" alt="Фото 2">
+            <div class="caption">{caption}</div>
+        </div>
+    </div>
+</body>
+</html>
+    """
+    
+    return collage_html
 
-def generate_zine_content(analysis: dict, images: list[Path]) -> dict:
-    """Генерирует короткий контент для мозаичного зина"""
-    
-    # Фиксированные данные
-    username = analysis.get('username', 'Неизвестный')
-    followers = analysis.get('followers', 0)
-    bio = analysis.get('bio', '')
-    
-    # Реальные данные
-    real_captions = analysis.get('captions', ['Без слов'])[:3]
-    locations = analysis.get('locations', ['неизвестное место'])[:2]
-    
-    # Анализируем фотографии для карточек (максимум 15 фото)
-    photo_cards = []
-    valid_images = []
-    context = f"Instagram профиль @{username}, {followers} подписчиков, био: {bio}"
-    
-    # Романтические сообщения о процессе анализа фото
-    analysis_messages = [
-        "Вглядываюсь в детали каждого кадра...",
-        "Анализирую эмоции, запечатлённые в ваших глазах...",
-        "Изучаю композицию как вы выбираете ракурсы...",
-        "Рассматриваю игру света на вашем лице...",
-        "Декодирую скрытые послания в ваших взглядах..."
-    ]
-    
-    for i, img_path in enumerate(images[:15]):  # Ограничиваем до 15 фото для зина
-        if img_path.exists():
-            try:
-                # Создаем карточки разных типов
-                card_types = ["micro", "trigger", "sms"]
-                card_type = card_types[i % 3]
-                
-                # Заменяем удаленную функцию на прямой вызов
-                focus_mapping = {
-                    "micro": "first_impression",
-                    "trigger": "story_creation", 
-                    "sms": "hidden_emotions"
-                }
-                focus = focus_mapping.get(card_type, "first_impression")
-                card_content = analyze_photo_for_memoir(img_path, context, focus)
-                
-                photo_cards.append({
-                    'type': card_type,
-                    'content': card_content,
-                    'path': img_path
-                })
-                valid_images.append(img_path)
-                
-                # Романтическое сообщение о каждой карточке
-                if i < len(analysis_messages):
-                    print(f"{analysis_messages[i]} Карточка {i+1}/15")
-                else:
-                    print(f"💕 Карточка {i+1}/15: {card_content[:30]}... — ещё одна грань вашей души")
-                    
-            except Exception as e:
-                print(f"💔 Не смог проанализировать кадр {img_path}: {e}")
-    
-    # Если фото меньше 3, создаем минимальный зин
-    if len(valid_images) < 3:
-        print(f"💝 Работаю с {len(valid_images)} фотографиями — даже малого достаточно для красоты")
-    
-    print(f"✅ Проанализировал {len(valid_images)} граней вашей личности из {len(images)} доступных моментов")
-    
-    scene_data = {
-        'username': username,
-        'followers': followers,
-        'bio': bio,
-        'captions': real_captions,
-        'locations': locations,
-        'photo_cards': photo_cards
-    }
-    
-    content = {}
-    
-    # Заменяем удаленные функции на прямые вызовы memoir функций
-    scene_mapping = {
-        "hook": "meeting",
-        "conflict": "social_analysis",
-        "turn": "between_lines",
-        "climax": "story_creation",
-        "epilogue": "farewell_portrait"
-    }
-    
-    # Романтические сообщения о создании глав
-    chapter_messages = [
-        "📝 Пишу завязку — как наши души встретились в цифровом пространстве...",
-        "💭 Создаю конфликт — внутренняя борьба восхищения и смущения...", 
-        "🔄 Формирую поворот — момент, когда понял вашу особенность...",
-        "🎭 Выстраиваю кульминацию — пик эмоционального напряжения...",
-        "💫 Завершаю эпилогом — что останется в памяти навсегда..."
-    ]
-    
-    try:
-        # 1. ЗАВЯЗКА - дневниковая запись (максимум 3 предложения)
-        print(chapter_messages[0])
-        hook = generate_memoir_chapter(scene_mapping["hook"], scene_data)
-        content['prologue'] = strip_cliches(hook)
-        print(f"✅ Завязка готова: романтическое знакомство описано")
-    except Exception as e:
-        print(f"💔 Ошибка завязки: {e}")
-        content['prologue'] = f"Наткнулся на @{username} случайно. Что-то зацепило."
-    
-    try:
-        # 2. КОНФЛИКТ - SMS-стиль (максимум 4 строки)
-        print(chapter_messages[1])
-        conflict = generate_memoir_chapter(scene_mapping["conflict"], scene_data)
-        content['emotions'] = strip_cliches(conflict)
-        print(f"✅ Конфликт создан: внутренние противоречия показаны")
-    except Exception as e:
-        print(f"💔 Ошибка конфликта: {e}")
-        content['emotions'] = f"— {real_captions[0] if real_captions else 'Все хорошо'}\n— Но глаза говорят другое."
-    
-    try:
-        # 3. ПОВОРОТ - момент озарения (максимум 3 предложения)
-        print(chapter_messages[2])
-        turn = generate_memoir_chapter(scene_mapping["turn"], scene_data)
-        content['places'] = strip_cliches(turn)
-        print(f"✅ Поворот написан: ключевой момент понимания найден")
-    except Exception as e:
-        print(f"💔 Ошибка поворота: {e}")
-        content['places'] = f"Один кадр из {locations[0] if locations else 'неизвестного места'} изменил все. Здесь пахло честностью."
-    
-    try:
-        # 4. КУЛЬМИНАЦИЯ - цитаты комментариев
-        print(chapter_messages[3])
-        climax = generate_memoir_chapter(scene_mapping["climax"], scene_data)
-        content['community'] = strip_cliches(climax)
-        print(f"✅ Кульминация достигнута: пик эмоций передан словами")
-    except Exception as e:
-        print(f"💔 Ошибка кульминации: {e}")
-        content['community'] = f"{followers} человек отреагировали:\n— Наконец-то ты показал себя настоящего\n— Спасибо за честность"
-    
-    try:
-        # 5. ЭПИЛОГ - приглашение (максимум 2 предложения)
-        print(chapter_messages[4])
-        epilogue = generate_memoir_chapter(scene_mapping["epilogue"], scene_data)
-        content['legacy'] = strip_cliches(epilogue)
-        print(f"✅ Эпилог завершён: прощальные слова произнесены с нежностью")
-    except Exception as e:
-        print(f"💔 Ошибка эпилога: {e}")
-        content['legacy'] = "Листаю ленту в поиске нового дикого цветка. А вдруг это будешь ты?"
-    
-    # Метаданные
-    content['title'] = f"Зин @{username}"
-    content['photo_cards'] = photo_cards
-    content['valid_images_count'] = len(valid_images)
-    content['reading_time'] = "5 минут"
-    
-    return content
 
 def analyze_photo_for_gender(img_path: Path) -> str:
     """Анализирует фото для определения пола через ИИ"""
@@ -1863,79 +1674,6 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     return html
 
-def create_zine_html(content: dict, analysis: dict, images: list[Path]) -> str:
-    """Создает HTML для мозаичного зина"""
-    username = analysis.get('username', 'неизвестный')
-    
-    html = f"""<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Зин @{username}</title>
-    <style>
-    body {{
-            font-family: 'Arial', sans-serif;
-            background: #f5f5f5;
-        margin: 0;
-            padding: 20px;
-        }}
-        .zine-container {{
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }}
-        .zine-title {{
-            font-size: 2.5rem;
-        text-align: center;
-            margin-bottom: 2rem;
-            color: #333;
-        }}
-        .zine-content {{
-        line-height: 1.8;
-        font-size: 1.1rem;
-            color: #444;
-        }}
-        .photo-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        margin: 2rem 0;
-        }}
-        .photo-card {{
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }}
-        .photo-card img {{
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-    }}
-    </style>
-</head>
-<body>
-    <div class="zine-container">
-        <h1 class="zine-title">{content.get('title', f'Зин @{username}')}</h1>
-        <div class="zine-content">
-            <p>{content.get('prologue', 'Здесь начинается история...')}</p>
-            <p>{content.get('emotions', 'Эмоции и переживания...')}</p>
-            <p>{content.get('places', 'Места и локации...')}</p>
-            <p>{content.get('community', 'Сообщество и отклики...')}</p>
-            <p>{content.get('legacy', 'Что остается в памяти...')}</p>
-</div>
-
-        <div class="photo-grid">
-            {''.join([f'<div class="photo-card"><img src="data:image/jpeg;base64,placeholder" alt="Фото"></div>' for _ in range(min(6, len(images)))])}
-</div>
-    </div>
-</body>
-</html>"""
-    
-    return html
 
 def create_pdf_with_weasyprint(output_path: Path, html_content: str):
     """Генерирует красивый PDF из HTML используя WeasyPrint."""
