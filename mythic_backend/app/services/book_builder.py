@@ -1563,6 +1563,24 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         font-size: 18pt;
     }}
 
+    .cover-content {{
+        border: 2px solid #333;
+        padding: 2rem 3rem;
+    }}
+    
+    .cover-separator {{
+        width: 80px;
+        height: 1px;
+        background: #333;
+        margin: 0 auto 1.5rem;
+    }}
+
+    .cover-dedication {{
+        font-family: 'Open Sans', sans-serif;
+        font-style: italic;
+        font-size: 14pt;
+    }}
+
     /* Table of Contents */
     .toc-page {{
         padding: 0; /* Padding is handled by @page margins */
@@ -1665,12 +1683,12 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     }}
 
     .chapter-body p:first-of-type::first-letter {{
-        font-size: 72pt;
-        font-weight: bold;
+        /* чуть поменьше, с отступом и без слишком агрессивного float */
+        font-size: 48pt;       /* размер «капители» */
+        font-weight: 700 !important;     /* делаем именно жирным, с приоритетом */
         float: left;
-        margin-right: 0.1em;
-        line-height: 0.8;
-        padding-top: 0.1em;
+        margin: 0 0.15em 0 0;  /* отступ справа, чтобы буква не налезала на текст */
+        line-height: 1;        /* ровнее выравнивается текст */
     }}
     
     @media screen {{
@@ -1704,9 +1722,12 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
 <!-- Cover Page -->
 <div class="book-page cover-page">
-    <h1 class="cover-title">{book_title}</h1>
-    <p class="cover-subtitle">A personalized storybook</p>
-    <p class="cover-author">For {full_name}</p>
+    <div class="cover-content">
+        <h1 class="cover-title">{full_name.upper()}</h1>
+        <p class="cover-subtitle">An Unforgettable Story</p>
+        <div class="cover-separator"></div>
+        <p class="cover-dedication">A gift from a secret admirer</p>
+    </div>
 </div>
 
 <!-- Table of Contents -->
