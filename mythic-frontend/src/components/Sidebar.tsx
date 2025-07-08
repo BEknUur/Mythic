@@ -144,12 +144,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                 </Link>
               </Button>
 
-              <Button asChild variant="ghost" className="w-full justify-start h-12 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-50 transition-all duration-200 rounded-xl px-4">
-                <Link to="/fanfic">
-                <PenTool className="h-5 w-5 text-blue-500" />
-                <span className="ml-3 font-medium">Написать фанфик</span>
-                </Link>
-              </Button>
+            
             </div>
           </div>
 

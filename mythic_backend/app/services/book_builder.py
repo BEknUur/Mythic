@@ -1487,9 +1487,10 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
+    /* Белый фон страниц, чёрный акцент */
     :root {{
-        --accent-color: #8a2be2;
-        --background-color: #fdfaf4;
+        --accent-color: #333333;      /* чёрный вместо фиолетового */
+        --background-color: #ffffff;  /* белый фон */
         --text-color: #333;
         --font-body: 'Playfair Display', serif;
         --font-caption: 'Open Sans', sans-serif;
@@ -1512,7 +1513,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
     body {{
         font-family: var(--font-body);
-        background-color: var(--background-color);
+        background-color: var(--background-color) !important;
         color: var(--text-color);
         line-height: 1.6;
         font-size: 24pt;
@@ -1524,8 +1525,8 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         page-break-after: always;
         position: relative;
         overflow: hidden;
-        background-color: var(--background-color);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background-color: var(--background-color) !important;
+        box-shadow: none;  /* убираем тень страниц */
     }}
 
     .book-page:last-of-type {{
@@ -1596,13 +1597,12 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         color: var(--text-color);
     }}
     
+    /* Убираем точечные линии-лидеры в оглавлении */
     .toc-item .leader {{
-        flex-grow: 1;
-        border-bottom: 2px dotted #ccc;
-        margin: 0 0.5rem;
-        position: relative;
-        bottom: 0.2em;
-        order: 2;
+        flex-grow: 0;
+        border-bottom: none;
+        margin: 0;
+        position: static;
     }}
 
     .toc-item .page-ref {{
@@ -1968,26 +1968,38 @@ async def create_pdf_from_html_async(html_path: Path, output_path: Path) -> Path
 
 def format_chapter_text(text: str) -> str:
     """
-    Выделяет ключевые фразы только жирным шрифтом, максимум 10 выделений на текст.
+    Форматирует текст главы: расставляет параграфы и выделяет до 3 ключевых слов.
     """
-    highlight_words = [
-        r'люблю', r'восхищаюсь', r'красота', r'улыбка', r'вдохновение', r'нежность', r'счастье',
-        r'особый', r'магия', r'мечта', r'свет', r'душа', r'сердце', r'навсегда', r'благодарю',
-        r'ты', r'твой', r'твоя', r'тебя', r'мир', r'жизнь', r'чувства', r'эмоции', r'вдохновляешь',
-        r'улыбка', r'глаза', r'взгляд', r'обожаю', r'нежно', r'искренне', r'светишься', r'особенная', r'особенный'
-    ]
+    # Сначала разбиваем текст на параграфы по переносам строк
+    paragraphs = text.strip().split('\n')
     
-    max_bold = 10
+    highlight_words = [
+        'люблю', 'восхищаюсь', 'красота', 'улыбка', 'вдохновение', 'нежность', 'счастье',
+        'особый', 'магия', 'мечта', 'свет', 'душа', 'сердце', 'навсегда', 'благодарю',
+        'ты', 'твой', 'твоя', 'тебя', 'мир', 'жизнь', 'чувства', 'эмоции', 'вдохновляешь',
+        'улыбка', 'глаза', 'взгляд', 'обожаю', 'нежно', 'искренне', 'светишься', 'особенная', 'особенный'
+    ]
+    pattern = re.compile(r'\\b(' + '|'.join(highlight_words) + r')\\b', re.IGNORECASE)
+
+    # Ограничиваем количество выделений
     bold_count = 0
+    max_bold = 3
+
     def highlight(match):
         nonlocal bold_count
         if bold_count < max_bold:
             bold_count += 1
-            return f'<b>{match.group(0)}</b>'
-        else:
-            return match.group(0)
-    
-    pattern = re.compile(r'(' + '|'.join(highlight_words) + r')', re.IGNORECASE)
-    formatted_text = pattern.sub(highlight, text)
-    return formatted_text
+            # Возвращаем слово в теге <b>
+            return f'<b>{match.group(1)}</b>'
+        # Если лимит исчерпан, возвращаем слово без изменений
+        return match.group(1)
+
+    formatted_paragraphs = []
+    for p in paragraphs:
+        if p.strip():
+            # Применяем выделение к каждому параграфу с ограничением
+            highlighted_p = pattern.sub(highlight, p)
+            formatted_paragraphs.append(f'<p>{highlighted_p}</p>')
+            
+    return "".join(formatted_paragraphs)
 
