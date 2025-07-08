@@ -930,53 +930,45 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             reel['analysis'] = 'Динамичный момент, наполненный энергией'
             analyzed_reels.append(reel)
     
-    # Обрабатываем изображения (умный выбор - не подряд, а разнообразно)
+    # Обрабатываем изображения (РАНДОМНЫЙ выбор - не подряд!)
     processed_images = []
     detected_gender = "unknown"
     selected_photo_data = []  # Данные о выбранных фото для анализа
     
     if images:
-        # Еще более умная логика выбора фотографий - не подряд!
-        selected_indices = []
+        # НОВАЯ ЛОГИКА: РАНДОМНЫЙ выбор 7 фото из всего массива
+        import random
+        
         total_images = len(images)
+        print(f"📸 Всего фото в профиле: {total_images}")
         
-        if total_images >= 10:
-            # Если много фото - берем разнообразно: 1, 5, 11, 32, последнее
-            selected_indices = [
-                0,  # первое
-                min(4, total_images - 1),  # 5-е или близкое
-                min(10, total_images - 1),  # 11-е или близкое  
-                min(total_images // 3, total_images - 1),  # треть
-                min(total_images * 2 // 3, total_images - 1),  # две трети
-                total_images - 1  # последнее
-            ]
-        elif total_images >= 6:
-            # Средне количество - берем 1, 3, 5, последнее
-            selected_indices = [
-                0,  # первое
-                min(2, total_images - 1),  # 3-е
-                min(4, total_images - 1),  # 5-е
-                total_images - 1  # последнее
-            ]
-        elif total_images >= 3:
-            # Мало фото - берем 1-е, среднее, последнее
-            selected_indices = [0, total_images // 2, total_images - 1]
-        else:
-            # Совсем мало - берем что есть
+        if total_images >= 7:
+            # Если фото много - берем 7 случайных без повторов
+            selected_indices = random.sample(range(total_images), 7)
+            selected_indices.sort()  # Сортируем для красивого вывода
+        elif total_images >= 4:
+            # Если фото мало - берем все + добавляем случайные дубли до 7
             selected_indices = list(range(total_images))
+            while len(selected_indices) < 7:
+                random_idx = random.randint(0, total_images - 1)
+                selected_indices.append(random_idx)
+        else:
+            # Если фото очень мало - дублируем случайным образом до 7
+            selected_indices = []
+            for _ in range(7):
+                random_idx = random.randint(0, total_images - 1)
+                selected_indices.append(random_idx)
         
-        # Убираем дубликаты и сортируем
-        selected_indices = sorted(list(set(selected_indices)))
-        print(f"📸 Умный выбор фото: из {total_images} беру позиции {selected_indices}")
+        print(f"📸 Рандомный выбор: из {total_images} выбрал позиции {selected_indices}")
         
-        # Анализируем первое фото для определения пола
-        if images and images[0].exists():
-            print("🔍 Анализирую фото для определения пола...")
-            detected_gender = analyze_photo_for_gender(images[0])
+        # Анализируем первое ВЫБРАННОЕ фото для определения пола
+        if images and selected_indices and images[selected_indices[0]].exists():
+            print("🔍 Анализирую первое выбранное фото для определения пола...")
+            detected_gender = analyze_photo_for_gender(images[selected_indices[0]])
             print(f"✅ Определен пол: {detected_gender}")
         
-        # Обрабатываем выбранные фотографии
-        for i, idx in enumerate(selected_indices[:6]):  # Максимум 6 фото
+        # Обрабатываем выбранные фотографии (7 штук рандомно)
+        for i, idx in enumerate(selected_indices):
             img_path = images[idx]
             if img_path.exists():
                 try:
@@ -999,24 +991,49 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
                         img_str = base64.b64encode(buffer.getvalue()).decode()
                         processed_images.append(f"data:image/jpeg;base64,{img_str}")
                         
-                        # Быстрый fallback на случай ошибок
-                        quick_photo_analysis = [
-                            "Взгляд полон жизни и искренности",
-                            "Естественная красота без фильтров", 
-                            "Особая атмосфера в каждом кадре",
-                            "Эмоции, которые говорят сами за себя",
-                            "Харизма и энергетика через экран",
-                            "Стиль и грация в каждом движении"
-                        ][i % 6]
-                        # AI анализ фото
+                        # ИИ анализ фото для генерации описания (исправленный)
+                        photo_analysis = ""
                         try:
-                            from app.services.media_analyzer import MediaAnalysisRequest, analyze_media_item
-                            req = MediaAnalysisRequest(image_path=img_path)
-                            ai_result = analyze_media_item(req)
-                            photo_analysis = ai_result.description
+                            print(f"🧠 ИИ анализирует фото #{idx+1} для создания описания...")
+                            
+                            # Попробуем разные способы импорта
+                            try:
+                                from app.services.media_analyzer import MediaAnalysisRequest, analyze_media_item
+                                req = MediaAnalysisRequest(image_path=img_path)
+                                ai_result = analyze_media_item(req)
+                                photo_analysis = ai_result.description
+                                print(f"✅ ИИ анализ через media_analyzer: {photo_analysis[:50]}...")
+                            except Exception as import_error:
+                                print(f"⚠️ media_analyzer недоступен: {import_error}")
+                                
+                                # Fallback: используем прямой анализ через LLM
+                                try:
+                                    photo_analysis = analyze_photo_for_memoir(img_path, f"Instagram профиль @{username}", "first_impression")
+                                    print(f"✅ ИИ анализ через memoir: {photo_analysis[:50]}...")
+                                except:
+                                    photo_analysis = ""
+                            
+                            # Обрезаем описание если оно слишком длинное
+                            if photo_analysis and len(photo_analysis) > 120:
+                                photo_analysis = photo_analysis[:117] + "..."
+                                
                         except Exception as e:
-                            print(f"media_analyzer error: {e}")
-                            photo_analysis = quick_photo_analysis
+                            print(f"❌ Ошибка ИИ анализа фото #{idx+1}: {e}")
+                            photo_analysis = ""
+                        
+                        # Если ИИ анализ не сработал - используем качественные fallback'ы
+                        if not photo_analysis or len(photo_analysis.strip()) < 10:
+                            print(f"⚡ Использую fallback описание для фото #{idx+1}")
+                            fallback_descriptions = [
+                                "Естественная красота в каждой детали",
+                                "Взгляд, полный глубины и искренности", 
+                                "Особая атмосфера и харизма",
+                                "Эмоции, которые говорят без слов",
+                                "Магнетическая энергетика личности",
+                                "Грация и стиль в каждом движении",
+                                "Момент совершенства, застывший в кадре"
+                            ]
+                            photo_analysis = fallback_descriptions[i % len(fallback_descriptions)]
                         
                         selected_photo_data.append({
                             'index': idx + 1,  # Номер фото в профиле
@@ -1024,7 +1041,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
                             'image': f"data:image/jpeg;base64,{img_str}"
                         })
                         
-                        print(f"✅ Обработано фото #{idx+1} из профиля")
+                        print(f"✅ Обработано фото #{idx+1} из профиля: '{photo_analysis[:30]}...'")
                 except Exception as e:
                     print(f"❌ Ошибка обработки изображения {img_path}: {e}")
     
@@ -1036,7 +1053,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         # Cycle through the available photos using modulo
         safe_index = index % len(selected_photo_data)
         return selected_photo_data[safe_index]['analysis']
-
+    
     # Подготавливаем контекст для ИИ с анализом фото
     context_data = {
         'username': username,
@@ -1312,7 +1329,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             
             НАЧНИ с удивления: "Знаешь, что странно? Ты изменил мой взгляд на многие вещи..."
             
-            АНАЛИЗ ВОСЬМОГО ФОТО:
+            АНАЛИЗ ВОСЬМОГО ФОТО (циклически берем из доступных):
             {get_safe_photo_analysis(7, 'Влияние, что изменило многое')}
             
             СТРУКТУРА ГЛАВЫ:
@@ -1342,7 +1359,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             
             НАЧНИ с открытия: "За время наблюдения за тобой я сделал несколько интересных открытий..."
             
-            АНАЛИЗ ДЕВЯТОГО ФОТО:
+            АНАЛИЗ ДЕВЯТОГО ФОТО (циклически берем из доступных):
             {get_safe_photo_analysis(8, 'Наблюдения за особенностями')}
             
             СТРУКТУРА ГЛАВЫ:
@@ -1373,7 +1390,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             
             НАЧНИ с личного обращения: "{full_name}, эта книга подходит к концу, но мои мысли о тебе на этом не заканчиваются..."
             
-            АНАЛИЗ ФИНАЛЬНОГО ФОТО:
+            АНАЛИЗ ФИНАЛЬНОГО ФОТО (циклически берем из доступных):
             {get_safe_photo_analysis(9, 'Образ, что останется в памяти навсегда')}
             
             СТРУКТУРА ГЛАВЫ:
