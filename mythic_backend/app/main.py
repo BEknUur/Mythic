@@ -135,7 +135,7 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
     dataset_id = payload.get("datasetId")
     if not dataset_id:
         run = await fetch_run(run_id)
-        dataset_id = run.get("defaultDatasetId")
+        dataset_id = run.get("defaultDatasetId")         
 
     if not dataset_id:
         raise HTTPException(500, "datasetId unresolved")
@@ -1241,7 +1241,7 @@ def status_page(runId: str):
                 if (status.stages.book_generated) progress = 100;
                 progressFill.style.width = `${progress}%`;
                 
-
+                
                 if (status.stages.book_generated) {
                     if (intervalId) clearInterval(intervalId);
                     
@@ -1255,7 +1255,7 @@ def status_page(runId: str):
                         resultContainer.style.display = 'block';
                         
                         downloadButtons.innerHTML = ''; // Очищаем кнопки перед добавлением
-
+                        
                         if (status.files.html) {
                             const viewBtn = document.createElement('a');
                             viewBtn.href = status.files.html;
