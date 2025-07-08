@@ -1028,6 +1028,15 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
                 except Exception as e:
                     print(f"❌ Ошибка обработки изображения {img_path}: {e}")
     
+    # Helper function for safely getting photo analysis from the list
+    def get_safe_photo_analysis(index: int, fallback_text: str) -> str:
+        """Safely gets photo analysis, cycling through available photos."""
+        if not selected_photo_data:
+            return fallback_text
+        # Cycle through the available photos using modulo
+        safe_index = index % len(selected_photo_data)
+        return selected_photo_data[safe_index]['analysis']
+
     # Подготавливаем контекст для ИИ с анализом фото
     context_data = {
         'username': username,
@@ -1081,7 +1090,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ эмоционально и лично: "Дорогой {full_name}, я долго думал, что подарить тебе..."
             
             АНАЛИЗ ПЕРВОГО ФОТО:
-            {selected_photo_data[0]['analysis'] if selected_photo_data else 'Фото сразу зацепило взгляд'}
+            {get_safe_photo_analysis(0, 'Фото сразу зацепило взгляд')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Личное обращение и размышления о подарке
@@ -1118,7 +1127,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ с восхищения: "Знаешь, что меня поразило в первые минуты знакомства с твоим профилем?"
             
             АНАЛИЗ ВТОРОГО ФОТО:
-            {selected_photo_data[1]['analysis'] if len(selected_photo_data) > 1 else 'Каждое фото рассказывает историю'}
+            {get_safe_photo_analysis(1, 'Каждое фото рассказывает историю')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Что поразило с первого взгляда - искренность
@@ -1149,7 +1158,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ размышлением: "Больше всего меня поражает то, как ты видишь мир вокруг себя..."
             
             АНАЛИЗ ТРЕТЬЕГО ФОТО:
-            {selected_photo_data[2]['analysis'] if len(selected_photo_data) > 2 else 'Душа, видная в творчестве'}
+            {get_safe_photo_analysis(2, 'Душа, видная в творчестве')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Способность находить прекрасное в обыденном
@@ -1181,7 +1190,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ с признания: "Есть кадры, которые врезаются в память навсегда..."
             
             АНАЛИЗ ЧЕТВЕРТОГО ФОТО:
-            {selected_photo_data[3]['analysis'] if len(selected_photo_data) > 3 else 'Особые моменты в кадре'}
+            {get_safe_photo_analysis(3, 'Особые моменты в кадре')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Особые кадры, которые запомнились навсегда
@@ -1212,7 +1221,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ с наблюдения: "В тебе есть особая энергетика, которая чувствуется даже через экран телефона..."
             
             АНАЛИЗ ПЯТОГО ФОТО:
-            {selected_photo_data[4]['analysis'] if len(selected_photo_data) > 4 else 'Энергия, видная в каждом кадре'}
+            {get_safe_photo_analysis(4, 'Энергия, видная в каждом кадре')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Особая энергетика, которая чувствуется через экран
@@ -1242,7 +1251,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ с утверждения: "Красота - понятие субъективное, но в твоем случае она очевидна для всех..."
             
             АНАЛИЗ ШЕСТОГО ФОТО:
-            {selected_photo_data[5]['analysis'] if len(selected_photo_data) > 5 else 'Красота и стиль в каждом движении'}
+            {get_safe_photo_analysis(5, 'Красота и стиль в каждом движении')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Гармония внутреннего и внешнего
@@ -1273,7 +1282,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ с интриги: "В тебе есть особая загадочность, которая не дает покоя..."
             
             АНАЛИЗ СЕДЬМОГО ФОТО:
-            {selected_photo_data[6]['analysis'] if len(selected_photo_data) > 6 else selected_photo_data[0]['analysis'] if selected_photo_data else 'Загадочность в каждом взгляде'}
+            {get_safe_photo_analysis(6, 'Загадочность в каждом взгляде')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Особая загадочность - не эффект, а глубина личности
@@ -1304,7 +1313,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ с удивления: "Знаешь, что странно? Ты изменил мой взгляд на многие вещи..."
             
             АНАЛИЗ ВОСЬМОГО ФОТО:
-            {selected_photo_data[7]['analysis'] if len(selected_photo_data) > 7 else selected_photo_data[1]['analysis'] if len(selected_photo_data) > 1 else 'Влияние, что изменило многое'}
+            {get_safe_photo_analysis(7, 'Влияние, что изменило многое')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Удивление тому, как ты изменил автора
@@ -1334,7 +1343,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ с открытия: "За время наблюдения за тобой я сделал несколько интересных открытий..."
             
             АНАЛИЗ ДЕВЯТОГО ФОТО:
-            {selected_photo_data[8]['analysis'] if len(selected_photo_data) > 8 else selected_photo_data[2]['analysis'] if len(selected_photo_data) > 2 else 'Наблюдения за особенностями'}
+            {get_safe_photo_analysis(8, 'Наблюдения за особенностями')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Внимательность к деталям и глаз художника
@@ -1365,7 +1374,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             НАЧНИ с личного обращения: "{full_name}, эта книга подходит к концу, но мои мысли о тебе на этом не заканчиваются..."
             
             АНАЛИЗ ФИНАЛЬНОГО ФОТО:
-            {selected_photo_data[9]['analysis'] if len(selected_photo_data) > 9 else selected_photo_data[0]['analysis'] if selected_photo_data else 'Образ, что останется в памяти навсегда'}
+            {get_safe_photo_analysis(9, 'Образ, что останется в памяти навсегда')}
             
             СТРУКТУРА ГЛАВЫ:
             1. Абзац: Личное обращение и упоминание био "{bio if bio else 'твоя особенная натура'}"
@@ -1465,6 +1474,31 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     total_time = time.time() - start_time
     print(f"⏱️ Все главы сгенерированы за {total_time:.1f} секунд")
     
+    # Генерируем финальное послание
+    final_page_content = f"С бесконечным восхищением и благодарностью. Ты — особенный человек. Спасибо тебе за всё."
+    try:
+        print("💝 Генерирую финальное послание...")
+        final_prompt = f"""Напиши очень короткое и поэтичное финальное послание (1 предложения) для романтической книги о {full_name}.
+
+ПОЛ: {gender} - обращайся соответственно.
+
+ИДЕИ:
+- "Эта книга — лишь слабая попытка передать твой свет."
+- "Спасибо за вдохновение."
+- "Пусть твой путь всегда будет прекрасен."
+
+СТИЛЬ: Очень коротко, нежно, искренне. Без длинных вступлений и заключений. Только сама суть.
+"""
+        final_page_content = generate_memoir_chapter("final_message", {
+            'prompt': final_prompt,
+            'context': context_data,
+            'style': 'poetic_farewell'
+        })
+        print("✅ Финальное послание готово.")
+    except Exception as e:
+        print(f"💔 Ошибка генерации финального послания: {e}")
+        # fallback is already set
+    
     # Генерируем личное название книги
     book_titles = [
         f"Для {full_name} с любовью",
@@ -1498,7 +1532,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 
     @page {{
         size: A5 portrait;
-        margin: 1.5cm;
+        margin: 2.5cm; /* Еще больше отступы */
         
         @bottom-center {{
             content: counter(page);
@@ -1641,11 +1675,14 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     .chapter-main-title {{
         font-family: var(--font-body);
         font-weight: bold;
-        font-size: 36pt;
+        font-size: 32pt; /* Немного уменьшил, чтобы помещалось */
         text-align: center;
         text-transform: uppercase;
         color: var(--accent-color);
         margin: 1cm 0;
+        line-height: 1.2; /* Добавил высоты строки для многострочных заголовков */
+        overflow-wrap: break-word; /* Перенос слишком длинных слов */
+        hyphens: auto; /* Автоматические переносы */
     }}
     
     .chapter-subtitle {{
@@ -1683,14 +1720,40 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     }}
 
     .chapter-body p:first-of-type::first-letter {{
-        /* чуть поменьше, с отступом и без слишком агрессивного float */
-        font-size: 48pt;       /* размер «капители» */
-        font-weight: 700 !important;     /* делаем именно жирным, с приоритетом */
-        float: left;
-        margin: 0 0.15em 0 0;  /* отступ справа, чтобы буква не налезала на текст */
-        line-height: 1;        /* ровнее выравнивается текст */
+        /* Современный способ создания буквицы, который лучше поддерживается рендерами PDF */
+        initial-letter: 3; /* Буква будет высотой в 3 строки */
+        font-weight: bold;
+        padding-right: 0.2em; /* Небольшой отступ справа для воздуха */
+        color: #555; /* Сделаем ее чуть светлее для элегантности */
     }}
     
+    /* Final Page Styles */
+    .final-page {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }}
+    .final-content {{
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 24pt;
+        line-height: 1.7;
+        max-width: 80%;
+    }}
+    .final-ornament {{
+        font-size: 32pt;
+        color: var(--accent-color);
+        margin: 2rem 0;
+        font-family: serif;
+    }}
+    .final-signature {{
+        margin-top: 1rem;
+        font-size: 18pt;
+        font-style: normal;
+    }}
+
     @media screen {{
         body {{
             font-size: 16px;
@@ -1699,7 +1762,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             width: 148mm; /* A5 width */
             min-height: 210mm; /* A5 height */
             margin: 2rem auto;
-            padding: 1.5cm;
+            padding: 2.5cm; /* Увеличенные отступы для веб-просмотра */
             box-sizing: border-box;
             height: auto;
         }}
@@ -1708,13 +1771,15 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
             position: relative;
         }}
         .chapter-body p {{ font-size: 14pt; }}
-        .chapter-body p:first-of-type::first-letter {{ font-size: 48pt; }}
+        .chapter-body p:first-of-type::first-letter {{ font-size: 38pt; }}
         .cover-title {{ font-size: 32pt; }}
         .cover-subtitle {{ font-size: 18pt; }}
         .toc-title {{ font-size: 24pt; }}
         .toc-list {{ font-size: 14pt; }}
         .chapter-main-title {{ font-size: 24pt; }}
         .chapter-subtitle {{ font-size: 12pt; }}
+        .final-content {{ font-size: 18pt; }}
+        .final-signature {{ font-size: 14pt; }}
     }}
     </style>
 </head>
@@ -1753,15 +1818,28 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     {(f"""
     <div class="chapter-image-container">
         <img src="{selected_photo_data[i]['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
-        <p class="chapter-image-caption">Photo {selected_photo_data[i]['index']}: {selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
+        <p class="chapter-image-caption">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
     </div>
     """) if i < len(selected_photo_data) else ""}
 
     <div class="chapter-body">
-        <p>{chapters.get(config['key'], '').replace('</p><p>', ' ')}</p>
+        {chapters.get(config['key'], '<p>Эта глава скоро наполнится словами восхищения...</p>')}
     </div>
 </div>
 ''' for i, config in enumerate(chapter_configs)])}
+
+<!-- Final Page -->
+<div class="book-page final-page">
+    <div class="final-content">
+        <p>{final_page_content.replace('\\n', '<br>')}</p>
+    </div>
+    <div class="final-ornament">
+        ❦
+    </div>
+    <div class="final-signature">
+        <p>Помни, что каждый человек достоин любви.</p>
+    </div>
+</div>
 
 </body>
 </html>"""
