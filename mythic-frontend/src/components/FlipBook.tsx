@@ -62,7 +62,7 @@ export function FlipBook({ pages }: FlipBookProps) {
         maxHeight={1350}
         maxShadowOpacity={0.5}
         showCover={false}
-        className="shadow-2xl"
+        className="shadow-2xl book-container"
         mobileScrollSupport
         showPageCorners
         useMouseEvents

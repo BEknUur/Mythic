@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Flip Book</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <style>
+    body, html { margin:0; height:100%; background:#eee; }
+    .flip-book-container { width:90vw; height:90vh; margin:auto; }
+    #book .page { 
+      background:#fff; 
+      display:flex; 
+      flex-direction:column; 
+      justify-content:center; 
+      align-items:center; 
+      font-family:'Playfair Display', serif; 
+      padding:1.5em; 
+      box-sizing:border-box;
+    }
+    .page-image img { max-width:100%; max-height:60%; object-fit:contain; }
+    .text-content { font-size:1.1em; line-height:1.6; text-align:justify; color:#333; }
+    .cover-page { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; text-align:center; }
+    .cover-page h1 { font-size:2.5em; margin:0.2em 0; }
+  </style>
+</head>
+<body>
+  <div class="flip-book-container">
+    <div id="book">
+      {% for p in pages %}
+        <div class="page">
+          {{ p | safe }}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const book = document.getElementById('book');
+      const pf = new StPageFlip.PageFlip(book, {
+        width: 550,
+        height: 700,
+        showCover: true,
+        mobileScrollSupport: false,
+      });
+      pf.loadFromHTML(document.querySelectorAll('#book .page'));
+    });
+  </script>
+</body>
+</html> 

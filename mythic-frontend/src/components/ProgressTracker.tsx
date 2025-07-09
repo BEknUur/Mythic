@@ -196,12 +196,12 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     }
   };
 
-  const createBookWithFormat = async (format: 'classic') => {
+  const createBookWithFormat = async (format: 'classic' | 'flipbook') => {
     setShowFormatDialog(false);
     setIsCreatingBook(true);
     toast({
       title: "Отличный выбор!",
-      description: `Начинаем создание вашей книги в классическом формате.`,
+      description: format === 'flipbook' ? 'Создаем интерактивный Flipbook — наберитесь терпения ✨' : 'Начинаем создание вашей книги в классическом формате.',
     });
     try {
       const token = await getToken();
@@ -346,6 +346,15 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
                   <Book className="w-8 h-8 text-purple-600 mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Классическая книга</h3>
                   <p className="text-gray-500 dark:text-gray-400">Традиционный формат с главами, красивым дизайном и плавным повествованием.</p>
+                </button>
+
+                <button
+                  onClick={() => createBookWithFormat('flipbook')}
+                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300 md:col-span-2"
+                >
+                  <Book className="w-8 h-8 text-purple-600 mb-4 rotate-90" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Flipbook</h3>
+                  <p className="text-gray-500 dark:text-gray-400">Интерактивный формат с эффектом перелистывания страниц и возможностью скачать PDF.</p>
                 </button>
               </div>
               <div className="mt-8">

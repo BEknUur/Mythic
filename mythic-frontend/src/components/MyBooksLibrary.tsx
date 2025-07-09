@@ -21,9 +21,10 @@ import { api, type UserBook} from '@/lib/api';
 interface MyBooksLibraryProps {
   onBack: () => void;
   onOpenBook: (bookId?: string, runId?: string) => void;
+  onOpenFlip: (bookId?: string, runId?: string) => void;
 }
 
-export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
+export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibraryProps) {
   const [books, setBooks] = useState<UserBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +64,10 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
         variant: "destructive",
       });
     }
+  };
+
+  const handleFlipBook = (book: UserBook) => {
+    onOpenFlip(book.id, undefined);
   };
 
   const handleDownloadBook = async (book: UserBook) => {
@@ -287,6 +292,13 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
                       >
                       <Eye className="h-4 w-4 mr-2" />
                         Читать
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleFlipBook(book)}
+                        className="border-gray-300 dark:border-gray-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                      >
+                        Flipbook
                       </Button>
                       <Button
                         variant="outline"

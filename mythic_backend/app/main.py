@@ -58,6 +58,7 @@ app.add_middleware(
 app.include_router(edit.router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/data", StaticFiles(directory="data"), name="data")
 
 @app.get("/health")
 def health_check():
@@ -178,6 +179,15 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
         except:
             pass
 
+    # Читаем формат книги (classic | flipbook | zine | ...)
+    format_file = run_dir / "format.txt"
+    book_format = "classic"
+    if format_file.exists():
+        try:
+            book_format = format_file.read_text(encoding="utf-8").strip()
+        except:
+            pass
+
     message = "Начинаю путешествие по вашему профилю..."
 
     if book_generated:
@@ -245,6 +255,7 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
         "runId": run_id,
         "message": message,
         "style": book_style,
+        "format": book_format,
         "stages": {
             "data_collected": data_collected,
             "images_downloaded": images_downloaded,
@@ -1517,7 +1528,12 @@ async def create_book(request: Request, background: BackgroundTasks, current_use
         if not run_dir.exists():
             raise HTTPException(404, f"Данные для runId {run_id} не найдены")
             
-        log.info(f"Book creation started for run {run_id} by user {current_user.get('sub')}")
+        log.info(f"Book creation started for {run_id} by user {current_user.get('sub')}")
+        # Сохраняем выбранный формат для запроса статуса
+        try:
+            (run_dir / "format.txt").write_text(book_format, encoding="utf-8")
+        except Exception as e:
+            log.warning(f"Не удалось сохранить format.txt: {e}")
     except Exception as e:
         raise HTTPException(400, f"Ошибка в параметрах запроса: {e}")
 
@@ -1549,12 +1565,8 @@ async def create_book(request: Request, background: BackgroundTasks, current_use
         style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
         
         # Создаем книгу в соответствующем стиле
-        try:
-            from app.styles import build_book as build_style_book
-            build_style_book(style, run_id, imgs, comments, book_format, user_id)
-        except Exception as e:
-            print(f"❌ Ошибка генерации книги в стиле {style}: {e}. Падаем обратно на романтику.")
-            build_romantic_book(run_id, imgs, comments, book_format, user_id)
+        from app.styles import build_book as build_style_book
+        build_style_book(style, run_id, imgs, comments, book_format, user_id)
 
     background.add_task(_build)
 
@@ -1816,3 +1828,50 @@ async def update_book_content(
     except Exception as e:
         log.error(f"Ошибка обновления книги: {e}")
         raise HTTPException(500, f"Ошибка обновления книги: {e}")
+
+# ───────────── /create-flipbook ─────────────────────────────
+
+@app.post("/create-flipbook")
+async def create_flipbook(request: Request, background: BackgroundTasks, current_user: dict = Depends(get_current_user)):
+    """Создает книгу в формате flipbook (специальная верстка для перелистывания)"""
+    try:
+        body = await request.json()
+        run_id = body.get("runId")
+        if not run_id:
+            raise HTTPException(400, "runId обязателен")
+
+        # Проверяем, что данные существуют
+        run_dir = Path("data") / run_id
+        if not run_dir.exists():
+            raise HTTPException(404, f"Данные для runId {run_id} не найдены")
+
+        log.info(f"FlipBook creation started for run {run_id} by user {current_user.get('sub')}")
+    except Exception as e:
+        raise HTTPException(400, f"Ошибка в параметрах запроса: {e}")
+
+    async def _build_flip():
+        images_dir = run_dir / "images"
+        for attempt in range(10):
+            if images_dir.exists() and any(images_dir.glob("*")):
+                break
+            await asyncio.sleep(2)
+
+        imgs = await process_folder(images_dir)
+        comments = collect_texts(run_dir / "posts.json")
+
+        user_id = current_user.get("sub")
+        style_file = run_dir / "style.txt"
+        style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
+
+        from app.styles import build_book as build_style_book
+        build_style_book(style, run_id, imgs, comments, "flipbook", user_id)
+
+    # Сохраняем признак формата
+    try:
+        (run_dir / "format.txt").write_text("flipbook", encoding="utf-8")
+    except Exception as e:
+        log.warning(f"Не удалось сохранить format.txt: {e}")
+
+    background.add_task(_build_flip)
+
+    return {"status": "processing", "runId": run_id, "format": "flipbook", "message": "Создание Flipbook началось! Скоро будет готова"}

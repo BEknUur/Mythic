@@ -27,6 +27,7 @@ const StatusResponseSchema = z.object({
   runId: z.string(),
   message: z.string(),
   style: z.string().optional(),
+  format: z.string().optional(),
   stages: StagesSchema,
   profile: ProfileSchema.optional(),
   files: z.record(z.string()).default({}),
@@ -304,7 +305,8 @@ export const api = {
     format: string = 'classic',
     token?: string,
   ): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${BASE_URL}/create-book`, {
+    const endpoint = format === 'flipbook' ? '/create-flipbook' : '/create-book';
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: headersWithAuth(token),
       body: JSON.stringify({ runId: runId, format: format }),

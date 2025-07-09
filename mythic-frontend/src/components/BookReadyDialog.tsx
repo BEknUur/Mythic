@@ -21,6 +21,8 @@ import {
 import { useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
 import { BookReader } from './BookReader';
+import { FlipBookReader } from './FlipBookReader';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 
 interface BookReadyDialogProps {
@@ -41,6 +43,14 @@ export function BookReadyDialog({
   const [bookContent, setBookContent] = useState<string>('');
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isFlipView, setIsFlipView] = useState(status?.format === 'flipbook');
+
+  // Обновляем режим просмотра при изменении статуса
+  useEffect(() => {
+    if (status?.format === 'flipbook') {
+      setIsFlipView(true);
+    }
+  }, [status]);
   const { getToken } = useAuth();
 
   const profile = status?.profile;
@@ -126,10 +136,28 @@ export function BookReadyDialog({
     onOpenChange(true);
   };
 
+  if (isFlipView) {
+    return (
+      <Dialog open={true} onOpenChange={(open) => !open && setIsFlipView(false)}>
+        <DialogContent className="max-w-full w-full h-full max-h-full p-0 gap-0">
+          <VisuallyHidden>
+            <DialogTitle>Flipbook View</DialogTitle>
+            <DialogDescription>Interactive flipbook view of the generated book.</DialogDescription>
+          </VisuallyHidden>
+          <FlipBookReader runId={runId} onBack={() => setIsFlipView(false)} />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   if (isEditing) {
     return (
       <Dialog open={true} onOpenChange={(open) => !open && setIsEditing(false)}>
         <DialogContent className="max-w-full w-full h-full max-h-full p-0 gap-0">
+          <VisuallyHidden>
+            <DialogTitle>Book Reader View</DialogTitle>
+            <DialogDescription>Reading and editing view of the generated book.</DialogDescription>
+          </VisuallyHidden>
           <BookReader runId={runId} onBack={handleBackFromReader} />
         </DialogContent>
       </Dialog>

@@ -6,6 +6,7 @@ import { GeneratePage } from './components/GeneratePage'
 import { ProgressTracker } from './components/ProgressTracker'
 import { MyBooksLibrary } from './components/MyBooksLibrary'
 import { BookReader } from './components/BookReader'
+import { FlipBookReader } from './components/FlipBookReader'
 import { TikTokPage } from './components/TikTokPage'
 import { FlipBookPage } from './components/FlipBookPage'
 import { HelpPage } from './components/HelpPage'
@@ -22,6 +23,7 @@ function AppContent() {
   const navigate = useNavigate();
   const [runId, setRunId] = useState<string | null>(null);
   const [bookToRead, setBookToRead] = useState<{ bookId?: string; runId?: string } | null>(null);
+  const [flipBookToRead, setFlipBookToRead] = useState<{ bookId?: string; runId?: string } | null>(null);
   const [showTourDialog, setShowTourDialog] = useState(true);
   const { setSteps } = useTour();
 
@@ -93,8 +95,18 @@ function AppContent() {
     navigate('/reader');
   };
 
+  const handleOpenFlipReader = (bookId?: string, runId?: string) => {
+    setFlipBookToRead({ bookId, runId });
+    navigate('/flipreader');
+  };
+
   const handleBackFromReader = () => {
     setBookToRead(null);
+    navigate('/library');
+  };
+
+  const handleBackFromFlip = () => {
+    setFlipBookToRead(null);
     navigate('/library');
   };
 
@@ -110,7 +122,7 @@ function AppContent() {
           <Route path="/tiktok" element={<TikTokPage />} />
           <Route 
             path="/library"
-            element={<MyBooksLibrary onBack={handleBackToMain} onOpenBook={handleOpenBookReader} />}
+            element={<MyBooksLibrary onBack={handleBackToMain} onOpenBook={handleOpenBookReader} onOpenFlip={handleOpenFlipReader} />}
         />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
@@ -141,6 +153,20 @@ function AppContent() {
               <Navigate to="/library" />
     )
   }
+        />
+        <Route
+          path="/flipreader"
+          element={
+            flipBookToRead ? (
+              <FlipBookReader
+                bookId={flipBookToRead.bookId}
+                runId={flipBookToRead.runId}
+                onBack={handleBackFromFlip}
+              />
+            ) : (
+              <Navigate to="/library" />
+            )
+          }
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
