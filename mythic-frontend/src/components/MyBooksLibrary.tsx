@@ -265,7 +265,7 @@ export function MyBooksLibrary({ onBack, onOpenBook }: MyBooksLibraryProps) {
                     <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-4">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        <span>{book.user_name}</span>
+                        <span>{book.profile_full_name ?? book.profile_username ?? '—'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />

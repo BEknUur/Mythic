@@ -7,6 +7,7 @@ import { ProgressTracker } from './components/ProgressTracker'
 import { MyBooksLibrary } from './components/MyBooksLibrary'
 import { BookReader } from './components/BookReader'
 import { TikTokPage } from './components/TikTokPage'
+import { FlipBookPage } from './components/FlipBookPage'
 import { HelpPage } from './components/HelpPage'
 import { ComingSoonPage } from './components/ComingSoonPage'
 import { PricingPage } from './components/PricingPage'
@@ -14,13 +15,7 @@ import { TourProvider, TourAlertDialog, TOUR_STEP_IDS, useTour } from '@/compone
 import { Toaster } from './components/ui/toaster'
 import './App.css'
 
-// Placeholder components
-const FanficPage = () => (
-  <ComingSoonPage 
-    title="Написать фанфик"
-    description="Этот раздел находится в активной разработке. Скоро здесь появится возможность создавать фанфики по любимым вселенным!"
-  />
-);
+
 const SettingsPage = () => <div className="p-8"><h1>Настройки</h1><p>Скоро здесь можно будет настроить приложение.</p></div>;
 
 function AppContent() {
@@ -118,9 +113,9 @@ function AppContent() {
             element={<MyBooksLibrary onBack={handleBackToMain} onOpenBook={handleOpenBookReader} />}
         />
           <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/fanfic" element={<FanficPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/help" element={<HelpPage />} />
+          <Route path="/flipbook" element={<FlipBookPage />} />
         </Route>
         
         <Route 
