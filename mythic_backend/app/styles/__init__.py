@@ -1,20 +1,12 @@
 import importlib
 from pathlib import Path
-
-# Импортируем новую функцию генерации
+from app.services.text_collector import collect_texts
 from app.services.book_builder import generate_text_pages
 
 def fallback_pages(image_names: list[str], raw_comments: list[str]) -> list[str]:
-    """Генерирует стандартные тексты, если ИИ не справился."""
-    return [
-        "Момент, застывший во времени.",
-        "История, рассказанная одним взглядом.",
-        "Красота в каждой детали.",
-        "Воспоминание, которое останется навсегда.",
-        "Энергия, которую можно почувствовать.",
-        "Улыбка, которая меняет мир.",
-        "Просто, но с глубоким смыслом."
-    ] * (len(image_names) // 7 + 1) # Чтобы текстов точно хватило
+    """Возвращает короткие текстовые заглушки если LLM не сработал"""
+    return [f"Описание к фотографии {i+1}: {(raw_comments[i] if i < len(raw_comments) else 'Особенный момент')[:100]}..." 
+            for i in range(len(image_names))]
 
 async def build_book(style: str, run_id: str, images: list, comments: list, book_format: str, user_id: str):
     """
@@ -27,13 +19,19 @@ async def build_book(style: str, run_id: str, images: list, comments: list, book
         try:
             from app.services.flipbook_builder import generate_pages_html, build_flipbook_html
             
+            # Собираем все тексты из постов и сторис - уже есть в comments
             image_names = [Path(p).name for p in images]
 
             try:
-                # Новый асинхронный вызов ИИ
-                text_pages = await generate_text_pages(run_id, style, image_names, comments)
+                # Новый асинхронный вызов ИИ с полным контекстом
+                text_pages = await generate_text_pages(
+                    run_id=run_id, 
+                    style=style, 
+                    image_names=image_names, 
+                    raw_comments=comments
+                )
             except Exception as e:
-                print(f"💔 Ошибка пакетной генерации текстов: {e}. Использую fallback тексты.")
+                print(f"💔 LLM-ошибка: {e} — fallback коротких текстов")
                 text_pages = fallback_pages(image_names, comments)
 
             # Вызываем сборщик HTML с уже готовыми текстами
@@ -42,6 +40,7 @@ async def build_book(style: str, run_id: str, images: list, comments: list, book
             print(f"✅ Flipbook для стиля '{style}' успешно сгенерирован.")
         except Exception as e:
             print(f"❌ Ошибка при создании flipbook: {e}")
+            raise
         return
 
     # Динамический импорт и вызов сборщика для классических форматов
@@ -67,3 +66,4 @@ async def build_book(style: str, run_id: str, images: list, comments: list, book
         build_romantic_book(run_id, images, comments, book_format, user_id)
     except Exception as e:
         print(f"❌ Ошибка при сборке книги в стиле '{style}': {e}")
+        raise

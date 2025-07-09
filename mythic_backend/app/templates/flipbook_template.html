@@ -2,33 +2,377 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Flip Book</title>
+  <title>Романтическая История - Flip Book</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  
   <style>
-    body, html { margin:0; height:100%; background:#eee; }
-    .flip-book-container { width:90vw; height:90vh; margin:auto; }
-    #book .page { 
-      background:#fff; 
-      display:flex; 
-      flex-direction:column; 
-      justify-content:center; 
-      align-items:center; 
-      font-family:'Playfair Display', serif; 
-      padding:1.5em; 
-      box-sizing:border-box;
+    * {
+      box-sizing: border-box;
     }
-    .page-image img { max-width:100%; max-height:60%; object-fit:contain; }
-    .text-content { font-size:1.1em; line-height:1.6; text-align:justify; color:#333; }
-    .cover-page { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; text-align:center; }
-    .cover-page h1 { font-size:2.5em; margin:0.2em 0; }
+    
+    body, html { 
+      margin: 0; 
+      padding: 0;
+      height: 100%; 
+      background: linear-gradient(135deg, #f5f2e8 0%, #faf6f0 50%, #f0ebe2 100%);
+      font-family: 'Crimson Text', serif;
+      overflow: hidden;
+    }
+    
+    .flip-book-container { 
+      width: 90vw; 
+      height: 90vh; 
+      margin: 5vh auto; 
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.1); 
+      border-radius: 15px; 
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .flip-book-container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+      border-radius: 17px;
+      z-index: -1;
+      opacity: 0.3;
+    }
+
+    #book .page { 
+      position: relative;
+      background: #fff; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+      align-items: center; 
+      font-family: 'Crimson Text', serif; 
+      box-sizing: border-box;
+      overflow-y: auto;
+      border: 2px solid #e8ddd4;
+      box-shadow: inset 0 0 30px rgba(139, 69, 19, 0.05);
+      background-image: 
+        radial-gradient(circle at 20% 20%, rgba(255, 182, 193, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 218, 185, 0.1) 0%, transparent 50%);
+    }
+
+    /* Декоративные уголки */
+    #book .page::before,
+    #book .page::after {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background-image: 
+        radial-gradient(circle at center, rgba(184, 134, 11, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    #book .page::before { top: 15px; left: 15px; }
+    #book .page::after { bottom: 15px; right: 15px; }
+
+    /* Стили для разных типов страниц */
+    .page.text-page {
+      padding: 3em 2.5em;
+      text-align: left;
+    }
+    
+    .page.image-page {
+      padding: 2em;
+      background: linear-gradient(135deg, #faf8f3 0%, #f5f2ea 100%);
+    }
+
+    /* Обложка */
+    .cover-page { 
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 30%, #fecfef 70%, #ff9a9e 100%);
+      color: #fff; 
+      text-align: center; 
+      padding: 4em 3em;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cover-page::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, transparent 30%),
+        radial-gradient(circle at 70% 70%, rgba(255,255,255,0.2) 0%, transparent 40%);
+      animation: shimmer 6s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.1); }
+    }
+    
+    .cover-page h1 { 
+      font-family: 'Playfair Display', serif;
+      font-size: 4em; 
+      margin: 0.3em 0; 
+      text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      font-weight: 700;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .cover-page p {
+      font-size: 1.4em;
+      margin: 1em 0;
+      font-style: italic;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .cover-decoration {
+      font-size: 3em;
+      margin-top: 1em;
+      position: relative;
+      z-index: 2;
+      animation: heartbeat 2s ease-in-out infinite;
+    }
+    
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Титульная страница */
+    .title-page {
+      text-align: center;
+      padding: 4em 2em;
+    }
+    
+    .title-page h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.2em;
+      color: #8b4513;
+      margin-bottom: 0.5em;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .title-page p {
+      font-size: 1.3em;
+      color: #cd853f;
+      font-style: italic;
+      margin-bottom: 2em;
+    }
+    
+    .title-decoration {
+      margin-top: 2em;
+    }
+    
+    .title-decoration .heart {
+      font-size: 2.5em;
+      color: #ff69b4;
+      margin-bottom: 0.5em;
+    }
+    
+    .title-decoration .date {
+      font-size: 1.1em;
+      color: #8b4513;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* Текстовый контент */
+    .text-content { 
+      font-size: 1.3em; 
+      line-height: 1.8; 
+      text-align: justify; 
+      color: #2c1810; 
+      width: 100%;
+      max-height: 100%;
+      overflow-y: auto;
+    }
+    
+    .text-content h2 {
+      font-family: 'Playfair Display', serif;
+      color: #8b4513;
+      font-size: 2.2em;
+      margin-bottom: 1em;
+      text-align: center;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 0.5em;
+    }
+    
+    .text-content h3 {
+      font-family: 'Playfair Display', serif;
+      color: #cd853f;
+      font-size: 1.6em;
+      margin-bottom: 0.8em;
+      text-align: center;
+    }
+    
+    .text-content p {
+      margin-bottom: 1.2em;
+      text-indent: 2em;
+    }
+    
+    .text-content p:first-of-type {
+      text-indent: 0;
+      font-size: 1.1em;
+      font-weight: 600;
+    }
+
+    /* Оглавление */
+    .toc-page {
+      padding: 3em 2em;
+    }
+    
+    .toc-page h2 { 
+      text-align: center; 
+      font-family: 'Playfair Display', serif; 
+      color: #8b4513;
+      font-size: 2.5em;
+      margin-bottom: 1.5em;
+      border-bottom: 3px solid #ddd;
+      padding-bottom: 0.5em;
+    }
+    
+    .toc { 
+      list-style: none;
+      padding: 0;
+      counter-reset: chapter;
+    }
+    
+    .toc li {
+      font-size: 1.2em; 
+      line-height: 1.6; 
+      margin-bottom: 0.8em;
+      padding-left: 2em;
+      position: relative;
+      border-bottom: 1px dotted #ccc;
+      padding-bottom: 0.5em;
+    }
+    
+    .toc li::before {
+      counter-increment: chapter;
+      content: counter(chapter, decimal);
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: #ff69b4;
+      color: white;
+      width: 1.5em;
+      height: 1.5em;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+
+    /* Изображения */
+    .page-image {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      position: relative;
+    }
+    
+    .page-image img { 
+      max-width: 85%; 
+      max-height: 75%; 
+      object-fit: contain; 
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2), 0 3px 10px rgba(0,0,0,0.1); 
+      border-radius: 10px;
+      border: 4px solid #fff;
+    }
+    
+    .image-caption {
+      margin-top: 1.5em;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3em;
+      color: #8b4513;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* Специальные страницы */
+    .prologue h2,
+    .epilogue h2 {
+      color: #ff69b4;
+      text-align: center;
+      font-size: 2em;
+      margin-bottom: 1.5em;
+    }
+    
+    .final-decoration {
+      text-align: center;
+      margin-top: 3em;
+      padding-top: 2em;
+      border-top: 2px solid #ddd;
+    }
+    
+    .hearts {
+      font-size: 2em;
+      margin-bottom: 1em;
+      color: #ff69b4;
+    }
+    
+    .final-decoration p {
+      font-style: italic;
+      color: #8b4513;
+      font-size: 1.1em;
+    }
+
+    /* Скроллбар */
+    .text-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .text-content::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    .text-content::-webkit-scrollbar-thumb {
+      background: #ff69b4;
+      border-radius: 4px;
+    }
+    
+    .text-content::-webkit-scrollbar-thumb:hover {
+      background: #ff1493;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+      .flip-book-container {
+        width: 95vw;
+        height: 85vh;
+      }
+      
+      .cover-page h1 {
+        font-size: 2.5em;
+      }
+      
+      .text-content {
+        font-size: 1.1em;
+        padding: 2em 1.5em;
+      }
+      
+      .page.text-page {
+        padding: 2em 1.5em;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="flip-book-container">
     <div id="book">
       {% for p in pages %}
-        <div class="page">
+        <div class="page {% if '<img' in p %}image-page{% else %}text-page{% endif %}">
           {{ p | safe }}
         </div>
       {% endfor %}
@@ -39,13 +383,33 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const book = document.getElementById('book');
+      
+      // Настройки для разных размеров экрана
+      const isMobile = window.innerWidth <= 768;
+      const bookWidth = isMobile ? 350 : 600;
+      const bookHeight = isMobile ? 500 : 750;
+      
       const pf = new StPageFlip.PageFlip(book, {
-        width: 550,
-        height: 700,
+        width: bookWidth,
+        height: bookHeight,
         showCover: true,
-        mobileScrollSupport: false,
+        mobileScrollSupport: true,
+        disableFlipByClick: false,
+        usePortrait: isMobile,
+        startZIndex: 100,
+        autoSize: false,
+        maxShadowOpacity: 0.5,
+        showPageCorners: true,
+        drawShadow: true
       });
+      
       pf.loadFromHTML(document.querySelectorAll('#book .page'));
+      
+      // Плавное появление книги
+      setTimeout(() => {
+        book.style.opacity = '1';
+        book.style.transform = 'scale(1)';
+      }, 100);
     });
   </script>
 </body>

@@ -1536,25 +1536,54 @@ async def run_full_build(run_id: str, book_format: str, user: dict):
     # 1. Ждем завершения загрузки изображений (с таймаутом)
     try:
         await asyncio.wait_for(wait_for_images(images_dir), timeout=300.0)
+        log.info(f"[{run_id}] Изображения загружены.")
     except asyncio.TimeoutError:
-        print(f"❌ Таймаут ожидания изображений для {run_id}")
+        log.error(f"[{run_id}] Таймаут ожидания изображений")
         return
 
-    # 2. Собираем данные
+    # 2. Собираем список изображений (до 30 штук для большей книги)
+    images = sorted([str(p) for p in images_dir.glob("*")])[:30]
+    if not images:
+        log.error(f"[{run_id}] В папке {images_dir} не найдено изображений после загрузки.")
+        return
+
+    # 3. Парсим данные профиля
     posts_file = run_dir / "posts.json"
+    if not posts_file.exists():
+        log.error(f"[{run_id}] Файл posts.json не найден")
+        return
+        
     posts_data = json.loads(posts_file.read_text(encoding="utf-8"))
     
+    # Извлекаем комментарии из правильной структуры данных
+    comments = []
+    if posts_data and isinstance(posts_data, list) and len(posts_data) > 0:
+        profile = posts_data[0]
+        latest_posts = profile.get('latestPosts', [])
+        comments = [post.get('caption', '') for post in latest_posts if post.get('caption')]
+        
+        # Также добавляем описание профиля если есть
+        if profile.get('biography'):
+            comments.insert(0, profile.get('biography'))
+            
+        log.info(f"[{run_id}] Найдено {len(comments)} текстовых материалов для анализа")
+    else:
+        log.warning(f"[{run_id}] Данные профиля не найдены или имеют неверный формат")
+        comments = ["Особенный момент", "Прекрасные воспоминания", "Важные мгновения"]
+
+    # 4. Определяем стиль
     style_file = run_dir / "style.txt"
     style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
 
-    images = sorted(list(images_dir.glob("*.[jp][pn]g")))
-    comments = [p.get('caption', '') for p in posts_data]
-
     user_id = user.get("sub")
     
-    # 3. Вызываем новый асинхронный диспетчер
-    await build_book(style, run_id, images, comments, book_format, user_id)
-    print(f"✅ Полная сборка для {run_id} (формат: {book_format}) завершена.")
+    # 5. Вызываем новый асинхронный диспетчер
+    try:
+        await build_book(style, run_id, images, comments, book_format, user_id)
+        log.info(f"[{run_id}] Полная сборка (формат: {book_format}) завершена.")
+    except Exception as e:
+        log.error(f"[{run_id}] Ошибка при сборке книги: {e}")
+        raise
 
 async def wait_for_images(images_dir: Path):
     """Асинхронно ждет появления файлов в папке с изображениями."""
