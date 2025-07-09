@@ -1821,9 +1821,7 @@ async def create_pdf_from_html_async(html_path: Path, output_path: Path) -> Path
     return output_path
 
 def format_chapter_text(text: str) -> str:
-    """
-    Форматирует текст главы: расставляет параграфы и выделяет до 3 ключевых слов.
-    """
+    """Очищает и форматирует текст главы."""
     # Сначала разбиваем текст на параграфы по переносам строк
     paragraphs = text.strip().split('\n')
     
@@ -1856,4 +1854,75 @@ def format_chapter_text(text: str) -> str:
             formatted_paragraphs.append(f'<p>{highlighted_p}</p>')
             
     return "".join(formatted_paragraphs)
+
+# --- НОВЫЙ КОД ОТ БРАТА ---
+import re
+# Правильный импорт АСИНХРОННОГО клиента
+from app.services.llm_client import async_client, settings
+
+
+async def generate_text_pages(run_id: str, style: str, image_names: list[str], raw_comments: list[str]) -> list[str]:
+    """
+    Просит LLM сразу вернуть JSON {"pages": [ "...", "...", ... ]}.
+    Если JSON-парсинг не удаётся — пытается вытащить первое {...} из текста.
+    Если и это не помогает — бросает исключение, и вы переходите на fallback.
+    """
+    # 1) подготовим чёткий system-prompt
+    system = {
+        "role": "system",
+        "content": (
+            "Ты — талантливый писатель, который создаёт романтические истории.\n"
+            "Выдавай _только_ JSON в ровно таком формате:\n\n"
+            "{\n"
+            '  "pages": [\n'
+            '    "Текст первой страницы...",\n'
+            '    "Текст второй страницы...",\n'
+            '    ...\n'
+            "  ]\n"
+            "}\n"
+            "Никаких примечаний, отладочных сообщений и лишних символов — только этот объект."
+        )
+    }
+
+    # 2) user-prompt с данными
+    user = {
+        "role": "user",
+        "content": json.dumps({
+            "runId": run_id,
+            "style": style,
+            "images": image_names,
+            "rawComments": raw_comments
+        }, ensure_ascii=False)
+    }
+
+    # 3) собственно вызов LLM
+    resp = await async_client.chat.completions.create(
+        model=settings.AZURE_OPENAI_GPT4_DEPLOYMENT, # Используем правильный deployment
+        messages=[system, user]
+    )
+    raw = resp.choices[0].message.content.strip()
+
+    # 4) пробуем сразу распарсить
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        # логируем что вернулось, чтобы потом подправить prompt
+        print(f"⚠️ Не удалось распарсить JSON из LLM:\n{raw}\n")
+        # пытаемся найти первый {...}
+        m = re.search(r"\{[\s\S]*\}", raw)
+        if m:
+            try:
+                payload = json.loads(m.group(0))
+            except json.JSONDecodeError:
+                raise ValueError("LLM вернул что-то, но невалидный JSON даже внутри обёрток")
+        else:
+            raise ValueError("LLM вернул текст, но в нём нет JSON-объекта")
+
+    # 5) убеждаемся, что в payload есть pages
+    pages = payload.get("pages")
+    if not isinstance(pages, list) or not all(isinstance(p, str) for p in pages):
+        raise ValueError(f"JSON не содержит корректного списка pages: {payload}")
+
+    return pages
+# --- КОНЕЦ НОВОГО КОДА ---
 

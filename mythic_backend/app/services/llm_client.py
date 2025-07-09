@@ -4,10 +4,17 @@ from app.config import settings
 from typing import Optional
 import logging
 import random
-from openai import AzureOpenAI
+from openai import AzureOpenAI, AsyncAzureOpenAI
 
-# Инициализация Azur
+# Инициализация синхронного клиента
 client = AzureOpenAI(
+    api_key=settings.AZURE_OPENAI_API_KEY,
+    azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+    api_version=settings.AZURE_OPENAI_API_VERSION
+)
+
+# Инициализация АСИНХРОННОГО клиента для новых функций
+async_client = AsyncAzureOpenAI(
     api_key=settings.AZURE_OPENAI_API_KEY,
     azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
     api_version=settings.AZURE_OPENAI_API_VERSION

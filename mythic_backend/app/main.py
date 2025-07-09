@@ -24,10 +24,7 @@ class NormalizePathMiddleware(BaseHTTPMiddleware):
 import asyncio
 from app.services.image_processor import process_folder
 from app.services.text_collector import collect_texts
-from app.services.book_builder import (
-    build_romantic_book,
-    # create_pdf_from_html_async is now deprecated
-)
+from app.styles import build_book
 from app.auth import get_current_user, get_optional_current_user, get_user_from_request
 from app.database import get_db, create_tables
 from app.services.user_service import UserService
@@ -361,7 +358,7 @@ async def generate_pdf(run_id: str, current_user: dict = Depends(get_current_use
         user_id = current_user.get("sub")
 
         # Эта функция теперь также создает PDF
-        build_romantic_book(run_id, imgs, comments, "classic", user_id)
+        build_book(run_id, imgs, comments, "classic", user_id)
 
         if pdf_file.exists():
              return {"status": "success", "message": "PDF успешно создан", "download_url": f"/download/{run_id}/book.pdf"}
@@ -1514,64 +1511,73 @@ def status_page(runId: str):
 
 @app.post("/create-book")
 async def create_book(request: Request, background: BackgroundTasks, current_user: dict = Depends(get_current_user)):
-    """Создает романтическую книгу на основе данных профиля - только для авторизованных пользователей"""
+    """(DEPRECATED) Создает книгу в фоновом режиме."""
+    payload = await request.json()
+    run_id = payload.get("runId")
+
+    if not run_id:
+        raise HTTPException(400, "runId is required")
+
+    # Сохраняем формат книги
+    (Path("data") / run_id / "format.txt").write_text("classic", encoding="utf-8")
+    
+    # Запускаем полную сборку в фоне
+    background.add_task(run_full_build, run_id, "classic", current_user)
+    
+    return {"status": "ok", "runId": run_id, "message": "Начинаю создавать вашу книгу..."}
+
+async def run_full_build(run_id: str, book_format: str, user: dict):
+    """
+    Полный асинхронный процесс сборки книги: ожидание фото, сборка текста и HTML.
+    """
+    run_dir = Path("data") / run_id
+    images_dir = run_dir / "images"
+
+    # 1. Ждем завершения загрузки изображений (с таймаутом)
     try:
-        body = await request.json()
-        run_id = body.get("runId")
-        book_format = body.get("format", "classic")  
-        
-        if not run_id:
-            raise HTTPException(400, "runId обязателен")
-        
-        # Проверяем, что данные существуют
-        run_dir = Path("data") / run_id
-        if not run_dir.exists():
-            raise HTTPException(404, f"Данные для runId {run_id} не найдены")
-            
-        log.info(f"Book creation started for {run_id} by user {current_user.get('sub')}")
-        # Сохраняем выбранный формат для запроса статуса
-        try:
-            (run_dir / "format.txt").write_text(book_format, encoding="utf-8")
-        except Exception as e:
-            log.warning(f"Не удалось сохранить format.txt: {e}")
-    except Exception as e:
-        raise HTTPException(400, f"Ошибка в параметрах запроса: {e}")
+        await asyncio.wait_for(wait_for_images(images_dir), timeout=300.0)
+    except asyncio.TimeoutError:
+        print(f"❌ Таймаут ожидания изображений для {run_id}")
+        return
 
-    async def _build():
-        # Ждем завершения загрузки изображений
-        images_dir = run_dir / "images"
-        for attempt in range(10):  # Максимум 20 секунд ожидания
-            if images_dir.exists() and any(images_dir.glob("*")):
-                print(f"📸 Найдены изображения в папке {images_dir}")
-                break
-            print(f"⏳ Попытка {attempt + 1}/10: ждем загрузки изображений...")
-            await asyncio.sleep(2)
+    # 2. Собираем данные
+    posts_file = run_dir / "posts.json"
+    posts_data = json.loads(posts_file.read_text(encoding="utf-8"))
+    
+    style_file = run_dir / "style.txt"
+    style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
 
-        imgs      = await process_folder(images_dir)
-        comments  = collect_texts(run_dir / "posts.json")
-        
-        # Получаем user_id из метаданных или из текущего пользователя
-        user_id = current_user.get("sub")
-        user_meta_file = run_dir / "user_meta.json"
-        if user_meta_file.exists():
-            try:
-                user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
-                user_id = user_meta.get("user_id", user_id)
-            except:
-                pass
-        
-        # Определяем стиль книги
-        style_file = run_dir / "style.txt"
-        style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
-        
-        # Создаем книгу в соответствующем стиле
-        from app.styles import build_book as build_style_book
-        build_style_book(style, run_id, imgs, comments, book_format, user_id)
+    images = sorted(list(images_dir.glob("*.[jp][pn]g")))
+    comments = [p.get('caption', '') for p in posts_data]
 
-    background.add_task(_build)
+    user_id = user.get("sub")
+    
+    # 3. Вызываем новый асинхронный диспетчер
+    await build_book(style, run_id, images, comments, book_format, user_id)
+    print(f"✅ Полная сборка для {run_id} (формат: {book_format}) завершена.")
 
-    format_name = "классическую книгу" if book_format == "classic" else "мозаичный зин" if book_format == "zine" else "журнал"
-    return {"status": "processing", "runId": run_id, "format": book_format, "message": f"Создание {format_name} началось! Скоро будет готова"}
+async def wait_for_images(images_dir: Path):
+    """Асинхронно ждет появления файлов в папке с изображениями."""
+    while not images_dir.exists() or not any(images_dir.iterdir()):
+        await asyncio.sleep(5)
+    print(f"✅ Изображения в {images_dir} обнаружены.")
+
+@app.post("/create-flipbook")
+async def create_flipbook(request: Request, background: BackgroundTasks, current_user: dict = Depends(get_current_user)):
+    """Создает flipbook в фоновом режиме."""
+    payload = await request.json()
+    run_id = payload.get("runId")
+
+    if not run_id:
+        raise HTTPException(400, "runId is required")
+        
+    # Сохраняем формат книги
+    (Path("data") / run_id / "format.txt").write_text("flipbook", encoding="utf-8")
+
+    # Запускаем полную сборку в фоне
+    background.add_task(run_full_build, run_id, "flipbook", current_user)
+
+    return {"status": "ok", "runId": run_id, "message": "Начинаю создавать ваш флипбук..."}
 
 # Модели для работы с книгами пользователя
 class SaveBookRequest(BaseModel):
@@ -1828,50 +1834,3 @@ async def update_book_content(
     except Exception as e:
         log.error(f"Ошибка обновления книги: {e}")
         raise HTTPException(500, f"Ошибка обновления книги: {e}")
-
-# ───────────── /create-flipbook ─────────────────────────────
-
-@app.post("/create-flipbook")
-async def create_flipbook(request: Request, background: BackgroundTasks, current_user: dict = Depends(get_current_user)):
-    """Создает книгу в формате flipbook (специальная верстка для перелистывания)"""
-    try:
-        body = await request.json()
-        run_id = body.get("runId")
-        if not run_id:
-            raise HTTPException(400, "runId обязателен")
-
-        # Проверяем, что данные существуют
-        run_dir = Path("data") / run_id
-        if not run_dir.exists():
-            raise HTTPException(404, f"Данные для runId {run_id} не найдены")
-
-        log.info(f"FlipBook creation started for run {run_id} by user {current_user.get('sub')}")
-    except Exception as e:
-        raise HTTPException(400, f"Ошибка в параметрах запроса: {e}")
-
-    async def _build_flip():
-        images_dir = run_dir / "images"
-        for attempt in range(10):
-            if images_dir.exists() and any(images_dir.glob("*")):
-                break
-            await asyncio.sleep(2)
-
-        imgs = await process_folder(images_dir)
-        comments = collect_texts(run_dir / "posts.json")
-
-        user_id = current_user.get("sub")
-        style_file = run_dir / "style.txt"
-        style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
-
-        from app.styles import build_book as build_style_book
-        build_style_book(style, run_id, imgs, comments, "flipbook", user_id)
-
-    # Сохраняем признак формата
-    try:
-        (run_dir / "format.txt").write_text("flipbook", encoding="utf-8")
-    except Exception as e:
-        log.warning(f"Не удалось сохранить format.txt: {e}")
-
-    background.add_task(_build_flip)
-
-    return {"status": "processing", "runId": run_id, "format": "flipbook", "message": "Создание Flipbook началось! Скоро будет готова"}

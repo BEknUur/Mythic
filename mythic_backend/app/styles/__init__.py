@@ -1,6 +1,22 @@
 import importlib
+from pathlib import Path
 
-def build_book(style: str, run_id: str, images: list, comments: list, book_format: str, user_id: str):
+# Импортируем новую функцию генерации
+from app.services.book_builder import generate_text_pages
+
+def fallback_pages(image_names: list[str], raw_comments: list[str]) -> list[str]:
+    """Генерирует стандартные тексты, если ИИ не справился."""
+    return [
+        "Момент, застывший во времени.",
+        "История, рассказанная одним взглядом.",
+        "Красота в каждой детали.",
+        "Воспоминание, которое останется навсегда.",
+        "Энергия, которую можно почувствовать.",
+        "Улыбка, которая меняет мир.",
+        "Просто, но с глубоким смыслом."
+    ] * (len(image_names) // 7 + 1) # Чтобы текстов точно хватило
+
+async def build_book(style: str, run_id: str, images: list, comments: list, book_format: str, user_id: str):
     """
     Диспетчер, который выбирает и динамически импортирует нужный сборщик книги.
     """
@@ -10,7 +26,18 @@ def build_book(style: str, run_id: str, images: list, comments: list, book_forma
     if book_format == 'flipbook':
         try:
             from app.services.flipbook_builder import generate_pages_html, build_flipbook_html
-            pages = generate_pages_html(run_id, images, comments)
+            
+            image_names = [Path(p).name for p in images]
+
+            try:
+                # Новый асинхронный вызов ИИ
+                text_pages = await generate_text_pages(run_id, style, image_names, comments)
+            except Exception as e:
+                print(f"💔 Ошибка пакетной генерации текстов: {e}. Использую fallback тексты.")
+                text_pages = fallback_pages(image_names, comments)
+
+            # Вызываем сборщик HTML с уже готовыми текстами
+            pages = generate_pages_html(run_id, images, text_pages)
             build_flipbook_html(run_id, pages)
             print(f"✅ Flipbook для стиля '{style}' успешно сгенерирован.")
         except Exception as e:
