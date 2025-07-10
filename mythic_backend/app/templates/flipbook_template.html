@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Roboto:wght@300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
 
   <style>
     html, body { margin:0; padding:0; width:100%; height:100%; background:#f3f0ed; font-family: 'Roboto', sans-serif; }
@@ -15,43 +15,61 @@
       background:#fff;
       display:flex;
       flex-direction:column;
-      justify-content:center;
+      justify-content:flex-start; /* Начинаем с верха */
       align-items:center;
       font-family:'Playfair Display', serif;
       box-sizing:border-box;
       border:1px solid #e0e0e0;
       box-shadow:0 10px 30px rgba(0,0,0,0.07);
     }
-    .page-content { padding: 2.5em; text-align: justify; line-height: 1.8; font-size: 1.2em; color: #444; overflow-y: auto; }
-    .page-image { display:flex; justify-content:center; align-items:center; background-color: #fafafa; padding: 1.5em; }
-    .page-image img { max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; box-shadow:0 5px 15px rgba(0,0,0,0.1); }
+    .page-content {
+      /* Пара колонок, как в настоящей книге */
+      columns: 2;
+      column-gap: 2em;
+      /* Книжный serif-шрифт */
+      font-family: 'Merriweather', serif;
+      font-size: 1.15em;       /* чуть крупнее */
+      line-height: 1.9;        /* простор между строками */
+      /* чтобы текст ровно ложился по обеим колонкам */
+      text-align: justify;
+      hyphens: auto;
+      padding: 2.5em;
+      height: calc(100% - 5em); /* учитываем паддинги */
+      box-sizing: border-box;
+      overflow: hidden; /* Убираем скролл */
+    }
+    .page-content h2 {
+        column-span: all; /* Заголовок на всю ширину */
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 1.5em;
+        font-family: 'Playfair Display', serif; /* Оставляем заголовочный шрифт */
+    }
+    .page-image-container { display:flex; flex-direction:column; justify-content:center; align-items:center; flex-grow:1; background-color: #fafafa; padding: 1.5em; width:100%;}
+    .page-image-container img { max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; box-shadow:0 5px 15px rgba(0,0,0,0.1); }
     
-    .cover-page, .final-page { background:linear-gradient(135deg, #6a82fb 0%, #fc5c7d 100%); color:#fff; text-align:center; }
+    .cover-page, .final-page { background:linear-gradient(135deg, #6a82fb 0%, #fc5c7d 100%); color:#fff; text-align:center; justify-content: center;}
     .cover-page .page-content, .final-page .page-content { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; }
     .cover-page h1, .final-page h1 { font-size:2.8em; margin:0; text-shadow:0 2px 5px rgba(0,0,0,0.1); }
     
     .title-page h1 { font-size:2.5em; text-align: center; color: #333; }
     .title-page p { font-size: 1.2em; text-align:center; color: #777; font-style: italic; }
 
-    .text-content p:first-child { margin-top: 0; }
-    .text-content p:last-child { margin-bottom: 0; }
-
   </style>
 </head>
 <body>
   <div class="flip-book-container">
     <div id="book">
-      <!-- 1. Обложка с Прологом -->
+      <!-- 1. Обложка (можно вернуть пролог, если нужно) -->
       <div class="page cover-page">
-        <div class="page-content">
-          <h1>Пролог</h1>
-          {{ prologue | safe }}
+        <div class="page-content" style="columns: 1;">
+          <h1>Ваша История</h1>
         </div>
       </div>
       
       <!-- 2. Титульный лист -->
       <div class="page title-page">
-          <div class="page-content">
+          <div class="page-content" style="columns: 1;">
               <h1>Романтическая<br>История</h1>
               <p>создано с любовью и восхищением</p>
           </div>
@@ -61,24 +79,29 @@
       {% for page in pages %}
         <!-- Левая страница - Текст -->
         <div class="page">
-          <div class="page-content text-content">
+          <div class="page-content">
+            {{ page.title | safe }}
             {{ page.text | safe }}
           </div>
         </div>
 
-        <!-- Правая страница - Изображение -->
+        <!-- Правая страница - Изображение + подпись -->
         <div class="page page-image">
-          <img
-            src="{{ page.image }}"
-            alt="Page image {{ loop.index }}"
-            style="max-width:100%; height:auto;"
-          />
+          <div class="page-image-container">
+            <img
+              src="{{ page.image }}"
+              alt="{{ page.title | striptags | trim }}"
+            />
+          </div>
+          <div class="page-content" style="columns:1; font-family:'Merriweather',serif; font-size:0.9em; line-height:1.4; padding:1em 2.5em; height:auto; text-align:center; font-style: italic;">
+            {{ page.caption | safe }}
+          </div>
         </div>
       {% endfor %}
       
       <!-- 4. Последняя страница - Заключение -->
       <div class="page final-page">
-        <div class="page-content">
+        <div class="page-content" style="columns: 1;">
           <h1>Эпилог</h1>
           <p>Пусть эта книга хранит тепло самых<br>дорогих воспоминаний.</p>
         </div>
