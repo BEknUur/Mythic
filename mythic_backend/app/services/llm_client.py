@@ -6,6 +6,7 @@ import logging
 import random
 from openai import AzureOpenAI, AsyncAzureOpenAI
 import json
+import markdown
 
 # Инициализация синхронного клиента
 client = AzureOpenAI(
@@ -55,6 +56,22 @@ def strip_cliches(text: str) -> str:
     # Убираем двойные пробелы и переносы
     text = " ".join(text.split())
     return text
+
+def image_to_base64(image_path: str) -> str:
+    """Кодирует изображение в строку Base64 с правильным MIME-типом."""
+    try:
+        with open(image_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        
+        # Определяем MIME-тип по расширению файла
+        extension = Path(image_path).suffix.lower().replace('.', '')
+        if extension == 'jpg':
+            extension = 'jpeg'
+        
+        return f"data:image/{extension};base64,{encoded_string}"
+    except Exception as e:
+        logger.error(f"❌ Ошибка кодирования изображения {image_path}: {e}")
+        return ""
 
 async def generate_flipbook_json(image_paths: list[str]) -> dict:
     """
@@ -123,6 +140,20 @@ async def generate_flipbook_json(image_paths: list[str]) -> dict:
         if function_call_args:
             flipbook_data = json.loads(function_call_args)
             print("✅ LLM успешно сгенерировал JSON для флипбука.")
+            
+            # Сопоставляем абсолютные пути с именами файлов
+            image_path_map = {Path(p).name: p for p in image_paths}
+
+            # Заменяем имена файлов на Base64
+            for page in flipbook_data.get("pages", []):
+                image_name = page.get("image")
+                if image_name in image_path_map:
+                    # Кодируем в Base64 и подставляем в src
+                    page["image"] = image_to_base64(image_path_map[image_name])
+                else:
+                    # Если картинка не найдена, оставляем пустое поле
+                    page["image"] = ""
+            
             return flipbook_data
         else:
             logger.error("LLM не вернул ожидаемые аргументы функции.")
