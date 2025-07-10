@@ -7,9 +7,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import re
 from dotenv import load_dotenv
 
+
 load_dotenv()  # Загружаем переменные из .env файла
 
 from app.routers import edit
+from app.routers import auth
+from app.routers import user_router
 
 class NormalizePathMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -53,9 +56,14 @@ app.add_middleware(
 )
 
 app.include_router(edit.router)
+app.include_router(auth.router)
+app.include_router(user_router.router)
+
+BASE_DIR = Path(__file__).resolve().parent.parent  # mythic_backend/
+DATA_DIR = BASE_DIR / "data"
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/data", StaticFiles(directory="data"), name="data")
+app.mount("/runs", StaticFiles(directory=str(DATA_DIR), html=False), name="runs")
 
 @app.get("/health")
 def health_check():
@@ -372,7 +380,7 @@ async def generate_pdf(run_id: str, current_user: dict = Depends(get_current_use
 
 # ───────────── / (главная страница) ─────────────────────
 @app.get("/")
-def home():
+def read_root():
     """Главная страница с веб-интерфейсом"""
     static_dir = Path("static")
     index_file = static_dir / "index.html"
@@ -815,7 +823,7 @@ def home():
             border-radius: 20px;
             text-align: center;
             box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.2, 1.275);
             position: relative;
             overflow: hidden;
             border: 1px solid rgba(255,255,255,0.1);
@@ -1536,54 +1544,25 @@ async def run_full_build(run_id: str, book_format: str, user: dict):
     # 1. Ждем завершения загрузки изображений (с таймаутом)
     try:
         await asyncio.wait_for(wait_for_images(images_dir), timeout=300.0)
-        log.info(f"[{run_id}] Изображения загружены.")
     except asyncio.TimeoutError:
-        log.error(f"[{run_id}] Таймаут ожидания изображений")
+        print(f"❌ Таймаут ожидания изображений для {run_id}")
         return
 
-    # 2. Собираем список изображений (до 30 штук для большей книги)
-    images = sorted([str(p) for p in images_dir.glob("*")])[:30]
-    if not images:
-        log.error(f"[{run_id}] В папке {images_dir} не найдено изображений после загрузки.")
-        return
-
-    # 3. Парсим данные профиля
+    # 2. Собираем данные
     posts_file = run_dir / "posts.json"
-    if not posts_file.exists():
-        log.error(f"[{run_id}] Файл posts.json не найден")
-        return
-        
     posts_data = json.loads(posts_file.read_text(encoding="utf-8"))
     
-    # Извлекаем комментарии из правильной структуры данных
-    comments = []
-    if posts_data and isinstance(posts_data, list) and len(posts_data) > 0:
-        profile = posts_data[0]
-        latest_posts = profile.get('latestPosts', [])
-        comments = [post.get('caption', '') for post in latest_posts if post.get('caption')]
-        
-        # Также добавляем описание профиля если есть
-        if profile.get('biography'):
-            comments.insert(0, profile.get('biography'))
-            
-        log.info(f"[{run_id}] Найдено {len(comments)} текстовых материалов для анализа")
-    else:
-        log.warning(f"[{run_id}] Данные профиля не найдены или имеют неверный формат")
-        comments = ["Особенный момент", "Прекрасные воспоминания", "Важные мгновения"]
-
-    # 4. Определяем стиль
     style_file = run_dir / "style.txt"
     style = style_file.read_text(encoding="utf-8").strip() if style_file.exists() else "romantic"
 
+    images = sorted([str(p) for p in images_dir.glob("*")])[:30]
+    comments = [p.get('caption', '') for p in posts_data]
+
     user_id = user.get("sub")
     
-    # 5. Вызываем новый асинхронный диспетчер
-    try:
-        await build_book(style, run_id, images, comments, book_format, user_id)
-        log.info(f"[{run_id}] Полная сборка (формат: {book_format}) завершена.")
-    except Exception as e:
-        log.error(f"[{run_id}] Ошибка при сборке книги: {e}")
-        raise
+    # 3. Вызываем новый асинхронный диспетчер
+    await build_book(style, run_id, images, comments, book_format, user_id)
+    print(f"✅ Полная сборка для {run_id} (формат: {book_format}) завершена.")
 
 async def wait_for_images(images_dir: Path):
     """Асинхронно ждет появления файлов в папке с изображениями."""

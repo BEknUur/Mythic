@@ -5,6 +5,7 @@ import { ArrowLeft, Download } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@clerk/clerk-react';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface FlipBookReaderProps {
   bookId?: string;
@@ -71,6 +72,15 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
     })();
   }, [bookId, runId, getToken, toast]);
 
+  if (loading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-lg">Загружаем вашу волшебную книгу...</p>
+      </div>
+    );
+  }
+
   const handleDownloadPdf = async () => {
     try {
       const token = await getToken();
@@ -82,24 +92,26 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
   };
 
   const pageComponents = pages.map((html, idx) => (
-    <div key={idx} className="book-content w-full h-full overflow-auto p-6" dangerouslySetInnerHTML={{ __html: html }} />
+    <div key={idx} className="book-content w-full h-full overflow-auto p-6 bg-white dark:bg-gray-800" dangerouslySetInnerHTML={{ __html: html }} />
   ));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-      <header className="shrink-0 p-4 border-b bg-white dark:bg-gray-900 flex items-center gap-2">
-        <Button variant="ghost" onClick={onBack} className="text-gray-700 dark:text-gray-300">
-          <ArrowLeft className="mr-2 h-4 w-4" />Назад
-        </Button>
-        <Button variant="outline" onClick={handleDownloadPdf} className="ml-auto">
-          <Download className="mr-2 h-4 w-4" /> PDF
-        </Button>
+    <div key={runId || bookId} className="flex-1 flex flex-col bg-gray-100 dark:bg-gray-900">
+      <header className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b">
+        <Button variant="ghost" onClick={onBack}><ArrowLeft className="mr-2 h-4 w-4" /> В библиотеку</Button>
+        <h2 className="text-xl font-semibold">Ваша Книга</h2>
+        <Button onClick={handleDownloadPdf} disabled={!runId && !bookId}><Download className="mr-2 h-4 w-4" /> Скачать PDF</Button>
       </header>
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center">Загружаем...</div>
-      ) : (
-        <div className="flex-1 overflow-auto">
-          <FlipBook pages={pageComponents} />
+      
+      {!loading && pages.length > 0 && (
+        <div className="flex-1 overflow-auto flex items-center justify-center p-4">
+          <FlipBook key={runId || bookId} pages={pageComponents} />
+        </div>
+      )}
+
+      {!loading && pages.length === 0 && (
+        <div className="flex-1 flex items-center justify-center">
+          <p>Не удалось загрузить страницы книги.</p>
         </div>
       )}
     </div>

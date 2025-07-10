@@ -51,7 +51,7 @@ export function FlipBook({ pages }: FlipBookProps) {
     : placeholderPages;
 
   return (
-    <div className="flex items-center justify-center py-10">
+    <div className="flex-1 w-full h-full flex items-center justify-center p-4">
       <HTMLFlipBook
         width={450}
         height={600}

@@ -31,5 +31,5 @@ def collect_texts(posts_json_path: Path) -> list[str]:
             # For now, we assume a simple text key might exist.
             if story_text := story.get("text"): # Placeholder key
                  texts.append(story_text)
-
+    
     return texts

@@ -5,6 +5,8 @@ from typing import Optional
 import logging
 import random
 from openai import AzureOpenAI, AsyncAzureOpenAI
+import json
+import markdown
 
 # Инициализация синхронного клиента
 client = AzureOpenAI(
@@ -55,11 +57,21 @@ def strip_cliches(text: str) -> str:
     text = " ".join(text.split())
     return text
 
-def generate_text(prompt: str,
-                  model: str = "gpt-4.1-mini",
-                  max_tokens: int = 1500,  # Возвращаем обратно к 1500 для качественных текстов
-                  temperature: float = 0.8,  # Возвращаем к 0.8 для более творческих ответов
-                  image_data: Optional[str] = None) -> str:
+def image_to_base64(image_path: str) -> str:
+    """Кодирует изображение в строку Base64."""
+    try:
+        with open(image_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+            # Получаем расширение файла, чтобы правильно сформировать Data URL
+            extension = Path(image_path).suffix.lower().replace('.', '')
+            if extension == 'jpg':
+                extension = 'jpeg' # стандартный MIME-тип
+            return f"data:image/{extension};base64,{encoded_string}"
+    except Exception as e:
+        print(f"❌ Ошибка кодирования изображения {image_path}: {e}")
+        return ""
+
+async def generate_text(image_path: str, context: str) -> str:
     """Генерирует текст с помощью Azure OpenAI API (только GPT-4o), с поддержкой изображений"""
     try:
         # Всегда используем GPT-4o deployment
@@ -75,16 +87,16 @@ def generate_text(prompt: str,
 ЗАПРЕЩЕНО: "Не могу поверить!", "Потрясающе!", сложные фразы"""
 
         # Если есть изображение, используем vision model
-        if image_data:
+        if image_path:
             messages = [
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": prompt},
+                        {"type": "text", "text": context},
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": image_data,
+                                "url": image_to_base64(image_path),
                                 "detail": "low"  # Для определения пола достаточно низкого качества
                             }
                         }
@@ -92,23 +104,23 @@ def generate_text(prompt: str,
                 }
             ]
 
-            response = client.chat.completions.create(
+            response = await async_client.chat.completions.create(
                 model=deployment,
                 messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature
+                max_tokens=1500,
+                temperature=0.8
             )
             
         else:
             # Обычная генерация текста (БЫСТРАЯ)
-            response = client.chat.completions.create(
+            response = await async_client.chat.completions.create(
                 model=deployment,
                 messages=[
                     {"role": "system", "content": fast_system_message},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": context}
                 ],
-                max_tokens=max_tokens,
-                temperature=temperature,
+                max_tokens=1500,
+                temperature=0.8,
                 presence_penalty=0.3,  # Снижено для скорости
                 frequency_penalty=0.2  # Снижено для скорости
             )
@@ -121,6 +133,102 @@ def generate_text(prompt: str,
         # Быстрый fallback вместо ошибки
         return f"Этот момент наполнен особой красотой и теплом. Каждая деталь говорит о твоей уникальности."
 
+async def generate_flipbook_json(image_paths: list[str]) -> dict:
+    """
+    Генерирует всю структуру флипбука (пролог и страницы) в виде единого JSON-объекта,
+    используя function calling для гарантированной валидности формата.
+    """
+    # 1. Схема для function calling
+    functions = [
+        {
+            "name": "build_flipbook",
+            "description": "Создать контент для флипбука: пролог и страницы с текстом и привязанной картинкой.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "prologue": {
+                        "type": "string",
+                        "description": "Вступительный текст для книги, задающий романтическое настроение."
+                    },
+                    "pages": {
+                        "type": "array",
+                        "description": "Массив страниц, где каждая страница содержит текст и имя файла изображения.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {"type": "string", "description": "Романтический текст, описывающий фотографию."},
+                                "image": {"type": "string", "description": "Имя файла изображения для этой страницы."}
+                            },
+                            "required": ["text", "image"]
+                        }
+                    }
+                },
+                "required": ["prologue", "pages"]
+            }
+        }
+    ]
+
+    # 2. Подготавливаем контент для LLM
+    # Делаем пути относительными для передачи в LLM
+    relative_image_paths = [str(Path(p).name) for p in image_paths]
+    
+    system_prompt = """Ты — талантливый писатель, создающий романтические фотокниги.
+Твоя задача — сгенерировать душевный пролог и трогательные подписи к каждой фотографии.
+Результат верни строго в формате JSON, используя функцию `build_flipbook`.
+Не добавляй никаких комментариев или вступлений, только вызов функции.
+История должна быть связной и вызывать теплые чувства."""
+
+    user_prompt = f"Создай фотокнигу на основе следующих изображений: {json.dumps(relative_image_paths)}"
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt}
+    ]
+
+    # 3. Вызываем Azure OpenAI API с `function_call`
+    try:
+        response = await async_client.chat.completions.create(
+            model=settings.AZURE_OPENAI_GPT4_DEPLOYMENT, # Используем мощную модель для креатива
+            messages=messages,
+            functions=functions,
+            function_call={"name": "build_flipbook"}, # Принудительно вызываем нашу функцию
+            temperature=0.8
+        )
+
+        # 4. Извлекаем и парсим JSON из ответа
+        function_call_args = response.choices[0].message.function_call.arguments
+        if function_call_args:
+            flipbook_data = json.loads(function_call_args)
+            print("✅ LLM успешно сгенерировал JSON для флипбука.")
+            return flipbook_data
+        else:
+            logger.error("LLM не вернул ожидаемые аргументы функции.")
+            return {}
+
+    except Exception as e:
+        logger.error(f"❌ Ошибка при вызове LLM с function calling: {e}")
+        # В случае ошибки, можно вернуть пустую структуру, чтобы приложение не падало
+        return {"prologue": "Что-то пошло не так...", "pages": []}
+
+    # 5. Возвращаем результат
+    try:
+        # Парсим JSON из ответа
+        function_args = json.loads(response.choices[0].message.function_call.arguments)
+        
+        # Заменяем имена файлов на Base64
+        image_base64_map = {Path(p).name: image_to_base64(p) for p in image_paths}
+        
+        for page in function_args.get("pages", []):
+            if page.get("image") in image_base64_map:
+                page["image"] = image_base64_map[page["image"]]
+            else:
+                page["image"] = "" # если картинка не найдена
+
+        return function_args
+
+    except (json.JSONDecodeError, AttributeError, KeyError) as e:
+        print(f"❌ Ошибка парсинга JSON ответа LLM: {e}")
+        return {"prologue": "Что-то пошло не так...", "pages": []}
 
 def analyze_photo_for_memoir(image_path: Path, context: str = "", chapter_focus: str = "general") -> str:
     """Анализирует фотографию для мемуарного повествования"""

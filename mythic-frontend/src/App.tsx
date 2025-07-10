@@ -162,11 +162,11 @@ function AppContent() {
                 bookId={flipBookToRead.bookId}
                 runId={flipBookToRead.runId}
                 onBack={handleBackFromFlip}
-              />
+        />
             ) : (
               <Navigate to="/library" />
-            )
-          }
+    )
+  }
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
