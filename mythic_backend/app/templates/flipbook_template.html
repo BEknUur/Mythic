@@ -6,105 +6,763 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
 
   <style>
-    html, body { margin:0; padding:0; width:100%; height:100%; background:#f3f0ed; font-family: 'Roboto', sans-serif; }
-    .flip-book-container { display: flex; justify-content: center; align-items: center; width:100%; height:100%; padding:2em 0; box-sizing:border-box; }
+    /* === ОСНОВНЫЕ НАСТРОЙКИ === */
+    html, body { 
+      margin: 0; 
+      padding: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: linear-gradient(135deg, #f8f6f3 0%, #e8e3d8 100%); 
+      font-family: 'Merriweather', serif; 
+    }
+    
+    .flip-book-container { 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      width: 100%; 
+      height: 100%; 
+      padding: 2em 0; 
+      box-sizing: border-box; 
+    }
+    
+    /* === ЦВЕТОВАЯ ПАЛИТРА === */
+    :root {
+      --font-heading: 'Playfair Display', serif;
+      --font-body: 'Merriweather', serif;
+      --font-ornamental: 'Cormorant Garamond', serif;
+      --primary-navy: #2b2d42;
+      --accent-gold: #d4af37;
+      --accent-warm: #8d5524;
+      --text-dark: #1a1a1a;
+      --text-medium: #4a4a4a;
+      --text-light: #6b6b6b;
+      --border-light: #e0d5c7;
+      --background-cream: #faf8f5;
+      --highlight-blue: #34495e;
+    }
+    
+    /* === БАЗОВАЯ СТРАНИЦА === */
     #book .page {
-      background:#fff;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-start; /* Начинаем с верха */
-      align-items:center;
-      font-family:'Playfair Display', serif;
-      box-sizing:border-box;
-      border:1px solid #e0e0e0;
-      box-shadow:0 10px 30px rgba(0,0,0,0.07);
-    }
-    .page-content {
-      /* Пара колонок, как в настоящей книге */
-      columns: 2;
-      column-gap: 2em;
-      /* Книжный serif-шрифт */
-      font-family: 'Merriweather', serif;
-      font-size: 1.15em;       /* чуть крупнее */
-      line-height: 1.9;        /* простор между строками */
-      /* чтобы текст ровно ложился по обеим колонкам */
-      text-align: justify;
-      hyphens: auto;
-      padding: 2.5em;
-      height: calc(100% - 5em); /* учитываем паддинги */
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      font-family: var(--font-body);
       box-sizing: border-box;
-      overflow: hidden; /* Убираем скролл */
+      border: 1px solid var(--border-light);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+      position: relative;
+      overflow: hidden;
     }
+    
+    /* === НУМЕРАЦИЯ СТРАНИЦ === */
+    .page-number {
+      position: absolute;
+      bottom: 25px;
+      font-family: var(--font-heading);
+      font-size: 0.85em;
+      color: var(--text-light);
+      z-index: 10;
+      font-weight: 400;
+    }
+    
+    .page-number.left { left: 40px; }
+    .page-number.right { right: 40px; }
+    
+    /* === КОЛОНТИТУЛЫ === */
+    .running-header {
+      position: absolute;
+      top: 20px;
+      font-family: var(--font-heading);
+      font-size: 0.75em;
+      color: var(--text-light);
+      font-style: italic;
+      letter-spacing: 0.5px;
+      z-index: 10;
+    }
+    
+    .running-header.left { left: 40px; }
+    .running-header.right { right: 40px; }
+    
+    /* === НОМЕРА ГЛАВ НА ПОЛЯХ === */
+    .chapter-margin-number {
+      position: absolute;
+      left: -15px;
+      top: 120px;
+      font-family: var(--font-heading);
+      font-size: 3em;
+      color: var(--accent-gold);
+      opacity: 0.15;
+      font-weight: 700;
+      z-index: 1;
+    }
+    
+    /* === КОНТЕНТ СТРАНИЦЫ === */
+    .page-content {
+      font-family: var(--font-body);
+      font-size: 1.1em;
+      line-height: 1.65; /* Увеличенный для лучшей читаемости */
+      text-align: left;
+      padding: 4em 3.5em 3em 3.5em;
+      height: calc(100% - 7em);
+      box-sizing: border-box;
+      overflow: hidden;
+      position: relative;
+      color: var(--text-dark);
+    }
+    
+    /* === ДВУХКОЛОНОЧНЫЙ ТЕКСТ === */
+    .page-content.two-column {
+      columns: 2;
+      column-gap: 3em;
+      column-rule: 1px solid var(--border-light);
+    }
+    
+    /* === ОТСТУП ПЕРВОЙ СТРОКИ === */
+    .page-content p {
+      text-indent: 1.2em;
+      margin: 0 0 1em 0;
+      font-weight: 400;
+    }
+    
+    .page-content p:first-of-type,
+    .drop-cap p:first-child {
+      text-indent: 0;
+    }
+    
+    /* === ЭПИГРАФЫ ГЛАВ === */
+    .chapter-epigraph {
+      font-family: var(--font-heading);
+      font-size: 1.1em;
+      font-style: italic;
+      text-align: center;
+      margin: 0 auto 2em auto;
+      padding: 1.5em 2em;
+      max-width: 80%;
+      color: var(--accent-warm);
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(212, 175, 55, 0.1) 100%);
+      border-left: 4px solid var(--accent-gold);
+      border-radius: 0 8px 8px 0;
+      column-span: all;
+      position: relative;
+      line-height: 1.4;
+    }
+    
+    .chapter-epigraph:before {
+      content: '„';
+      font-size: 2.5em;
+      position: absolute;
+      left: 8px;
+      top: -8px;
+      color: var(--accent-gold);
+      opacity: 0.4;
+    }
+    
+    .chapter-epigraph:after {
+      content: '"';
+      font-size: 2.5em;
+      position: absolute;
+      right: 8px;
+      bottom: -20px;
+      color: var(--accent-gold);
+      opacity: 0.4;
+    }
+    
+    /* === УЛУЧШЕННЫЙ DROP CAP === */
+    .drop-cap p:first-child::first-letter {
+      float: left;
+      font-family: var(--font-ornamental);
+      font-size: 5em;
+      line-height: 0.8;
+      margin: 0.1em 0.15em 0 0;
+      color: var(--primary-navy);
+      font-weight: 600;
+      text-shadow: 3px 3px 6px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, var(--primary-navy) 0%, var(--accent-warm) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* === ЗАГОЛОВКИ === */
+    .page-content h1 {
+      font-family: var(--font-heading);
+      font-size: 2.6em;
+      color: var(--primary-navy);
+      text-align: center;
+      margin: 0 0 1.5em 0;
+      column-span: all;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    }
+    
     .page-content h2 {
-        column-span: all; /* Заголовок на всю ширину */
-        text-align: center;
-        margin-top: 0;
-        margin-bottom: 1.5em;
-        font-family: 'Playfair Display', serif; /* Оставляем заголовочный шрифт */
+      font-family: var(--font-heading);
+      font-size: 2.1em;
+      color: var(--primary-navy);
+      text-align: center;
+      margin: 1.5em 0 1em 0;
+      column-span: all;
+      position: relative;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
     }
-    .page-image-container { display:flex; flex-direction:column; justify-content:center; align-items:center; flex-grow:1; background-color: #fafafa; padding: 1.5em; width:100%;}
-    .page-image-container img { max-width:100%; max-height:100%; object-fit:contain; border-radius:4px; box-shadow:0 5px 15px rgba(0,0,0,0.1); }
     
-    .cover-page, .final-page { background:linear-gradient(135deg, #6a82fb 0%, #fc5c7d 100%); color:#fff; text-align:center; justify-content: center;}
-    .cover-page .page-content, .final-page .page-content { display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%; }
-    .cover-page h1, .final-page h1 { font-size:2.8em; margin:0; text-shadow:0 2px 5px rgba(0,0,0,0.1); }
+    /* === ДЕКОРАТИВНАЯ ЛИНИЯ ПОД ЗАГОЛОВКАМИ === */
+    .chapter-separator {
+      width: 120px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+      margin: 1em auto 2.5em auto;
+      border: none;
+      column-span: all;
+      border-radius: 2px;
+    }
     
-    .title-page h1 { font-size:2.5em; text-align: center; color: #333; }
-    .title-page p { font-size: 1.2em; text-align:center; color: #777; font-style: italic; }
+    .page-content h2:after {
+      content: '';
+      display: block;
+      width: 100px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+      margin: 0.8em auto;
+    }
+    
+    /* === УЛУЧШЕННЫЕ PULL QUOTES === */
+    .pull-quote {
+      font-family: var(--font-heading);
+      font-size: 1.4em;
+      font-style: italic;
+      color: var(--primary-navy);
+      text-align: center;
+      margin: 3em auto;
+      padding: 2.5em 2em;
+      max-width: 75%;
+      border: 3px solid var(--accent-gold);
+      background: linear-gradient(135deg, var(--background-cream) 0%, rgba(212, 175, 55, 0.08) 100%);
+      column-span: all;
+      position: relative;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      line-height: 1.5;
+      font-weight: 500;
+    }
+    
+    .pull-quote:before {
+      content: '"';
+      font-family: var(--font-ornamental);
+      font-size: 5em;
+      position: absolute;
+      left: 15px;
+      top: -15px;
+      color: var(--accent-gold);
+      opacity: 0.3;
+      font-weight: 700;
+    }
+    
+    .pull-quote:after {
+      content: '"';
+      font-family: var(--font-ornamental);
+      font-size: 5em;
+      position: absolute;
+      right: 15px;
+      bottom: -35px;
+      color: var(--accent-gold);
+      opacity: 0.3;
+      font-weight: 700;
+    }
+    
+    /* === ИЗОБРАЖЕНИЯ === */
+    .page-image-container { 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+      align-items: center; 
+      flex-grow: 1; 
+      background: linear-gradient(135deg, var(--background-cream) 0%, #f5f2ed 100%); 
+      padding: 2.5em; 
+      width: 100%;
+      position: relative;
+    }
+    
+    .page-image-container img { 
+      max-width: 85%; 
+      max-height: 75%; 
+      object-fit: contain; 
+      border-radius: 12px; 
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      border: 4px solid #fff;
+      transition: transform 0.3s ease;
+    }
+    
+    .page-image-container img:hover {
+      transform: scale(1.02);
+    }
+    
+    /* === ПОДПИСИ К ИЗОБРАЖЕНИЯМ === */
+    .image-caption {
+      font-family: var(--font-heading);
+      font-size: 0.9em;
+      font-style: italic;
+      color: var(--text-medium);
+      text-align: center;
+      margin-top: 1.5em;
+      line-height: 1.4;
+      max-width: 85%;
+    }
+    
+    .figure-number {
+      font-weight: 600;
+      color: var(--primary-navy);
+      font-style: normal;
+      display: block;
+      margin-bottom: 0.5em;
+      font-family: var(--font-heading);
+    }
+    
+    /* === ПОЛНОЭКРАННЫЕ ИЗОБРАЖЕНИЯ === */
+    .page.full-image {
+      padding: 0;
+    }
+    
+    .page.full-image .page-image-container {
+      height: 100%;
+      padding: 0;
+      border-radius: 0;
+    }
+    
+    .page.full-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 0;
+      border: none;
+    }
+    
+    /* === ОБЛОЖКА И ФИНАЛЬНАЯ СТРАНИЦА === */
+    .cover-page, .final-page { 
+      background: linear-gradient(135deg, var(--primary-navy) 0%, var(--highlight-blue) 100%); 
+      color: #fff; 
+      text-align: center; 
+      justify-content: center;
+    }
+    
+    .cover-page .page-content, .final-page .page-content { 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+      align-items: center; 
+      height: 100%; 
+      text-align: center;
+    }
+    
+    .cover-page h1, .final-page h1 { 
+      font-family: var(--font-heading);
+      font-size: 3.8em; 
+      margin: 0; 
+      text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+    
+    /* === ТИТУЛЬНАЯ СТРАНИЦА === */
+    .title-page { 
+      background: linear-gradient(135deg, var(--background-cream) 0%, #f0ede8 100%);
+    }
+    
+    .title-page h1 { 
+      font-family: var(--font-heading);
+      font-size: 3.2em; 
+      text-align: center; 
+      color: var(--primary-navy);
+      margin-bottom: 0.5em;
+      font-weight: 700;
+    }
+    
+    .title-page p { 
+      font-size: 1.3em; 
+      text-align: center; 
+      color: var(--text-light); 
+      font-style: italic;
+      margin-top: 2em;
+    }
+    
+    .title-page .subtitle {
+      font-size: 1em;
+      color: var(--text-medium);
+      margin-top: 1em;
+    }
+    
+    /* === ОГЛАВЛЕНИЕ === */
+    .toc-page {
+      background: #fafafa;
+    }
+    
+    .toc-content {
+      padding: 4em 3.5em 3em 3.5em;
+      height: calc(100% - 7em);
+    }
+    
+    .toc-content h2 {
+      font-family: var(--font-heading);
+      font-size: 2.4em;
+      color: var(--primary-navy);
+      text-align: center;
+      margin-bottom: 2.5em;
+      border-bottom: 3px solid var(--accent-gold);
+      padding-bottom: 0.8em;
+      font-weight: 700;
+    }
+    
+    .toc-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 1.2em;
+      padding-bottom: 0.8em;
+      border-bottom: 1px dotted var(--border-light);
+      font-size: 1.1em;
+      position: relative;
+    }
+    
+    .toc-item:after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: repeating-linear-gradient(
+        to right,
+        transparent,
+        transparent 3px,
+        var(--text-light) 3px,
+        var(--text-light) 6px
+      );
+      opacity: 0.3;
+    }
+    
+    .toc-item .chapter-title {
+      font-weight: 600;
+      color: var(--text-dark);
+      background: #fff;
+      padding-right: 10px;
+      z-index: 2;
+      position: relative;
+    }
+    
+    .toc-item .page-num {
+      font-family: var(--font-heading);
+      color: var(--accent-gold);
+      font-weight: 700;
+      background: #fff;
+      padding-left: 10px;
+      z-index: 2;
+      position: relative;
+    }
+    
+    /* === ЭПИГРАФ === */
+    .epigraph {
+      font-family: var(--font-heading);
+      font-style: italic;
+      font-size: 1.3em;
+      text-align: center;
+      color: var(--text-medium);
+      margin: 2.5em auto;
+      padding: 2.5em;
+      max-width: 80%;
+      border: 3px solid var(--accent-gold);
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(212, 175, 55, 0.1) 100%);
+      border-radius: 12px;
+      position: relative;
+    }
+    
+    .epigraph:before {
+      content: '❦';
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      padding: 0 15px;
+      color: var(--accent-gold);
+      font-size: 1.5em;
+    }
+    
+    .epigraph-author {
+      margin-top: 1.5em;
+      font-size: 0.9em;
+      font-weight: 600;
+      color: var(--primary-navy);
+    }
+    
+    /* === БЛАГОДАРНОСТИ === */
+    .acknowledgments {
+      font-size: 1em;
+      line-height: 1.6;
+      color: var(--text-medium);
+      text-align: center;
+      padding: 2.5em;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(212, 175, 55, 0.1) 100%);
+      border-radius: 12px;
+      margin: 2em 0;
+      border: 1px solid var(--border-light);
+    }
+    
+    /* === ДЕКОРАТИВНЫЕ ЭЛЕМЕНТЫ === */
+    .decorative-border {
+      border: 2px solid var(--accent-gold);
+      border-radius: 12px;
+      position: relative;
+      background: linear-gradient(135deg, #fff 0%, rgba(212, 175, 55, 0.02) 100%);
+    }
+    
+    .decorative-border:before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      right: -1px;
+      bottom: -1px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      z-index: -1;
+    }
+    
+    /* === ИКОНКИ ДЛЯ РАЗДЕЛОВ === */
+    .section-icon {
+      font-size: 2em;
+      color: var(--accent-gold);
+      margin-bottom: 1em;
+      display: block;
+      text-align: center;
+    }
+    
+    .intro-icon:before { content: '✦'; }
+    .epilogue-icon:before { content: '❋'; }
+    .thanks-icon:before { content: '♥'; }
 
   </style>
 </head>
 <body>
   <div class="flip-book-container">
     <div id="book">
-      <!-- 1. Обложка (можно вернуть пролог, если нужно) -->
+      <!-- 1. Обложка -->
       <div class="page cover-page">
-        <div class="page-content" style="columns: 1;">
-          <h1>Ваша История</h1>
+        <div class="page-content">
+          <h1>Романтическая<br>История</h1>
+          <p style="font-size: 1.2em; margin-top: 2em; font-style: italic; letter-spacing: 1px;">Создано с любовью</p>
         </div>
       </div>
       
       <!-- 2. Титульный лист -->
       <div class="page title-page">
-          <div class="page-content" style="columns: 1;">
-              <h1>Романтическая<br>История</h1>
-              <p>создано с любовью и восхищением</p>
+        <div class="page-content">
+          <h1>Романтическая<br>История</h1>
+          <div class="epigraph">
+            <p>"В каждом моменте есть своя магия,<br>
+            стоит лишь научиться её замечать"</p>
+            <div class="epigraph-author">— Древняя мудрость</div>
           </div>
+          <p class="subtitle">Создано с любовью и восхищением</p>
+        </div>
+        <div class="page-number left">1</div>
+        <div class="running-header left">Романтическая История</div>
       </div>
 
-      <!-- 3. Развороты: Текст слева, Картинка справа -->
+      <!-- 3. Оглавление -->
+      <div class="page toc-page">
+        <div class="toc-content">
+          <h2>Содержание</h2>
+          {% for page in pages %}
+          <div class="toc-item">
+            <span class="chapter-title">Глава {{ loop.index }}: {{ page.title | striptags | trim | truncate(30) }}</span>
+            <span class="page-num">{{ (loop.index0 * 2) + 4 }}</span>
+          </div>
+          {% endfor %}
+          <div class="toc-item">
+            <span class="chapter-title">Эпилог</span>
+            <span class="page-num">{{ (pages|length * 2) + 4 }}</span>
+          </div>
+          <div class="toc-item">
+            <span class="chapter-title">Благодарности</span>
+            <span class="page-num">{{ (pages|length * 2) + 5 }}</span>
+          </div>
+        </div>
+        <div class="page-number right">2</div>
+        <div class="running-header right">Содержание</div>
+      </div>
+
+      <!-- 4. Введение -->
+      <div class="page">
+        <div class="page-content two-column decorative-border">
+          <span class="section-icon intro-icon"></span>
+          <h2>Введение</h2>
+          <hr class="chapter-separator">
+          <div class="drop-cap">
+            <p>Каждая история начинается с одного момента, одного взгляда, одного слова. Эта книга — собрание таких моментов, каждый из которых стал частью большего повествования о любви, дружбе и жизни.</p>
+          </div>
+          
+          <div class="pull-quote">
+            Лучшие истории пишутся не пером, а сердцем
+          </div>
+          
+          <p>В этих страницах вы найдёте не просто фотографии и слова, а кусочки души, запечатлённые в моментах счастья, размышлений и открытий. Каждая глава — это шаг в путешествии, которое продолжается и сегодня.</p>
+          
+          <p>Позвольте себе погрузиться в эту историю, прочувствовать каждый момент и, возможно, найти что-то знакомое в этих строках — что-то, что отзовётся в вашем собственном сердце.</p>
+        </div>
+        <div class="page-number left">3</div>
+        <div class="running-header left">Введение</div>
+      </div>
+
+      <!-- 5. Развороты: Текст слева, Картинка справа -->
       {% for page in pages %}
         <!-- Левая страница - Текст -->
         <div class="page">
-          <div class="page-content">
-            {{ page.title | safe }}
-            {{ page.text | safe }}
+          <div class="chapter-margin-number">{{ loop.index }}</div>
+          <div class="page-content two-column decorative-border">
+            
+            <!-- Эпиграф для каждой главы -->
+            <div class="chapter-epigraph">
+              {% if loop.index == 1 %}
+              Стена — не граница, а дверь в новый мир.
+              {% elif loop.index == 2 %}
+              В каждом моменте скрыта вечность.
+              {% elif loop.index == 3 %}
+              Путь к мечте начинается с одного шага.
+              {% elif loop.index == 4 %}
+              Звёзды ближе, чем кажется.
+              {% elif loop.index == 5 %}
+              Будущее создаётся сегодня.
+              {% else %}
+              Каждая история — это часть великого повествования.
+              {% endif %}
+            </div>
+            
+            <h2>Глава {{ loop.index }}{% if loop.index == 1 %}. Шаги, что ведут к звёздам{% endif %}</h2>
+            <hr class="chapter-separator">
+            
+            {% if loop.first %}
+            <div class="drop-cap">
+              <p>Ты чувствуешь, как каменная кладка стены шепчет тебе: «Добро пожаловать в мир, который соткан из твоих идей». {{ page.text | safe | replace('Ты стоишь перед кирпичной стеной.', '') | replace('Beknur, словно воплощение мечты, которая только начинает становиться реальностью.', 'Beknur — больше чем пространство, это алхимия амбиций, где каждый кирпич словно строительный блок твоих будущих свершений.') | replace('Взгляд — уверенный, в нём горят искры.', 'Взгляд твой переливается огненным светом — искры дерзости, готовые запустить цепную реакцию перемен.') }}</p>
+            </div>
+            
+            <div class="pull-quote">
+              Каждый шаг — это секретная формула, которая меняет мир
+            </div>
+            
+            <p>Ты вдохнул вечерний воздух и шагнул навстречу неизвестности, чувствуя, как кровь закипает от предвкушения новых открытий. Каждая вибрация под ногами — словно отголосок твоих амбиций, готовых прорваться наружу.</p>
+            
+            <p>Beknur оказался твоей площадкой для экспериментов: стены, пропитанные историями наставлений, и свет ламп, обрамляющий твои идеи, словно прожекторы на сцене твоего будущего. Взгляд твой — это вспышка энтузиазма, которой достаточно, чтобы зажечь огонь перемен.</p>
+            {% else %}
+            <div class="drop-cap">
+              <p>{{ page.text | safe }}</p>
+            </div>
+            {% endif %}
+            
+            {% if loop.index % 3 == 0 %}
+            <div class="pull-quote">
+              Каждый момент уникален и неповторим, как отпечаток души на холсте времени
+            </div>
+            {% elif loop.index % 2 == 0 %}
+            <div class="pull-quote">
+              В простых вещах скрывается невероятная красота
+            </div>
+            {% endif %}
           </div>
+          <div class="page-number left">{{ (loop.index0 * 2) + 4 }}</div>
+          <div class="running-header left">Глава {{ loop.index }}</div>
         </div>
 
-        <!-- Правая страница - Изображение + подпись -->
+        <!-- Правая страница - Изображение -->
+        {% if loop.index % 4 == 0 %}
+        <!-- Каждая 4-я картинка на полный экран -->
+        <div class="page full-image">
+          <div class="page-image-container">
+            <img src="{{ page.image }}" alt="{{ page.title | striptags | trim }}" />
+          </div>
+          <div class="page-number right">{{ (loop.index0 * 2) + 5 }}</div>
+        </div>
+        {% else %}
+        <!-- Обычная страница с изображением -->
         <div class="page page-image">
           <div class="page-image-container">
-            <img
-              src="{{ page.image }}"
-              alt="{{ page.title | striptags | trim }}"
-            />
+            <img src="{{ page.image }}" alt="{{ page.title | striptags | trim }}" />
+            <div class="image-caption">
+              <span class="figure-number">Рис. {{ loop.index }}.</span>
+              {{ page.caption | safe }}
+              <br><small style="color: var(--text-light); font-size: 0.8em; margin-top: 0.5em; display: block;">
+                {% if loop.index % 3 == 1 %}
+                "Момент, застывший во времени, говорит о вечности"
+                {% elif loop.index % 3 == 2 %}
+                "В каждом кадре — история, в каждой истории — жизнь"
+                {% else %}
+                "Красота рождается в пересечении света и тени"
+                {% endif %}
+              </small>
+            </div>
           </div>
-          <div class="page-content" style="columns:1; font-family:'Merriweather',serif; font-size:0.9em; line-height:1.4; padding:1em 2.5em; height:auto; text-align:center; font-style: italic;">
-            {{ page.caption | safe }}
-          </div>
+          <div class="page-number right">{{ (loop.index0 * 2) + 5 }}</div>
+          <div class="running-header right">Глава {{ loop.index }}</div>
         </div>
+        {% endif %}
       {% endfor %}
       
-      <!-- 4. Последняя страница - Заключение -->
+      <!-- 6. Эпилог -->
       <div class="page final-page">
-        <div class="page-content" style="columns: 1;">
+        <div class="page-content">
+          <span class="section-icon epilogue-icon"></span>
           <h1>Эпилог</h1>
-          <p>Пусть эта книга хранит тепло самых<br>дорогих воспоминаний.</p>
+          <div style="font-size: 1.2em; line-height: 1.5; max-width: 85%; margin: 2em auto;">
+            <p>Пусть эта книга хранит тепло самых дорогих воспоминаний. Каждая страница — это напоминание о том, что жизнь прекрасна в своей простоте и сложности одновременно.</p>
+            
+            <p style="margin-top: 2em;">Впереди нас ждут новые главы, новые открытия и новые моменты счастья. И кто знает, возможно, скоро появится продолжение этой истории...</p>
+            
+            <div class="pull-quote" style="color: white; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1);">
+              До встречи в следующей главе жизни
+            </div>
+          </div>
         </div>
+        <div class="page-number left">{{ (pages|length * 2) + 4 }}</div>
+        <div class="running-header left">Эпилог</div>
+      </div>
+
+      <!-- 7. Благодарности -->
+      <div class="page" style="background: linear-gradient(135deg, var(--background-cream) 0%, #f0ede8 100%);">
+        <div class="page-content">
+          <span class="section-icon thanks-icon"></span>
+          <h2>Благодарности</h2>
+          <hr class="chapter-separator">
+          
+          <div class="acknowledgments">
+            <p><strong>Особая благодарность:</strong></p>
+            <p>Всем, кто был частью этой истории, кто делился моментами радости и вдохновения. Каждая улыбка, каждый разговор, каждый миг — всё это стало частью этой книги.</p>
+          </div>
+          
+          <div class="acknowledgments">
+            <p><strong>Техническая команда:</strong></p>
+            <p>Создано с использованием современных технологий искусственного интеллекта для генерации изображений и обработки текста. Особая благодарность разработчикам, которые делают такие проекты возможными.</p>
+          </div>
+          
+          <div class="acknowledgments">
+            <p><strong>Посвящение:</strong></p>
+            <p>Эта книга посвящается всем мечтателям и романтикам, которые верят в силу историй и красоту человеческих отношений.</p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 3em; font-style: italic; color: var(--text-light);">
+            <p>© 2024 | Создано с любовью</p>
+            <small>Все права защищены</small>
+          </div>
+        </div>
+        <div class="page-number right">{{ (pages|length * 2) + 5 }}</div>
+        <div class="running-header right">Благодарности</div>
       </div>
     </div>
   </div>
@@ -123,9 +781,25 @@
         height: 800,
         showCover: true,
         mobileScrollSupport: true,
-        usePortrait: true
+        usePortrait: true,
+        flippingTime: 1000,
+        useMouseEvents: true,
+        swipeDistance: 30,
+        clickEventForward: true,
+        maxShadowOpacity: 0.5,
+        drawShadow: true
       });
+      
       pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+      
+      // Плавная загрузка страниц с анимацией
+      pageFlip.on('flip', (e) => {
+        console.log('Текущая страница:', e.data);
+      });
+      
+      pageFlip.on('changeOrientation', (e) => {
+        pageFlip.updateFromHtml(document.querySelectorAll('.page'));
+      });
     });
   </script>
 </body>
