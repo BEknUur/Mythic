@@ -60,11 +60,16 @@
       <!-- 3. Развороты: Текст слева, Картинка справа -->
       {% for page in pages %}
         <!-- Левая страница - Текст -->
-        <div class="page page-text">{{ page.text|safe }}</div>
+        <div class="page">
+          <div class="page-content text-content">
+            {{ page.text | safe }}
+          </div>
+        </div>
+
         <!-- Правая страница - Изображение -->
         <div class="page page-image">
           <img
-            src="{{ page.image }}"
+            src="/runs/{{ run_id }}/images/{{ page.image }}"
             alt="Page image {{ loop.index }}"
             style="max-width:100%; height:auto;"
           />

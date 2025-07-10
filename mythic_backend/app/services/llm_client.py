@@ -6,7 +6,6 @@ import logging
 import random
 from openai import AzureOpenAI, AsyncAzureOpenAI
 import json
-import markdown
 
 # Инициализация синхронного клиента
 client = AzureOpenAI(
@@ -57,82 +56,6 @@ def strip_cliches(text: str) -> str:
     text = " ".join(text.split())
     return text
 
-def image_to_base64(image_path: str) -> str:
-    """Кодирует изображение в строку Base64."""
-    try:
-        with open(image_path, "rb") as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-            # Получаем расширение файла, чтобы правильно сформировать Data URL
-            extension = Path(image_path).suffix.lower().replace('.', '')
-            if extension == 'jpg':
-                extension = 'jpeg' # стандартный MIME-тип
-            return f"data:image/{extension};base64,{encoded_string}"
-    except Exception as e:
-        print(f"❌ Ошибка кодирования изображения {image_path}: {e}")
-        return ""
-
-async def generate_text(image_path: str, context: str) -> str:
-    """Генерирует текст с помощью Azure OpenAI API (только GPT-4o), с поддержкой изображений"""
-    try:
-        # Всегда используем GPT-4o deployment
-        deployment = settings.AZURE_OPENAI_GPT4_DEPLOYMENT
-        
-        # БЫСТРАЯ система для романтического рассказчика (сокращенная версия)
-        fast_system_message = """Ты - романтический рассказчик. Пиши просто, искренне, романтично.
-
-СТИЛЬ: Дневник влюбленного
-ЯЗЫК: Русский, простой, теплый
-ДЛИНА: Кратко, по сути
-
-ЗАПРЕЩЕНО: "Не могу поверить!", "Потрясающе!", сложные фразы"""
-
-        # Если есть изображение, используем vision model
-        if image_path:
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": context},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": image_to_base64(image_path),
-                                "detail": "low"  # Для определения пола достаточно низкого качества
-                            }
-                        }
-                    ]
-                }
-            ]
-
-            response = await async_client.chat.completions.create(
-                model=deployment,
-                messages=messages,
-                max_tokens=1500,
-                temperature=0.8
-            )
-            
-        else:
-            # Обычная генерация текста (БЫСТРАЯ)
-            response = await async_client.chat.completions.create(
-                model=deployment,
-                messages=[
-                    {"role": "system", "content": fast_system_message},
-                    {"role": "user", "content": context}
-                ],
-                max_tokens=1500,
-                temperature=0.8,
-                presence_penalty=0.3,  # Снижено для скорости
-                frequency_penalty=0.2  # Снижено для скорости
-            )
-        
-        result = response.choices[0].message.content.strip()
-        return strip_cliches(result)
-        
-    except Exception as e:
-        logger.error(f"Ошибка в generate_text: {e}")
-        # Быстрый fallback вместо ошибки
-        return f"Этот момент наполнен особой красотой и теплом. Каждая деталь говорит о твоей уникальности."
-
 async def generate_flipbook_json(image_paths: list[str]) -> dict:
     """
     Генерирует всю структуру флипбука (пролог и страницы) в виде единого JSON-объекта,
@@ -168,9 +91,9 @@ async def generate_flipbook_json(image_paths: list[str]) -> dict:
         }
     ]
 
-    # 2. Подготавливаем контент для LLM
-    # Делаем пути относительными для передачи в LLM
-    relative_image_paths = [str(Path(p).name) for p in image_paths]
+    # 2. Формируем промпт для модели
+    # Преобразуем пути в просто имена файлов, как ожидает модель
+    image_filenames = [Path(p).name for p in image_paths]
     
     system_prompt = """Ты — талантливый писатель, создающий романтические фотокниги.
 Твоя задача — сгенерировать душевный пролог и трогательные подписи к каждой фотографии.
@@ -178,7 +101,7 @@ async def generate_flipbook_json(image_paths: list[str]) -> dict:
 Не добавляй никаких комментариев или вступлений, только вызов функции.
 История должна быть связной и вызывать теплые чувства."""
 
-    user_prompt = f"Создай фотокнигу на основе следующих изображений: {json.dumps(relative_image_paths)}"
+    user_prompt = f"Создай фотокнигу на основе следующих изображений: {json.dumps(image_filenames)}"
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -210,25 +133,72 @@ async def generate_flipbook_json(image_paths: list[str]) -> dict:
         # В случае ошибки, можно вернуть пустую структуру, чтобы приложение не падало
         return {"prologue": "Что-то пошло не так...", "pages": []}
 
-    # 5. Возвращаем результат
+def generate_text(prompt: str,
+                  model: str = "gpt-4.1-mini",
+                  max_tokens: int = 1500,  # Возвращаем обратно к 1500 для качественных текстов
+                  temperature: float = 0.8,  # Возвращаем к 0.8 для более творческих ответов
+                  image_data: Optional[str] = None) -> str:
+    """Генерирует текст с помощью Azure OpenAI API (только GPT-4o), с поддержкой изображений"""
     try:
-        # Парсим JSON из ответа
-        function_args = json.loads(response.choices[0].message.function_call.arguments)
+        # Всегда используем GPT-4o deployment
+        deployment = settings.AZURE_OPENAI_GPT4_DEPLOYMENT
         
-        # Заменяем имена файлов на Base64
-        image_base64_map = {Path(p).name: image_to_base64(p) for p in image_paths}
+        # БЫСТРАЯ система для романтического рассказчика (сокращенная версия)
+        fast_system_message = """Ты - романтический рассказчик. Пиши просто, искренне, романтично.
+
+СТИЛЬ: Дневник влюбленного
+ЯЗЫК: Русский, простой, теплый
+ДЛИНА: Кратко, по сути
+
+ЗАПРЕЩЕНО: "Не могу поверить!", "Потрясающе!", сложные фразы"""
+
+        # Если есть изображение, используем vision model
+        if image_data:
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_data,
+                                "detail": "low"  # Для определения пола достаточно низкого качества
+                            }
+                        }
+                    ]
+                }
+            ]
+
+            response = client.chat.completions.create(
+                model=deployment,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+            
+        else:
+            # Обычная генерация текста (БЫСТРАЯ)
+            response = client.chat.completions.create(
+                model=deployment,
+                messages=[
+                    {"role": "system", "content": fast_system_message},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=max_tokens,
+                temperature=temperature,
+                presence_penalty=0.3,  # Снижено для скорости
+                frequency_penalty=0.2  # Снижено для скорости
+            )
         
-        for page in function_args.get("pages", []):
-            if page.get("image") in image_base64_map:
-                page["image"] = image_base64_map[page["image"]]
-            else:
-                page["image"] = "" # если картинка не найдена
+        result = response.choices[0].message.content.strip()
+        return strip_cliches(result)
+        
+    except Exception as e:
+        logger.error(f"Ошибка в generate_text: {e}")
+        # Быстрый fallback вместо ошибки
+        return f"Этот момент наполнен особой красотой и теплом. Каждая деталь говорит о твоей уникальности."
 
-        return function_args
-
-    except (json.JSONDecodeError, AttributeError, KeyError) as e:
-        print(f"❌ Ошибка парсинга JSON ответа LLM: {e}")
-        return {"prologue": "Что-то пошло не так...", "pages": []}
 
 def analyze_photo_for_memoir(image_path: Path, context: str = "", chapter_focus: str = "general") -> str:
     """Анализирует фотографию для мемуарного повествования"""

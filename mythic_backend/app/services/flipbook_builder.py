@@ -3,27 +3,12 @@ import json
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 import markdown
-import base64
 
 # Импортируем новый асинхронный клиент
 from app.services.llm_client import generate_flipbook_json
-from app.config import settings
 
 # Подключаем шаблоны из папки app/templates
 env = Environment(loader=FileSystemLoader('app/templates'))
-
-def image_to_base64_data_uri(image_path: Path) -> str:
-    """Кодирует изображение в строку Base64 для вставки в HTML."""
-    try:
-        with open(image_path, "rb") as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-            extension = image_path.suffix.lower().replace('.', '')
-            if extension == 'jpg':
-                extension = 'jpeg'
-            return f"data:image/{extension};base64,{encoded_string}"
-    except Exception as e:
-        print(f"❌ Ошибка кодирования изображения {image_path}: {e}")
-        return ""
 
 async def generate_flipbook_data(run_id: str, image_paths: list[str]) -> dict:
     """
@@ -62,27 +47,13 @@ def build_flipbook_html(run_id: str, data: dict):
         print("️️⚠️ Нет данных для сборки HTML флипбука.")
         return
 
-    # --- НОВАЯ ЛОГИКА: КОНВЕРТАЦИЯ В BASE64 ---
-    run_dir = Path('data') / run_id
-    for page in data.get("pages", []):
-        image_filename = page.get("image")
-        if image_filename:
-            image_path = run_dir / "images" / image_filename
-            if image_path.exists():
-                page["image"] = image_to_base64_data_uri(image_path)
-            else:
-                print(f"⚠️ Файл изображения не найден: {image_path}")
-                page["image"] = "" # Обнуляем, если файла нет
-    # --------------------------------------------
-
     tpl = env.get_template('flipbook_template.html')
     
-    # Прокидываем данные в шаблон, включая базовый URL бэкенда
+    # Прокидываем данные в шаблон
     html = tpl.render(
         run_id=run_id,
         prologue=data.get("prologue", "Ваша история начинается здесь..."),
-        pages=data.get("pages", []),
-        backend_base=settings.BACKEND_BASE
+        pages=data.get("pages", [])
     )
     
     out = Path('data') / run_id / 'book.html'
