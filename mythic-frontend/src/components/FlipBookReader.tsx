@@ -147,18 +147,20 @@ function enhancePageContent(htmlContent: string): string {
         font-family: var(--font-body);
         color: var(--text-color);
         text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-        line-height: 1.6;
+        line-height: 1.7;
       }
       
       .cyber-content .page-content {
-        padding: 2rem;
+        padding: 1.5rem 1.5rem 3rem 1.5rem; /* Оптимизированные отступы */
         box-sizing: border-box;
         height: 100%;
-        font-size: 1rem;
-        line-height: 1.7;
+        font-size: 1.2rem; /* Немного уменьшили для лучшего размещения */
+        line-height: 1.6; /* Оптимизированный межстрочный интервал */
         color: var(--text-color);
         font-weight: 400;
         position: relative;
+        overflow-y: auto; /* Добавили прокрутку если нужно */
+        overflow-x: hidden;
       }
       
       .cyber-content h1, .cyber-content h2 {
@@ -172,17 +174,17 @@ function enhancePageContent(htmlContent: string): string {
       }
       
       .cyber-content h1 { 
-        font-size: 2.2em; 
-        margin-bottom: 1em;
+        font-size: 2.2em; /* Немного уменьшили для лучшего размещения */
+        margin-bottom: 0.8em;
       }
       .cyber-content h2 { 
-        font-size: 1.8em; 
-        margin-bottom: 1.2em;
+        font-size: 1.9em; /* Немного уменьшили для лучшего размещения */
+        margin-bottom: 1em;
       }
       
       .cyber-content .book-title {
         font-family: var(--font-heading);
-        font-size: 3.5em;
+        font-size: 3.8em; /* Увеличили размер заголовка книги */
         font-weight: 700;
         margin: 0;
         line-height: 1.1;
@@ -192,7 +194,7 @@ function enhancePageContent(htmlContent: string): string {
       }
       
       .cyber-content .book-subtitle {
-        font-size: 1.1em;
+        font-size: 1.3em; /* Увеличили размер подзаголовка */
         font-style: italic;
         letter-spacing: 1px;
         color: var(--meta-text-color);
@@ -213,7 +215,7 @@ function enhancePageContent(htmlContent: string): string {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 100%;
+        height: calc(100% - 3rem); /* Учитываем оптимизированный нижний отступ */
         padding: 1.5em;
         box-sizing: border-box;
       }
@@ -238,7 +240,7 @@ function enhancePageContent(htmlContent: string): string {
       }
       
       .cyber-content .image-caption {
-        font-size: 0.9em;
+        font-size: 1.1em; /* Увеличили размер подписи к изображению */
         color: var(--meta-text-color);
         text-align: center;
         margin-top: 1em;
@@ -248,38 +250,42 @@ function enhancePageContent(htmlContent: string): string {
       
       .cyber-content .page-number {
         position: absolute;
-        bottom: 20px;
+        bottom: 25px; /* Подняли номер страницы выше */
         font-family: var(--font-body);
-        font-size: 0.9em;
+        font-size: 1.1em; /* Увеличили размер номера страницы */
         color: var(--meta-text-color);
         z-index: 20;
+        font-weight: 600;
+        font-variant-numeric: oldstyle-nums; /* Красивые цифры */
       }
       
-      .cyber-content .page-number.left { left: 25px; }
-      .cyber-content .page-number.right { right: 25px; }
+      .cyber-content .page-number.left { left: 30px; }
+      .cyber-content .page-number.right { right: 30px; }
       
       .cyber-content .running-header {
         position: absolute;
-        top: 20px;
+        top: 25px;
         font-family: var(--font-body);
         font-style: italic;
-        font-size: 0.8em;
+        font-size: 1.0em; /* Увеличили размер заголовка */
         color: var(--meta-text-color);
         z-index: 20;
       }
       
-      .cyber-content .running-header.left { left: 25px; }
-      .cyber-content .running-header.right { right: 25px; }
+      .cyber-content .running-header.left { left: 30px; }
+      .cyber-content .running-header.right { right: 30px; }
       
       .cyber-content p {
-        margin-bottom: 1em;
+        margin-bottom: 1em; /* Уменьшили отступ между абзацами */
         text-align: justify;
+        font-size: 1.2rem; /* Соответствует основному размеру */
+        line-height: 1.6;
       }
       
       .cyber-content .drop-cap p:first-child::first-letter {
         font-family: var(--font-ornamental);
         float: left;
-        font-size: 4em;
+        font-size: 4.5em; /* Увеличили буквицу */
         line-height: 0.8;
         margin: 0.05em 0.1em 0 0;
         color: var(--highlight-color);
@@ -290,26 +296,27 @@ function enhancePageContent(htmlContent: string): string {
         font-style: italic;
         text-align: center;
         margin: 1.5em 0;
-        padding: 1em;
+        padding: 1.2em; /* Увеличили отступы в цитате */
         border-left: 3px solid var(--accent-color);
         background: var(--quote-bg);
         color: var(--highlight-color);
         border-radius: 0 8px 8px 0;
         box-shadow: 0 2px 8px rgba(180, 160, 130, 0.2);
+        font-size: 1.2em; /* Увеличили размер цитаты */
       }
       
       .cyber-content .toc-content {
-        padding: 2rem;
+        padding: 1.5rem 1.5rem 3rem 1.5rem; /* Соответствует основному контенту */
       }
       
       .cyber-content .toc-item {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
-        margin-bottom: 1em;
-        font-size: 1em;
+        margin-bottom: 1.2em; /* Увеличили отступ между пунктами */
+        font-size: 1.2em; /* Увеличили размер пунктов оглавления */
         transition: all 0.3s ease;
-        padding: 0.5em 0;
+        padding: 0.6em 0;
       }
       
       .cyber-content .toc-item:hover {
@@ -326,6 +333,8 @@ function enhancePageContent(htmlContent: string): string {
       .cyber-content .toc-item .page-num {
         font-weight: 600;
         color: var(--accent-color);
+        font-size: 1.1em; /* Увеличили размер номеров страниц в оглавлении */
+        font-variant-numeric: oldstyle-nums; /* Красивые цифры */
       }
       
       .cyber-content .chapter-epigraph {
@@ -333,18 +342,76 @@ function enhancePageContent(htmlContent: string): string {
         text-align: center;
         margin-bottom: 1.5em;
         color: var(--meta-text-color);
-        font-size: 0.9em;
-        padding: 0.5em;
+        font-size: 1.1em; /* Увеличили размер эпиграфа */
+        padding: 0.8em;
         background: var(--quote-bg);
         border-radius: 6px;
         border: 1px solid rgba(200, 180, 140, 0.3);
+        line-height: 1.6;
       }
       
       .cyber-content .chapter-separator {
         border: none;
         height: 1px;
         background: linear-gradient(to right, transparent, var(--accent-color), transparent);
-        margin: 1.5em 0;
+        margin: 2em 0; /* Увеличили отступы у разделителя */
+      }
+      
+      /* Дополнительные стили для лучшей читаемости */
+      .cyber-content strong {
+        font-weight: 600;
+        color: var(--highlight-color);
+      }
+      
+      .cyber-content em {
+        font-style: italic;
+        color: var(--meta-text-color);
+      }
+      
+      /* Стили для всех цифр */
+      .cyber-content {
+        font-variant-numeric: oldstyle-nums;
+      }
+      
+      /* Улучшенные отступы для всех элементов */
+      .cyber-content > * {
+        margin-bottom: 1.2em;
+      }
+      
+      .cyber-content > *:last-child {
+        margin-bottom: 0;
+      }
+      
+      /* Адаптивное масштабирование для длинного контента */
+      .cyber-content {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+      }
+      
+      .cyber-content .page-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Стиль для прокрутки */
+      .cyber-content .page-content::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      .cyber-content .page-content::-webkit-scrollbar-track {
+        background: rgba(200, 180, 140, 0.1);
+        border-radius: 3px;
+      }
+      
+      .cyber-content .page-content::-webkit-scrollbar-thumb {
+        background: rgba(180, 160, 130, 0.5);
+        border-radius: 3px;
+      }
+      
+      .cyber-content .page-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(180, 160, 130, 0.7);
       }
     </style>
     ${htmlContent}
@@ -517,4 +584,4 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
       )}
     </div>
   );
-} 
+}
