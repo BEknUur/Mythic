@@ -23,7 +23,14 @@ const Page = React.forwardRef<HTMLDivElement, { number: number; children?: React
     return (
       <div
         ref={ref}
-        className="w-full h-full bg-white border border-gray-200 shadow-xl flex items-center justify-center text-2xl font-serif p-8 select-none"
+        className="w-full h-full border shadow-xl flex items-center justify-center text-2xl font-serif p-8 select-none"
+        style={{
+          background: children ? 'transparent' : 'linear-gradient(135deg, #f8f6f0 0%, #f0ede5 30%, #e8e3d3 100%)',
+          color: children ? 'inherit' : '#4a453f',
+          fontFamily: children ? 'inherit' : "'Cormorant Garamond', serif",
+          borderColor: children ? 'rgba(200, 180, 140, 0.3)' : 'rgba(180, 160, 130, 0.4)',
+          boxShadow: children ? 'inherit' : '0 4px 20px rgba(160, 140, 100, 0.2)',
+        }}
       >
         {children ?? `Page ${number}`}
       </div>
@@ -53,19 +60,29 @@ export function FlipBook({ pages }: FlipBookProps) {
   return (
     <div className="flex-1 w-full h-full flex items-center justify-center p-4">
       <HTMLFlipBook
-        width={450}
-        height={600}
-        size="stretch"
-        minWidth={315}
-        maxWidth={1000}
-        minHeight={420}
-        maxHeight={1350}
-        maxShadowOpacity={0.5}
+        width={900}
+        height={700}
+        size="fixed"
+        minWidth={700}
+        maxWidth={1600}
+        minHeight={500}
+        maxHeight={1200}
+        maxShadowOpacity={0.18}
         showCover={false}
         className="shadow-2xl book-container"
         mobileScrollSupport
-        showPageCorners
+        showPageCorners={true}
         useMouseEvents
+        flippingTime={800}
+        usePortrait={false}
+        swipeDistance={50}
+        clickEventForward={false}
+        drawShadow={true}
+        autoSize={false}
+        startPage={0}
+        startZIndex={0}
+        useBook={true}
+        style={{ margin: '0 auto' }}
       >
         {preparedPages}
       </HTMLFlipBook>
