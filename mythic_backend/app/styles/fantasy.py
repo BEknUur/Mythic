@@ -27,169 +27,67 @@ def analyze_profile_for_fantasy(posts_data: list) -> dict:
     return analysis
 
 def generate_fantasy_chapters(analysis: dict, images: list[Path]) -> dict:
-    """Генерирует главы фэнтези-книги"""
+    """Генерирует главы фэнтези-книги — коротко, читаемо, с fallback."""
     
     full_name = analysis.get("full_name", analysis.get("username", "Герой"))
     username = analysis.get("username", "hero")
     bio = analysis.get("bio", "")
     
-    # Фэнтези конфигурация глав
+    # Фэнтези конфигурация глав - короткие и читаемые
     fantasy_configs = [
         {
             'key': 'prophecy',
             'title': 'Древнее пророчество',
-            'prompt': f"""Напиши главу "Древнее пророчество" о герое по имени {full_name} в жанре эпического фэнтези (5-6 абзацев).
-            
-            НАЧНИ: "В древних свитках Академии Магов было записано пророчество о герое, чье имя станет легендой..."
-            
-            СТРУКТУРА:
-            1. Абзац: Древнее пророчество в магических свитках
-            2. Абзац: Описание героя {full_name} - благородные черты, магическая аура
-            3. Абзац: Знаки судьбы в его облике и характере
-            4. Абзац: Особая сила, что дремлет в его душе
-            5. Абзац: Предназначение изменить мир
-            6. Абзац: Начало великого пути
-            
-            СТИЛЬ: Эпическое фэнтези, архаичный язык, магические метафоры, описания ауры и силы."""
+            'prompt': f"""Напиши короткую главу "Древнее пророчество" о герое {full_name} (1-2 абзаца, 60-80 слов). Стиль — личный, возвышенный фэнтези о человеке, с метафорами, но без сказочной мишуры. Коротко и эмоционально."""
         },
         {
             'key': 'magical_realm',
             'title': 'Магическое королевство',
-            'prompt': f"""Напиши главу "Магическое королевство" о мире героя {full_name} в жанре фэнтези (5-6 абзацев).
-            
-            НАЧНИ: "Королевство @{username} раскинулось между мирами, где магия течет в каждом камне..."
-            
-            СТРУКТУРА:
-            1. Абзац: Описание магического королевства
-            2. Абзац: Особенности этого мира - кристаллы, руны, древние артефакты
-            3. Абзац: Жители королевства и их способности
-            4. Абзац: Природа пропитана магией
-            5. Абзац: Герой как хранитель этого мира
-            6. Абзац: Гармония между магией и природой
-            
-            СТИЛЬ: Детальные описания магического мира, мистические элементы."""
+            'prompt': f"""Напиши короткую главу "Магическое королевство" о мире героя {full_name} (1-2 абзаца, 60-80 слов). Стиль — личный, возвышенный фэнтези о человеке, с метафорами, но без сказочной мишуры. Коротко и эмоционально."""
         },
         {
             'key': 'ancient_wisdom',
             'title': 'Древняя мудрость',
-            'prompt': f"""Напиши главу "Древняя мудрость" о знаниях героя {full_name} в жанре фэнтези (5-6 абзацев).
-            
-            НАЧНИ: "В глазах {full_name} читается мудрость веков, словно он помнит времена Первой Магии..."
-            
-            СТРУКТУРА:
-            1. Абзац: Древняя мудрость в глазах героя
-            2. Абзац: Знание тайных рун и заклинаний
-            3. Абзац: Понимание языка природы и стихий
-            4. Абзац: Связь с духами предков
-            5. Абзац: Дар предвидения будущего
-            6. Абзац: Ответственность за древние знания
-            
-            СТИЛЬ: Мистический, философский, с элементами древних знаний."""
+            'prompt': f"""Напиши короткую главу "Древняя мудрость" о знаниях героя {full_name} (1-2 абзаца, 60-80 слов). Стиль — личный, возвышенный фэнтези о человеке, с метафорами, но без сказочной мишуры. Коротко и эмоционально."""
         },
         {
             'key': 'magical_artifacts',
             'title': 'Магические артефакты',
-            'prompt': f"""Напиши главу "Магические артефакты" о сокровищах героя {full_name} в жанре фэнтези (5-6 абзацев).
-            
-            НАЧНИ: "Каждый предмет в коллекции {full_name} излучает древнюю магию..."
-            
-            СТРУКТУРА:
-            1. Абзац: Коллекция магических артефактов
-            2. Абзац: Кристаллы силы и их свойства
-            3. Абзац: Древние амулеты защиты
-            4. Абзац: Руны памяти и мудрости
-            5. Абзац: Связь артефактов с душой героя
-            6. Абзац: Сила, что растет с каждым днем
-            
-            СТИЛЬ: Описания магических предметов, их силы и назначения."""
+            'prompt': f"""Напиши короткую главу "Магические артефакты" о сокровищах героя {full_name} (1-2 абзаца, 60-80 слов). Стиль — личный, возвышенный фэнтези о человеке, с метафорами, но без сказочной мишуры. Коротко и эмоционально."""
         },
         {
             'key': 'elemental_power',
             'title': 'Власть над стихиями',
-            'prompt': f"""Напиши главу "Власть над стихиями" о магических способностях {full_name} в жанре фэнтези (5-6 абзацев).
-            
-            НАЧНИ: "Стихии повинуются {full_name} как древнему повелителю..."
-            
-            СТРУКТУРА:
-            1. Абзац: Власть над четырьмя стихиями
-            2. Абзац: Огонь - страсть и сила воли
-            3. Абзац: Вода - мудрость и исцеление
-            4. Абзац: Земля - стойкость и защита
-            5. Абзац: Воздух - свобода и вдохновение
-            6. Абзац: Гармония всех стихий в одном существе
-            
-            СТИЛЬ: Магические описания, власть над природными силами."""
+            'prompt': f"""Напиши короткую главу "Власть над стихиями" о магических способностях {full_name} (1-2 абзаца, 60-80 слов). Стиль — личный, возвышенный фэнтези о человеке, с метафорами, но без сказочной мишуры. Коротко и эмоционально."""
         },
         {
             'key': 'dragon_bond',
             'title': 'Союз с драконом',
-            'prompt': f"""Напиши главу "Союз с драконом" о магической связи {full_name} с древним драконом в жанре фэнтези (5-6 абзацев).
-            
-            НАЧНИ: "Древний дракон признал в {full_name} достойного союзника..."
-            
-            СТРУКТУРА:
-            1. Абзац: Встреча с древним драконом
-            2. Абзац: Взаимное признание и уважение
-            3. Абзац: Магическая связь душ
-            4. Абзац: Общие полеты над королевством
-            5. Абзац: Дракон как хранитель и советник
-            6. Абзац: Сила, что удваивается в союзе
-            
-            СТИЛЬ: Эпические описания, связь с мифическими существами."""
+            'prompt': f"""Напиши короткую главу "Союз с драконом" о магической связи {full_name} с древним драконом (1-2 абзаца, 60-80 слов). Стиль — личный, возвышенный фэнтези о человеке, с метафорами, но без сказочной мишуры. Коротко и эмоционально."""
         },
         {
             'key': 'quest_calling',
             'title': 'Зов приключений',
-            'prompt': f"""Напиши главу "Зов приключений" о судьбе героя {full_name} в жанре фэнтези (5-6 абзацев).
-            
-            НАЧНИ: "Судьба зовет {full_name} в великий поход..."
-            
-            СТРУКТУРА:
-            1. Абзац: Зов судьбы и предназначения
-            2. Абзац: Знаки, указывающие путь
-            3. Абзац: Подготовка к великому походу
-            4. Абзац: Спутники и союзники
-            5. Абзац: Опасности, что ждут впереди
-            6. Абзац: Решимость идти до конца
-            
-            СТИЛЬ: Героический, вдохновляющий, полный решимости."""
+            'prompt': f"""Напиши короткую главу "Зов приключений" о судьбе героя {full_name} (1-2 абзаца, 60-80 слов). Стиль — личный, возвышенный фэнтези о человеке, с метафорами, но без сказочной мишуры. Коротко и эмоционально."""
         },
         {
             'key': 'legendary_deeds',
             'title': 'Легендарные подвиги',
-            'prompt': f"""Напиши главу "Легендарные подвиги" о великих делах {full_name} в жанре фэнтези (5-6 абзацев).
-            
-            НАЧНИ: "Барды по всему королевству слагают песни о подвигах {full_name}..."
-            
-            СТРУКТУРА:
-            1. Абзац: Песни и легенды о герое
-            2. Абзац: Спасение заколдованного леса
-            3. Абзац: Победа над темными силами
-            4. Абзац: Освобождение пленных душ
-            5. Абзац: Восстановление древних святилищ
-            6. Абзац: Слава, что переживет века
-            
-            СТИЛЬ: Эпические подвиги, героические деяния."""
-        },
-        {
-            'key': 'eternal_legacy',
-            'title': 'Вечное наследие',
-            'prompt': f"""Напиши главу "Вечное наследие" о бессмертной славе {full_name} в жанре фэнтези (6-7 абзацев).
-            
-            НАЧНИ: "Имя {full_name} навсегда вписано в Книгу Героев..."
-            
-            СТРУКТУРА:
-            1. Абзац: Имя в Книге Героев
-            2. Абзац: Статуи и памятники в его честь
-            3. Абзац: Ученики, продолжающие дело
-            4. Абзац: Магия, что живет в его наследии
-            5. Абзац: Вдохновение для будущих поколений
-            6. Абзац: Благодарность всего королевства
-            7. Абзац: Вечная память и почитание
-            
-            СТИЛЬ: Торжественный, вдохновляющий финал."""
+            'prompt': f"""Напиши короткую главу "Легендарные подвиги" о великих делах {full_name} (1-2 абзаца, 60-80 слов). Стиль — личный, возвышенный фэнтези о человеке, с метафорами, но без сказочной мишуры. Коротко и эмоционально."""
         }
     ]
+    
+    # Fallback-тексты для каждой главы
+    quick_fallbacks = {
+        'prophecy': f"Древние пророчества говорили о герое по имени {full_name}. Его судьба была предопределена звездами, а каждое его действие становилось частью великой легенды.",
+        'magical_realm': f"Королевство @{username} раскинулось между мирами, где магия течет в каждом камне. {full_name} стал хранителем этого удивительного мира.",
+        'ancient_wisdom': f"В глазах {full_name} читается мудрость веков. Он помнит времена Первой Магии и несет в себе знания древних предков.",
+        'magical_artifacts': f"Каждый предмет в коллекции {full_name} излучает древнюю магию. Кристаллы силы, амулеты защиты и руны памяти хранят его секреты.",
+        'elemental_power': f"Стихии повинуются {full_name} как древнему повелителю. Огонь, вода, земля и воздух гармонично сочетаются в его душе.",
+        'dragon_bond': f"Древний дракон признал в {full_name} достойного союзника. Их магическая связь стала легендой, а совместные полеты над королевством восхищают всех.",
+        'quest_calling': f"Судьба зовет {full_name} в великий поход. Знаки указывают путь, а спутники готовы следовать за героем до конца.",
+        'legendary_deeds': f"Барды по всему королевству слагают песни о подвигах {full_name}. Его имя стало синонимом отваги и благородства."
+    }
     
     chapters = {}
     
@@ -202,15 +100,15 @@ def generate_fantasy_chapters(analysis: dict, images: list[Path]) -> dict:
                 'style': 'epic_fantasy'
             })
             
-            if len(generated_content.strip()) < 100:
-                chapters[config['key']] = f"В этой главе рассказывается о {config['title'].lower()} героя {full_name}. Магия окружает каждый его шаг, а судьба ведет к великим свершениям."
+            if len(generated_content.strip()) < 60:
+                chapters[config['key']] = quick_fallbacks[config['key']]
             else:
                 clean_content = strip_cliches(generated_content)
                 chapters[config['key']] = format_chapter_text(clean_content)
                 
         except Exception as e:
             print(f"❌ Ошибка генерации главы '{config['title']}': {e}")
-            chapters[config['key']] = f"Глава о {config['title'].lower()} полна магии и древних тайн."
+            chapters[config['key']] = quick_fallbacks[config['key']]
     
     return chapters
 
@@ -240,418 +138,492 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{book_title}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
     :root {{
-        --parchment: #f4f1e8;
-        --dark-ink: #2c1810;
-        --gold: #d4af37;
-        --deep-purple: #4a148c;
-        --mystic-blue: #1a237e;
-        --shadow: rgba(74, 20, 140, 0.3);
-        --ancient-bronze: #8b4513;
+        --accent-color: #333333;
+        --background-color: #ffffff;
+        --text-color: #333;
+        --font-body: 'Playfair Display', serif;
+        --font-caption: 'Open Sans', sans-serif;
+        --fantasy-accent: #8b4513;
+        --fantasy-secondary: #d4af37;
+        --shadow-soft: rgba(0, 0, 0, 0.1);
     }}
-    
+
+    @page {{
+        size: A5 portrait;
+        margin: 2.5cm;
+        
+        @bottom-center {{
+            content: counter(page);
+            font-family: 'Playfair Display', serif;
+            font-size: 16pt;
+            color: #555;
+            border-top: 1px solid #ddd;
+            padding-top: 0.25cm;
+            width: 100%;
+        }}
+    }}
+
     body {{
-        font-family: 'Crimson Text', serif;
-        background: linear-gradient(135deg, var(--parchment) 0%, #e8e2d5 100%);
-        color: var(--dark-ink);
-        line-height: 1.7;
-        font-size: 16px;
+        font-family: var(--font-body);
+        background-color: var(--background-color) !important;
+        color: var(--text-color);
+        line-height: 1.6;
+        font-size: 24pt;
         margin: 0;
-        padding: 0;
-        max-width: 900px;
-        margin: 0 auto;
+        counter-reset: page;
     }}
-    
-    .fantasy-page {{
-        min-height: 95vh;
-        padding: 3cm 2.5cm;
-        background: var(--parchment);
-        box-shadow: 0 10px 50px var(--shadow);
-        margin: 20px auto;
-        border: 3px solid var(--gold);
-        border-radius: 15px;
-        position: relative;
-    }}
-    
-    .fantasy-page::before {{
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="ancient" patternUnits="userSpaceOnUse" width="20" height="20"><circle cx="10" cy="10" r="1" fill="%23d4af37" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23ancient)"/></svg>');
-        pointer-events: none;
-        border-radius: 12px;
-    }}
-    
-    .cover-fantasy {{
-        text-align: center;
-        padding: 4cm 2cm;
-        background: linear-gradient(135deg, var(--deep-purple) 0%, var(--mystic-blue) 100%);
-        color: var(--gold);
-        border-radius: 15px;
+
+    .book-page {{
+        page-break-after: always;
         position: relative;
         overflow: hidden;
+        background-color: var(--background-color) !important;
+        box-shadow: none;
     }}
-    
-    .cover-fantasy::before {{
-        content: '⚔️';
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 3rem;
-        opacity: 0.3;
+
+    .book-page:last-of-type {{
+        page-break-after: auto;
     }}
-    
-    .cover-title {{
-        font-family: 'Cinzel', serif;
-        font-size: 3.2rem;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        letter-spacing: 2px;
-    }}
-    
-    .cover-subtitle {{
-        font-family: 'Cinzel', serif;
-        font-size: 1.4rem;
-        margin-bottom: 2rem;
-        opacity: 0.9;
-    }}
-    
-    .cover-epigraph {{
-        font-style: italic;
-        border: 2px solid var(--gold);
-        padding: 2rem;
-        margin: 2rem auto;
-        max-width: 500px;
-        border-radius: 10px;
-        background: rgba(255,255,255,0.1);
-        backdrop-filter: blur(10px);
-    }}
-    
-    .chapter-header {{
-        margin-bottom: 3rem;
-        text-align: center;
-        border-bottom: 3px solid var(--gold);
-        padding-bottom: 1.5rem;
-    }}
-    
-    .chapter-number {{
-        font-family: 'Cinzel', serif;
-        font-size: 1rem;
-        color: var(--deep-purple);
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        margin-bottom: 1rem;
-    }}
-    
-    .chapter-title {{
-        font-family: 'Cinzel', serif;
-        font-size: 2.5rem;
-        font-weight: 600;
-        color: var(--deep-purple);
-        margin: 0;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-    }}
-    
-    .fantasy-text {{
-        text-align: justify;
-        line-height: 1.8;
-        font-size: 17px;
-        text-indent: 2em;
-        margin-bottom: 1.5em;
-        position: relative;
-        z-index: 1;
-    }}
-    
-    .fantasy-text::first-letter {{
-        font-family: 'Cinzel', serif;
-        font-size: 4rem;
-        font-weight: 700;
-        color: var(--deep-purple);
-        float: left;
-        line-height: 1;
-        margin: 0.1em 0.1em 0 0;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }}
-    
-    .fantasy-photo {{
-        margin: 3rem 0;
-        text-align: center;
-        position: relative;
-    }}
-    
-    .photo-frame {{
-        display: inline-block;
-        padding: 20px;
-        background: linear-gradient(135deg, var(--gold) 0%, var(--ancient-bronze) 100%);
-        border-radius: 15px;
-        box-shadow: 0 8px 30px var(--shadow);
-        transform: rotate(-1deg);
-        transition: transform 0.3s ease;
-    }}
-    
-    .photo-frame:hover {{
-        transform: rotate(0deg) scale(1.05);
-    }}
-    
-    .photo-frame img {{
-        max-width: 100%;
-        max-height: 350px;
-        border-radius: 10px;
-        border: 2px solid var(--parchment);
-    }}
-    
-    .photo-caption {{
-        font-family: 'Cinzel', serif;
-        font-style: italic;
-        font-size: 1rem;
-        color: var(--deep-purple);
-        margin-top: 1.5rem;
-        text-align: center;
-        font-weight: 600;
-    }}
-    
-    .fantasy-finale {{
-        text-align: center;
-        margin-top: 4rem;
-        padding: 3rem;
-        background: linear-gradient(135deg, var(--gold) 0%, var(--ancient-bronze) 100%);
-        border-radius: 15px;
-        color: var(--parchment);
-        box-shadow: 0 8px 30px var(--shadow);
-    }}
-    
-    .fantasy-signature {{
-        font-family: 'Cinzel', serif;
-        font-size: 1.4rem;
-        font-weight: 600;
-        margin-top: 2rem;
-    }}
-    
-    .toc-fantasy {{
-        background: linear-gradient(135deg, var(--parchment) 0%, #e8e2d5 100%);
-        border: 2px solid var(--gold);
-        border-radius: 15px;
-        padding: 3rem;
-        margin: 2rem 0;
-    }}
-    
-    .toc-title {{
-        font-family: 'Cinzel', serif;
-        font-size: 2rem;
-        color: var(--deep-purple);
-        text-align: center;
-        margin-bottom: 2rem;
-        font-weight: 600;
-    }}
-    
-    .toc-item {{
-        margin-bottom: 1rem;
-        padding: 0.8rem;
-        border-bottom: 1px dotted var(--gold);
+
+    /* Cover Page */
+    .cover-page {{
         display: flex;
-        justify-content: space-between;
-        font-size: 1.1rem;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+    }}
+
+    .cover-title {{
+        font-family: 'Playfair Display', serif;
+        font-size: 48pt;
+        font-weight: 700;
+        margin: 0;
+    }}
+
+    .cover-subtitle {{
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 24pt;
+        margin: 1rem 0 3rem 0;
+    }}
+
+    .cover-author {{
+        position: absolute;
+        bottom: 1.5cm;
+        font-size: 18pt;
+    }}
+
+    .cover-content {{
+        border: 2px solid #333;
+        padding: 2rem 3rem;
     }}
     
-    .toc-chapter {{
-        font-weight: 600;
-        color: var(--dark-ink);
+    .cover-separator {{
+        width: 80px;
+        height: 1px;
+        background: #333;
+        margin: 0 auto 1.5rem;
     }}
-    
+
+    .cover-dedication {{
+        font-family: 'Open Sans', sans-serif;
+        font-style: italic;
+        font-size: 14pt;
+    }}
+
+    /* Table of Contents */
     .toc-page {{
-        color: var(--deep-purple);
-        font-family: 'Cinzel', serif;
+        padding: 0;
+    }}
+
+    .toc-title {{
+        font-size: 36pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-align: center;
+        margin-top: 1cm;
+        margin-bottom: 2cm;
+        color: var(--accent-color);
+    }}
+
+    .toc-list {{
+        list-style: none;
+        padding: 0;
+        font-size: 20pt;
+        font-family: 'Playfair Display', serif;
+    }}
+
+    .toc-item {{
+        display: flex;
+        margin-bottom: 0.5rem;
+        align-items: baseline;
+    }}
+
+    .toc-item .chapter-name {{
+        order: 1;
+        text-decoration: none;
+        color: var(--text-color);
     }}
     
-    @media (max-width: 768px) {{
-        .fantasy-page {{
-            padding: 2cm 1.5cm;
-            margin: 10px;
+    .toc-item .leader {{
+        flex-grow: 0;
+        border-bottom: none;
+        margin: 0;
+        position: static;
+    }}
+
+    .toc-item .page-ref {{
+        order: 3;
+        text-decoration: none;
+        color: var(--text-color);
+    }}
+
+    .toc-item .page-ref::after {{
+        content: target-counter(attr(href), page);
+    }}
+    
+    /* Chapter Page */
+    .chapter-page {{
+        padding: 0;
+    }}
+
+    .chapter-main-title {{
+        font-family: var(--font-body);
+        font-weight: bold;
+        font-size: 32pt;
+        text-align: center;
+        text-transform: uppercase;
+        color: var(--accent-color);
+        margin: 1cm 0;
+        line-height: 1.2;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }}
+    
+    .chapter-subtitle {{
+        font-family: var(--font-body);
+        font-style: italic;
+        font-size: 18pt;
+        text-align: left;
+        margin: 0 0 1rem 0;
+    }}
+
+    .chapter-image-container {{
+        text-align: center;
+        margin: 1cm 0;
+        page-break-inside: avoid;
+    }}
+
+    .chapter-image {{
+        max-width: 90%;
+        border: 1px solid #ddd;
+        padding: 0.5cm;
+    }}
+
+    .chapter-image-caption {{
+        font-family: var(--font-caption);
+        font-style: italic;
+        font-size: 14pt;
+        margin-top: 0.5rem;
+        color: var(--accent-color);
+    }}
+    
+    .chapter-body p {{
+        font-size: 24pt;
+        line-height: 1.6;
+        margin-bottom: 1em;
+    }}
+
+    .chapter-body p:first-of-type::first-letter {{
+        initial-letter: 3;
+        font-weight: bold;
+        padding-right: 0.2em;
+        color: var(--fantasy-accent);
+    }}
+    
+    /* Final Page Styles */
+    .final-page {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }}
+    .final-content {{
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 24pt;
+        line-height: 1.7;
+        max-width: 80%;
+    }}
+    .final-ornament {{
+        font-size: 32pt;
+        color: var(--fantasy-accent);
+        margin: 2rem 0;
+        font-family: serif;
+    }}
+    .final-signature {{
+        margin-top: 1rem;
+        font-size: 18pt;
+        font-style: normal;
+    }}
+
+    /* Фэнтезийные акценты */
+    .fantasy-accent {{
+        color: var(--fantasy-accent);
+    }}
+    
+    .fantasy-emoji {{
+        font-size: 1.2em;
+        margin: 0 0.2em;
+        opacity: 0.7;
+    }}
+
+    @media screen {{
+        body {{
+            font-size: 16px;
         }}
-        
-        .cover-title {{
-            font-size: 2.5rem;
+        .book-page {{
+            width: 148mm;
+            min-height: 210mm;
+            margin: 2rem auto;
+            padding: 2.5cm;
+            box-sizing: border-box;
+            height: auto;
         }}
-        
-        .chapter-title {{
-            font-size: 2rem;
+        .cover-page {{
+            height: 210mm;
+            position: relative;
         }}
+        .chapter-body p {{ font-size: 14pt; }}
+        .chapter-body p:first-of-type::first-letter {{ font-size: 38pt; }}
+        .cover-title {{ font-size: 32pt; }}
+        .cover-subtitle {{ font-size: 18pt; }}
+        .toc-title {{ font-size: 24pt; }}
+        .toc-list {{ font-size: 14pt; }}
+        .chapter-main-title {{ font-size: 24pt; }}
+        .chapter-subtitle {{ font-size: 14pt; }}
+        .final-content {{ font-size: 18pt; }}
+        .final-signature {{ font-size: 14pt; }}
     }}
     </style>
 </head>
 <body>
 
-<!-- ОБЛОЖКА ФЭНТЕЗИ -->
-<div class="fantasy-page cover-fantasy">
-    <h1 class="cover-title">{book_title}</h1>
-    <p class="cover-subtitle">Эпическая сага о великом герое</p>
+<!-- Cover Page -->
+<div class="book-page cover-page">
+    <div class="cover-content">
+        <h1 class="cover-title">{full_name.upper()}</h1>
+        <p class="cover-subtitle">Хроники героя</p>
+        <div class="cover-separator"></div>
+        <p class="cover-dedication">Эпическая сага о великом герое</p>
+    </div>
+</div>
+
+<!-- Table of Contents -->
+<div class="book-page toc-page">
+    <h2 class="toc-title">Содержание</h2>
+    <ul class="toc-list">
+        <li class="toc-item">
+            <a href="#chapter-prophecy" class="chapter-name">Глава 1 – Древнее пророчество</a>
+            <span class="leader"></span>
+            <a href="#chapter-prophecy" class="page-ref"></a>
+        </li>
+        <li class="toc-item">
+            <a href="#chapter-magical_realm" class="chapter-name">Глава 2 – Магическое королевство</a>
+            <span class="leader"></span>
+            <a href="#chapter-magical_realm" class="page-ref"></a>
+        </li>
+        <li class="toc-item">
+            <a href="#chapter-ancient_wisdom" class="chapter-name">Глава 3 – Древняя мудрость</a>
+            <span class="leader"></span>
+            <a href="#chapter-ancient_wisdom" class="page-ref"></a>
+        </li>
+        <li class="toc-item">
+            <a href="#chapter-magical_artifacts" class="chapter-name">Глава 4 – Магические артефакты</a>
+            <span class="leader"></span>
+            <a href="#chapter-magical_artifacts" class="page-ref"></a>
+        </li>
+        <li class="toc-item">
+            <a href="#chapter-elemental_power" class="chapter-name">Глава 5 – Власть над стихиями</a>
+            <span class="leader"></span>
+            <a href="#chapter-elemental_power" class="page-ref"></a>
+        </li>
+        <li class="toc-item">
+            <a href="#chapter-dragon_bond" class="chapter-name">Глава 6 – Союз с драконом</a>
+            <span class="leader"></span>
+            <a href="#chapter-dragon_bond" class="page-ref"></a>
+        </li>
+        <li class="toc-item">
+            <a href="#chapter-quest_calling" class="chapter-name">Глава 7 – Зов приключений</a>
+            <span class="leader"></span>
+            <a href="#chapter-quest_calling" class="page-ref"></a>
+        </li>
+        <li class="toc-item">
+            <a href="#chapter-legendary_deeds" class="chapter-name">Глава 8 – Легендарные подвиги</a>
+            <span class="leader"></span>
+            <a href="#chapter-legendary_deeds" class="page-ref"></a>
+        </li>
+    </ul>
+</div>
+
+<!-- Chapter Pages -->
+<div id="chapter-prophecy" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава 1</h3>
+    <h2 class="chapter-main-title">Древнее пророчество</h2>
     
-    <div class="cover-epigraph">
-        В древних свитках написано:<br>
-        "Придет герой, чье имя станет легендой,<br>
-        и деяния его переживут века..."<br><br>
-        <strong>Этот герой - {full_name}</strong>
+    {f"""
+    <div class="chapter-image-container">
+        <img src="{processed_images[0]}" alt="Photo for Chapter 1" class="chapter-image">
+        <p class="chapter-image-caption">🔮 Избранный судьбой 🔮</p>
     </div>
+    """ if processed_images else ""}
+
+    <div class="chapter-body">
+        {chapters.get('prophecy', 'Древние пророчества говорили о великом герое...')}
+    </div>
+</div>
+
+<div id="chapter-magical_realm" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава 2</h3>
+    <h2 class="chapter-main-title">Магическое королевство</h2>
     
-    <div style="margin-top: 3rem; font-size: 1.2rem;">
-        <strong>Летопись героя @{username}</strong><br>
-        <em>Написано магическими чернилами</em>
+    {f"""
+    <div class="chapter-image-container">
+        <img src="{processed_images[1]}" alt="Photo for Chapter 2" class="chapter-image">
+        <p class="chapter-image-caption">🏰 Правитель магических земель 🏰</p>
+    </div>
+    """ if len(processed_images) > 1 else ""}
+
+    <div class="chapter-body">
+        {chapters.get('magical_realm', 'Королевство магии раскинулось между мирами...')}
     </div>
 </div>
 
-<!-- ОГЛАВЛЕНИЕ -->
-<div class="fantasy-page">
-    <div class="toc-fantasy">
-        <h2 class="toc-title">⚔️ Содержание Хроник ⚔️</h2>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Древнее пророчество</span>
-            <span class="toc-page">III</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Магическое королевство</span>
-            <span class="toc-page">IV</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Древняя мудрость</span>
-            <span class="toc-page">V</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Магические артефакты</span>
-            <span class="toc-page">VI</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Власть над стихиями</span>
-            <span class="toc-page">VII</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Союз с драконом</span>
-            <span class="toc-page">VIII</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Зов приключений</span>
-            <span class="toc-page">IX</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Легендарные подвиги</span>
-            <span class="toc-page">X</span>
-        </div>
-        
-        <div class="toc-item">
-            <span class="toc-chapter">Вечное наследие</span>
-            <span class="toc-page">XI</span>
-        </div>
-    </div>
-</div>
-
-<!-- ГЛАВЫ ФЭНТЕЗИ -->
-<div class="fantasy-page">
-    <div class="chapter-header">
-        <div class="chapter-number">Глава I</div>
-        <h2 class="chapter-title">🔮 Древнее пророчество</h2>
-    </div>
-    <div class="fantasy-text">{chapters.get('prophecy', 'Древние пророчества говорят о великом герое...')}</div>
-    {f'<div class="fantasy-photo"><div class="photo-frame"><img src="{processed_images[0]}" alt="Герой пророчества"></div><div class="photo-caption">✨ Избранный судьбой ✨</div></div>' if processed_images else ''}
-</div>
-
-<div class="fantasy-page">
-    <div class="chapter-header">
-        <div class="chapter-number">Глава II</div>
-        <h2 class="chapter-title">🏰 Магическое королевство</h2>
-    </div>
-    <div class="fantasy-text">{chapters.get('magical_realm', 'Королевство магии раскинулось между мирами...')}</div>
-    {f'<div class="fantasy-photo"><div class="photo-frame"><img src="{processed_images[1]}" alt="Владыка королевства"></div><div class="photo-caption">👑 Правитель магических земель 👑</div></div>' if len(processed_images) > 1 else ''}
-</div>
-
-<div class="fantasy-page">
-    <div class="chapter-header">
-        <div class="chapter-number">Глава III</div>
-        <h2 class="chapter-title">📜 Древняя мудрость</h2>
-    </div>
-    <div class="fantasy-text">{chapters.get('ancient_wisdom', 'Мудрость веков живет в глазах героя...')}</div>
-    {f'<div class="fantasy-photo"><div class="photo-frame"><img src="{processed_images[2]}" alt="Хранитель мудрости"></div><div class="photo-caption">🧙‍♂️ Носитель древних знаний 🧙‍♂️</div></div>' if len(processed_images) > 2 else ''}
-</div>
-
-<div class="fantasy-page">
-    <div class="chapter-header">
-        <div class="chapter-number">Глава IV</div>
-        <h2 class="chapter-title">💎 Магические артефакты</h2>
-    </div>
-    <div class="fantasy-text">{chapters.get('magical_artifacts', 'Древние артефакты хранят силу веков...')}</div>
-    {f'<div class="fantasy-photo"><div class="photo-frame"><img src="{processed_images[3]}" alt="Собиратель артефактов"></div><div class="photo-caption">⚡ Повелитель древних сил ⚡</div></div>' if len(processed_images) > 3 else ''}
-</div>
-
-<div class="fantasy-page">
-    <div class="chapter-header">
-        <div class="chapter-number">Глава V</div>
-        <h2 class="chapter-title">🌪️ Власть над стихиями</h2>
-    </div>
-    <div class="fantasy-text">{chapters.get('elemental_power', 'Стихии повинуются воле героя...')}</div>
-    {f'<div class="fantasy-photo"><div class="photo-frame"><img src="{processed_images[4]}" alt="Повелитель стихий"></div><div class="photo-caption">🔥💧🌍💨 Владыка четырех стихий 🔥💧🌍💨</div></div>' if len(processed_images) > 4 else ''}
-</div>
-
-<div class="fantasy-page">
-    <div class="chapter-header">
-        <div class="chapter-number">Глава VI</div>
-        <h2 class="chapter-title">🐉 Союз с драконом</h2>
-    </div>
-    <div class="fantasy-text">{chapters.get('dragon_bond', 'Древний дракон признал в герое равного...')}</div>
-    {f'<div class="fantasy-photo"><div class="photo-frame"><img src="{processed_images[5]}" alt="Друг драконов"></div><div class="photo-caption">🐲 Союзник древних драконов 🐲</div></div>' if len(processed_images) > 5 else ''}
-</div>
-
-<div class="fantasy-page">
-    <div class="chapter-header">
-        <div class="chapter-number">Глава VII</div>
-        <h2 class="chapter-title">🗡️ Зов приключений</h2>
-    </div>
-    <div class="fantasy-text">{chapters.get('quest_calling', 'Судьба зовет героя в великий поход...')}</div>
-    {f'<div class="fantasy-photo"><div class="photo-frame"><img src="{processed_images[6]}" alt="Искатель приключений"></div><div class="photo-caption">⚔️ Странник судьбы ⚔️</div></div>' if len(processed_images) > 6 else ''}
-</div>
-
-<div class="fantasy-page">
-    <div class="chapter-header">
-        <div class="chapter-number">Глава VIII</div>
-        <h2 class="chapter-title">🏆 Легендарные подвиги</h2>
-    </div>
-    <div class="fantasy-text">{chapters.get('legendary_deeds', 'Барды слагают песни о подвигах героя...')}</div>
-    {f'<div class="fantasy-photo"><div class="photo-frame"><img src="{processed_images[7]}" alt="Легендарный герой"></div><div class="photo-caption">🎵 Герой легенд и баллад 🎵</div></div>' if len(processed_images) > 7 else ''}
-</div>
-
-<div class="fantasy-page">
-    <div class="chapter-header">
-        <div class="chapter-number">Глава IX</div>
-        <h2 class="chapter-title">👑 Вечное наследие</h2>
-    </div>
-    <div class="fantasy-text">{chapters.get('eternal_legacy', 'Имя героя навсегда вписано в историю...')}</div>
-    {f'<div class="fantasy-photo"><div class="photo-frame"><img src="{processed_images[8]}" alt="Бессмертный герой"></div><div class="photo-caption">⭐ Вечная слава и почитание ⭐</div></div>' if len(processed_images) > 8 else ''}
+<div id="chapter-ancient_wisdom" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава 3</h3>
+    <h2 class="chapter-main-title">Древняя мудрость</h2>
     
-    <div class="fantasy-finale">
-        <div style="font-size: 1.6rem; margin-bottom: 2rem;">
-            ⚔️ Конец первой книги хроник ⚔️
-        </div>
-        
-        <div class="fantasy-signature">
-            Летопись героя {full_name} будет продолжена...<br>
-            <em>Написано в Академии Магических Искусств</em>
-        </div>
-        
-        <div style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.8;">
-            Создано магией Mythic • "Каждый достоин стать героем легенд"
+    {f"""
+    <div class="chapter-image-container">
+        <img src="{processed_images[2]}" alt="Photo for Chapter 3" class="chapter-image">
+        <p class="chapter-image-caption">🧙‍♂️ Носитель древних знаний 🧙‍♂️</p>
+    </div>
+    """ if len(processed_images) > 2 else ""}
+
+    <div class="chapter-body">
+        {chapters.get('ancient_wisdom', 'Мудрость веков живет в глазах героя...')}
+    </div>
+</div>
+
+<div id="chapter-magical_artifacts" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава 4</h3>
+    <h2 class="chapter-main-title">Магические артефакты</h2>
+    
+    {f"""
+    <div class="chapter-image-container">
+        <img src="{processed_images[3]}" alt="Photo for Chapter 4" class="chapter-image">
+        <p class="chapter-image-caption">⚡ Повелитель древних сил ⚡</p>
+    </div>
+    """ if len(processed_images) > 3 else ""}
+
+    <div class="chapter-body">
+        {chapters.get('magical_artifacts', 'Древние артефакты хранят силу веков...')}
+    </div>
+</div>
+
+<div id="chapter-elemental_power" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава 5</h3>
+    <h2 class="chapter-main-title">Власть над стихиями</h2>
+    
+    {f"""
+    <div class="chapter-image-container">
+        <img src="{processed_images[4]}" alt="Photo for Chapter 5" class="chapter-image">
+        <p class="chapter-image-caption">🔥💧🌍💨 Владыка четырех стихий 🔥💧🌍💨</p>
+    </div>
+    """ if len(processed_images) > 4 else ""}
+
+    <div class="chapter-body">
+        {chapters.get('elemental_power', 'Стихии повинуются воле героя...')}
+    </div>
+</div>
+
+<div id="chapter-dragon_bond" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава 6</h3>
+    <h2 class="chapter-main-title">Союз с драконом</h2>
+    
+    {f"""
+    <div class="chapter-image-container">
+        <img src="{processed_images[5]}" alt="Photo for Chapter 6" class="chapter-image">
+        <p class="chapter-image-caption">🐲 Союзник древних драконов 🐲</p>
+    </div>
+    """ if len(processed_images) > 5 else ""}
+
+    <div class="chapter-body">
+        {chapters.get('dragon_bond', 'Древний дракон признал в герое равного...')}
+    </div>
+</div>
+
+<div id="chapter-quest_calling" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава 7</h3>
+    <h2 class="chapter-main-title">Зов приключений</h2>
+    
+    {f"""
+    <div class="chapter-image-container">
+        <img src="{processed_images[6]}" alt="Photo for Chapter 7" class="chapter-image">
+        <p class="chapter-image-caption">⚔️ Странник судьбы ⚔️</p>
+    </div>
+    """ if len(processed_images) > 6 else ""}
+
+    <div class="chapter-body">
+        {chapters.get('quest_calling', 'Судьба зовет героя в великий поход...')}
+    </div>
+</div>
+
+<div id="chapter-legendary_deeds" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава 8</h3>
+    <h2 class="chapter-main-title">Легендарные подвиги</h2>
+    
+    {f"""
+    <div class="chapter-image-container">
+        <img src="{processed_images[7]}" alt="Photo for Chapter 8" class="chapter-image">
+        <p class="chapter-image-caption">🎵 Герой легенд и баллад 🎵</p>
+    </div>
+    """ if len(processed_images) > 7 else ""}
+
+    <div class="chapter-body">
+        {chapters.get('legendary_deeds', 'Барды слагают песни о подвигах героя...')}
+    </div>
+</div>
+
+<!-- Final Page -->
+<div class="book-page final-page">
+    <div class="final-content">
+        <p>
+            Вот и завершилась первая книга хроник о <span class="fantasy-accent">{full_name}</span>.
+        </p>
+        <p style="margin-top: 1.5em;">
+            Великие хроники о {full_name} завершены, но эхо его деяний ещё долго будет звенеть в сердцах тех, кто услышал его зов.<br><br>
+            <em>"Даже когда солнце скрыто за бурей,<br>
+            даже когда тьма растекается по земле,<br>
+            помните — неважно, насколько труден путь,<br>
+            свет героя всегда найдёт дорогу."</em>
+        </p>
+        <div class="final-ornament">⚔️</div>
+        <p>
+            Легенда будет продолжена в новых главах! <span class="fantasy-emoji">🔮</span>
+        </p>
+        <div class="final-signature">
+            Создано магией Mythic<br>
+            <em>"Каждый достоин стать героем легенд"</em>
         </div>
     </div>
 </div>
