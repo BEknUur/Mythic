@@ -168,7 +168,7 @@ function enhancePageContent(htmlContent: string): string {
         font-weight: 700;
         text-align: center;
         letter-spacing: 1px;
-        margin-bottom: 1.5em;
+        margin-bottom: 0.4em;
         color: var(--heading-color);
         text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
       }
@@ -546,34 +546,37 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
         borderColor: 'rgba(200, 180, 140, 0.3)',
         backdropFilter: 'blur(10px)',
       }}>
-        <Button 
-          variant="ghost" 
-          onClick={onBack}
-          style={{ 
-            color: '#6b5b4a',
-            borderColor: 'rgba(180, 160, 130, 0.4)',
-          }}
-          className="hover:bg-orange-100/50"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> В библиотеку
-        </Button>
-        <h2 className="text-xl font-semibold" style={{ color: '#4a453f' }}>Ваша Книга</h2>
-        <Button 
-          onClick={handleDownloadPdf} 
-          disabled={!runId && !bookId}
-          style={{ 
-            color: '#6b5b4a',
-            borderColor: 'rgba(180, 160, 130, 0.4)',
-          }}
-          className="hover:bg-orange-100/50"
-        >
-          <Download className="mr-2 h-4 w-4" /> Скачать PDF
-        </Button>
+        <div style={{ minWidth: 0 }}>
+          <Button 
+            variant="ghost" 
+            onClick={onBack}
+            style={{ 
+              color: '#6b5b4a',
+              borderColor: 'rgba(180, 160, 130, 0.4)',
+            }}
+            className="hover:bg-orange-100/50"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> В библиотеку
+          </Button>
+        </div>
+        <div className="flex-1 text-center">
+          <h2 className="text-xl font-semibold" style={{ color: '#4a453f', margin: 0 }}>Ваша Книга</h2>
+        </div>
+        <div style={{ minWidth: 0 }} />
       </header>
       
       {!loading && pages.length > 0 && (
-        <div className="flex-1 overflow-auto flex items-center justify-center p-6 relative z-10">
-          <FlipBook key={runId || bookId} pages={pageComponents} />
+        <div className="flex-1 flex items-center justify-center p-6 relative z-10" style={{
+          // Убираем лишние паддинги/маргины, только центрируем
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '2rem 0', // равные отступы сверху и снизу
+          margin: 0,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+            <FlipBook key={runId || bookId} pages={pageComponents} />
+          </div>
         </div>
       )}
 

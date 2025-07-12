@@ -219,14 +219,16 @@ export function BookReadyDialog({
                   <div className="text-xs opacity-80">Полноэкранный режим</div>
                 </div>
               </Button>
-              
-              <Button onClick={downloadBook} variant="outline" size="lg" className="h-16">
-                <Download className="h-5 w-5 mr-2" />
-                <div className="text-left">
-                  <div className="font-semibold">Скачать PDF</div>
-                  <div className="text-xs opacity-80">Сохранить на устройство</div>
-                </div>
-              </Button>
+              {/* PDF download button removed for flipbook */}
+              {status?.format !== 'flipbook' && (
+                <Button onClick={downloadBook} variant="outline" size="lg" className="h-16">
+                  <Download className="h-5 w-5 mr-2" />
+                  <div className="text-left">
+                    <div className="font-semibold">Скачать PDF</div>
+                    <div className="text-xs opacity-80">Сохранить на устройство</div>
+                  </div>
+                </Button>
+              )}
 
               {hasHtmlFile && (
                 <Button onClick={() => setIsEditing(true)} variant="secondary" size="lg" className="h-16">
