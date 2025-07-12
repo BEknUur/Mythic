@@ -10,7 +10,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Use Google Fonts with a valid family request -->
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@400;600;700&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Fallback: Bunny Fonts (privacy-friendly, unblocked in many regions) -->
+  <link href="https://fonts.bunny.net/css?family=lora:400,700,400i|cormorant-garamond:400,600,700|cinzel:400,600,700" rel="stylesheet" media="all" onerror="this.media='all'">
 
   <style>
     /* === ОСНОВА "КИБЕР-МАГИЯ" === */
@@ -405,8 +408,8 @@
       <div class="page cover-page">
         <div class="page-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
           <div class="cover-ornament">⚜</div>
-          <h1 class="book-title">Ваша<br>История</h1>
-          <p class="book-subtitle">Создано с любовью</p>
+          <h1 class="book-title">{{ book_title }}</h1>
+          <p class="book-subtitle">{{ book_subtitle }}</p>
         </div>
       </div>
       
@@ -416,21 +419,21 @@
       <!-- 2. Титульный лист -->
       <div class="page title-page">
         <div class="page-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-          <h1 style="font-size: 3.5em; margin-bottom: 1em;">Романтическая<br>История</h1>
+          <h1 style="font-size: 3.5em; margin-bottom: 1em;">{{ book_title }}</h1>
           <p style="font-family: var(--font-ornamental); font-size: 1.5em; border-top: 1px solid var(--meta-text-color); border-bottom: 1px solid var(--meta-text-color); padding: 1em 0;">
             "В каждом моменте есть своя магия,<br>
             стоит лишь научиться её замечать"
           </p>
-          <p style="font-size: 1.2em; margin-top: 3em;">Создано с любовью и восхищением</p>
+          <p style="font-size: 1.2em; margin-top: 3em;">{{ book_subtitle }}</p>
         </div>
         <div class="page-number left">1</div>
-        <div class="running-header left">Романтическая История</div>
+        <div class="running-header left">{{ book_title }}</div>
       </div>
 
       <!-- 3. Оглавление -->
       <div class="page toc-page">
         <div class="toc-content">
-          <h2>Содержание</h2>
+          <h2>{{ toc_title }}</h2>
           {% for page in pages %}
           <div class="toc-item">
             <span class="chapter-title">Глава {{ loop.index }}: {{ page.title | striptags | trim | truncate(30) }}</span>
@@ -444,20 +447,20 @@
             <span class="page-num">{{ (pages|length * 2) + 4 }}</span>
           </div>
           <div class="toc-item">
-            <span class="chapter-title">Благодарности</span>
+            <span class="chapter-title">{{ gratitude_title }}</span>
              <span class="leader"></span>
             <span class="page-num">{{ (pages|length * 2) + 5 }}</span>
           </div>
         </div>
         <div class="page-number right">2</div>
-        <div class="running-header right">Содержание</div>
+        <div class="running-header right">{{ toc_title }}</div>
       </div>
 
       <!-- 4. Введение -->
       <div class="page">
         <div class="page-content two-column">
           <span class="section-icon intro-icon"></span>
-          <h2>Введение</h2>
+          <h2>{{ intro_title }}</h2>
           <hr class="chapter-separator">
           <div class="drop-cap">
             <p>Каждая история начинается с одного момента, одного взгляда, одного слова. Эта книга — собрание таких моментов, каждый из которых стал частью большего повествования о любви, дружбе и жизни.</p>
@@ -472,7 +475,7 @@
           <p>Позвольте себе погрузиться в эту историю, прочувствовать каждый момент и, возможно, найти что-то знакомое в этих строках — что-то, что отзовётся в вашем собственном сердце.</p>
         </div>
         <div class="page-number left">3</div>
-        <div class="running-header left">Введение</div>
+        <div class="running-header left">{{ intro_title }}</div>
       </div>
 
       <!-- 5. Развороты: Текст слева, Картинка справа -->
@@ -572,12 +575,12 @@
       <!-- 7. Благодарности -->
       <div class="page" style="background: var(--page-bg);">
         <div class="page-content" style="text-align: center;">
-          <h2 style="font-family: var(--font-ornamental); font-size: 3em;">Благодарности</h2>
+          <h2 style="font-family: var(--font-ornamental); font-size: 3em;">{{ gratitude_title }}</h2>
           <p style="margin-top: 2em;">Всем, кто был частью этой истории.</p>
-          <p style="margin-top: 5em; font-size: 0.9em; color: var(--meta-text-color);">© 2024 | Создано с любовью</p>
+          <p style="margin-top: 5em; font-size: 0.9em; color: var(--meta-text-color);">© 2024 | {{ book_subtitle }}</p>
         </div>
         <div class="page-number right">{{ (pages|length * 2) + 5 }}</div>
-        <div class="running-header right">Благодарности</div>
+        <div class="running-header right">{{ gratitude_title }}</div>
       </div>
     </div>
   </div>

@@ -159,21 +159,48 @@ async def generate_flipbook_data(run_id: str, image_paths: list[str]) -> dict:
     return {"pages": pages_content, "prologue": ""}
 
 
-def build_flipbook_html(run_id: str, data: dict):
+def build_flipbook_html(run_id: str, data: dict, style: str = 'romantic'):
     """
     Рендерит HTML-флипбук на основе готовых данных (пролог и страницы).
+    Теперь поддерживает динамические заголовки и подзаголовки по стилю книги.
     """
     if not data or "pages" not in data:
         print("️️⚠️ Нет данных для сборки HTML флипбука.")
         return
 
+    # Динамические заголовки по стилю
+    if style == 'fantasy':
+        book_title = "Хроники Героя"
+        book_subtitle = "Создано магией и вдохновением"
+        toc_title = "Путеводитель"
+        intro_title = "Вступление"
+        gratitude_title = "Благодарности"
+    elif style == 'humor':
+        book_title = "Весёлая История"
+        book_subtitle = "Создано с улыбкой"
+        toc_title = "Оглавление"
+        intro_title = "Вступление"
+        gratitude_title = "Благодарности"
+    else:
+        book_title = "Романтическая История"
+        book_subtitle = "Создано с любовью"
+        toc_title = "Содержание"
+        intro_title = "Введение"
+        gratitude_title = "Благодарности"
+
     tpl = env.get_template('flipbook_template.html')
     
     # Прокидываем данные в шаблон
     html = tpl.render(
-        run_id=run_id, # run_id больше не нужен для картинок, но может использоваться где-то еще
+        run_id=run_id,
         prologue=data.get("prologue", ""),
-        pages=data.get("pages", [])
+        pages=data.get("pages", []),
+        book_title=book_title,
+        book_subtitle=book_subtitle,
+        toc_title=toc_title,
+        intro_title=intro_title,
+        gratitude_title=gratitude_title,
+        style=style
     )
     
     out = Path('data') / run_id / 'book.html'

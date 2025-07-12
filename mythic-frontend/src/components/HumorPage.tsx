@@ -8,132 +8,133 @@ interface HumorPageProps {
   number: number;
 }
 
+function splitCamelCase(str: string) {
+  return str.replace(/([а-яё])([А-ЯЁ])/g, '$1 $2');
+}
+
 export const HumorPage = React.forwardRef<HTMLDivElement, HumorPageProps>(
   ({ title, text, image, caption, number }, ref) => {
+    // Подключаем Comic Sans (один раз на страницу)
+    React.useEffect(() => {
+      const comicSans = document.createElement('link');
+      comicSans.rel = 'stylesheet';
+      comicSans.href = 'https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap';
+      document.head.appendChild(comicSans);
+      return () => {
+        document.head.removeChild(comicSans);
+      };
+    }, []);
+
     return (
       <div
         ref={ref}
         className="w-full h-full relative overflow-hidden select-none humor-page"
         style={{
-          background: 'linear-gradient(135deg, #fff5e6 0%, #ffe8cc 30%, #ffdab9 100%)',
+          background: 'linear-gradient(135deg, #fffbe6 0%, #ffe8cc 30%, #fffacd 100%)',
           border: '2px solid #ffb347',
-          boxShadow: `
-            0 8px 32px rgba(255, 179, 71, 0.3),
-            0 16px 64px rgba(255, 165, 0, 0.2),
-            inset 0 2px 0 rgba(255, 255, 255, 0.8)
-          `,
-          borderRadius: '12px',
-          fontFamily: "'Comic Sans MS', 'Chalkboard SE', cursive",
+          boxShadow: `0 4px 20px rgba(255, 179, 71, 0.18), 0 8px 40px rgba(255, 165, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8)`,
+          borderRadius: '16px',
           color: '#8b4513',
-          textShadow: '0 2px 4px rgba(255, 255, 255, 0.9)',
+          textShadow: '0 1px 2px rgba(255, 255, 255, 0.9)',
         }}
       >
-        {/* Анимированная рамка с эмодзи */}
-        <div 
-          className="absolute inset-0 rounded-lg pointer-events-none emoji-border"
-          style={{
-            background: 'linear-gradient(45deg, rgba(255, 182, 193, 0.4), rgba(255, 218, 185, 0.3), rgba(255, 160, 122, 0.4))',
-            backgroundSize: '300% 300%',
-            opacity: 0.8,
-            zIndex: -1,
-          }}
-        />
-        
-        {/* Внутреннее свечение */}
-        <div 
-          className="absolute pointer-events-none z-10 inner-glow rounded-lg"
-          style={{
-            top: '10px',
-            left: '10px', 
-            right: '10px',
-            bottom: '10px',
-            border: '2px solid rgba(255, 182, 193, 0.6)',
-            boxShadow: `
-              0 0 12px rgba(255, 182, 193, 0.4) inset,
-              0 0 20px rgba(255, 160, 122, 0.3)
-            `,
-            borderRadius: '8px',
-          }}
-        />
-        
-        {/* Контент */}
-        <div 
-          className="relative z-20 w-full h-full humor-content p-6"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            height: '100%',
-          }}
+        {/* Декоративные эмодзи в углах */}
+        <div style={{position: 'absolute', top: 18, left: 24, fontSize: 36, opacity: 0.18, pointerEvents: 'none'}}>😂</div>
+        <div style={{position: 'absolute', top: 18, right: 24, fontSize: 36, opacity: 0.18, pointerEvents: 'none'}}>🎭</div>
+        <div style={{position: 'absolute', bottom: 18, left: 24, fontSize: 36, opacity: 0.18, pointerEvents: 'none'}}>🎨</div>
+        <div style={{position: 'absolute', bottom: 18, right: 24, fontSize: 36, opacity: 0.18, pointerEvents: 'none'}}>📚</div>
+        {/* Декоративная линия */}
+        <div style={{width: '100%', textAlign: 'center', marginTop: 8, marginBottom: 8}}>
+          <span style={{fontSize: 32, color: '#ffb347', fontFamily: 'Comic Neue, Comic Sans MS, cursive'}}>✦</span>
+        </div>
+        <div
+          className="flex flex-col items-center h-full w-full p-8 overflow-y-auto"
+          style={{ boxSizing: 'border-box', paddingBottom: 56 }}
         >
-          {/* Заголовок с эмодзи */}
-          {title && (
-            <div className="text-center mb-4">
-              <h2 
-                className="text-3xl font-bold mb-2"
-                style={{
-                  color: '#ff6347',
-                  textShadow: '2px 2px 4px rgba(255, 255, 255, 0.8)',
-                  fontSize: '2.2em',
-                  fontWeight: 'bold',
-                }}
-              >
-                {title} 😄
-              </h2>
-            </div>
-          )}
-          
-          {/* Изображение с подписью */}
           {image && (
-            <div className="flex-1 flex flex-col justify-center items-center mb-4">
-              <div className="relative">
-                <img 
-                  src={image} 
-                  alt=""
-                  className="max-w-full max-h-60 object-cover rounded-lg"
-                  style={{
-                    border: '3px solid #ffb347',
-                    boxShadow: '0 8px 25px rgba(255, 179, 71, 0.4)',
-                    borderRadius: '12px',
-                  }}
-                />
-                {/* Эмодзи-декорации вокруг изображения */}
-                <div className="absolute -top-2 -left-2 text-2xl">🎭</div>
-                <div className="absolute -top-2 -right-2 text-2xl">🎪</div>
-                <div className="absolute -bottom-2 -left-2 text-2xl">🎨</div>
-                <div className="absolute -bottom-2 -right-2 text-2xl">🎯</div>
-              </div>
-              {caption && (
-                <p 
-                  className="text-center mt-3 text-lg italic"
-                  style={{ color: '#ff6347' }}
-                >
-                  {caption} 😂
-                </p>
-              )}
+            <div className="mb-4 w-full flex justify-center">
+              <img
+                src={image}
+                alt=""
+                className="max-w-full"
+                style={{
+                  maxHeight: 260,
+                  width: 'auto',
+                  objectFit: 'contain',
+                  borderRadius: 20,
+                  boxShadow: '0 4px 24px rgba(255,179,71,0.18)',
+                  background: '#fff',
+                  border: '2.5px solid #ffb347',
+                }}
+              />
             </div>
           )}
-          
-          {/* Текст */}
-          {text && (
-            <div 
-              className="flex-1 overflow-y-auto"
+          {caption && (
+            <div
+              className="text-center mb-4"
               style={{
-                fontSize: '1.1em',
-                lineHeight: '1.6',
+                fontFamily: 'Comic Neue, Comic Sans MS, cursive',
+                fontSize: 24,
+                color: '#ff6347',
+                fontStyle: 'italic',
+                letterSpacing: '0.5px',
+              }}
+            >
+              {caption} 😂
+            </div>
+          )}
+          {title && (
+            <h2
+              className="text-4xl font-bold text-center mb-2"
+              style={{
+                color: '#ff6347',
+                fontFamily: 'Comic Neue, Comic Sans MS, cursive',
+                fontSize: 40,
+                fontWeight: 700,
+                letterSpacing: '1.5px',
+                lineHeight: 1.1,
+                marginTop: 8,
+                marginBottom: 12,
+                textShadow: '0 2px 8px #fff6fb',
+              }}
+            >
+              {title ? splitCamelCase(title) : null}
+            </h2>
+          )}
+          {/* Декоративный элемент под заголовком */}
+          {title && (
+            <div style={{fontSize: 32, color: '#ffb347', fontFamily: 'Comic Neue, Comic Sans MS, cursive', marginBottom: 8}}>✨</div>
+          )}
+          {text && (
+            <div
+              className="text-center"
+              style={{
                 color: '#8b4513',
+                fontFamily: 'Comic Neue, Comic Sans MS, cursive',
+                fontSize: 22,
+                marginBottom: 36,
+                wordBreak: 'break-word',
+                lineHeight: 1.7,
+                textShadow: '0 1px 6px #fff6fb',
               }}
               dangerouslySetInnerHTML={{ __html: text }}
             />
           )}
-          
-          {/* Номер страницы с эмодзи */}
-          <div 
-            className="absolute bottom-4 right-4 text-lg font-bold"
-            style={{ color: '#ff6347' }}
-          >
-            {number} 📖
-          </div>
+        </div>
+        {/* Декоративная линия снизу */}
+        <div style={{width: '100%', textAlign: 'center', marginBottom: 8}}>
+          <span style={{fontSize: 32, color: '#ffb347', fontFamily: 'Comic Neue, Comic Sans MS, cursive'}}>✦</span>
+        </div>
+        <div
+          className="absolute bottom-4 right-4 text-lg font-bold"
+          style={{
+            color: '#ff6347',
+            fontFamily: 'Comic Neue, Comic Sans MS, cursive',
+            fontSize: 24,
+            textShadow: '0 1px 6px #fff6fb',
+          }}
+        >
+          {number} 😂
         </div>
       </div>
     );
