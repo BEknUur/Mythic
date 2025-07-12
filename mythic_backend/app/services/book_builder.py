@@ -4,12 +4,14 @@ from io import BytesIO
 from pathlib import Path
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageFont
 from app.services.llm_client import strip_cliches, analyze_photo_for_memoir, generate_memoir_chapter
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import random
 import time
 import re
 import asyncio
 from fpdf import FPDF
+from pydantic import BaseModel
+import concurrent.futures
 
 try:
     import numpy as np
@@ -17,6 +19,177 @@ try:
 except ImportError:
     NUMPY_AVAILABLE = False
     print("⚠️ NumPy не установлен, некоторые эффекты будут недоступны")
+
+# Pydantic модели для фэнтези-книги
+class FantasyChapter(BaseModel):
+    key: str
+    title: str
+    text: str
+
+class FantasyBook(BaseModel):
+    title: str
+    chapters: List[FantasyChapter]
+    final_message: str
+
+# Асинхронная функция-агент для быстрой генерации фэнтези-книги
+async def generate_fantasy_book_agent(chapter_configs: List[dict], context_data: dict, quick_fallbacks: dict) -> FantasyBook:
+    """Асинхронно генерирует все главы фэнтези-книги параллельно"""
+    
+    async def generate_chapter_async(config: dict, fallback: str) -> FantasyChapter:
+        """Генерирует одну главу асинхронно с таймаутом"""
+        try:
+            # Таймаут 20 секунд на главу
+            chapter_text = await asyncio.wait_for(
+                async_generate_memoir_chapter("fantasy_chapter", {
+                    'prompt': config['prompt'],
+                    'context': context_data,
+                    'style': 'epic_fantasy'
+                }),
+                timeout=20.0
+            )
+            
+            # Проверяем качество результата
+            if not chapter_text or len(chapter_text.strip()) < 100:
+                print(f"⚡ Короткий ответ для '{config['title']}', использую fallback")
+                chapter_text = fallback
+            else:
+                chapter_text = strip_cliches(chapter_text)
+                chapter_text = format_chapter_text(chapter_text)
+            
+            return FantasyChapter(
+                key=config['key'],
+                title=config['title'],
+                text=chapter_text
+            )
+            
+        except asyncio.TimeoutError:
+            print(f"⏰ Таймаут для главы '{config['title']}', использую fallback")
+            return FantasyChapter(
+                key=config['key'],
+                title=config['title'],
+                text=fallback
+            )
+        except Exception as e:
+            print(f"💔 Ошибка генерации главы '{config['title']}': {e}")
+            return FantasyChapter(
+                key=config['key'],
+                title=config['title'],
+                text=fallback
+            )
+    
+    # Генерируем все главы параллельно
+    print("🚀 Запускаю параллельную генерацию всех глав...")
+    start_time = time.time()
+    
+    tasks = [
+        generate_chapter_async(config, quick_fallbacks.get(config['key'], f"Глава о {config['title'].lower()} полна магии и древних тайн."))
+        for config in chapter_configs
+    ]
+    
+    chapters = await asyncio.gather(*tasks)
+    
+    # Генерируем финальное послание
+    final_message = "Пусть твоя сага будет вечной, а имя — вписано в Книгу Героев!"
+    try:
+        final_prompt = f"Напиши короткое финальное послание для фэнтези-книги о {context_data.get('full_name', 'герое')}."
+        
+        final_message = await asyncio.wait_for(
+            async_generate_memoir_chapter("final_message", {
+                'prompt': final_prompt,
+                'context': context_data,
+                'style': 'epic_fantasy'
+            }),
+            timeout=10.0
+        )
+        
+        if not final_message or len(final_message.strip()) < 10:
+            final_message = "Пусть твоя сага будет вечной, а имя — вписано в Книгу Героев!"
+            
+    except Exception as e:
+        print(f"💔 Ошибка генерации финального послания: {e}")
+        final_message = "Пусть твоя сага будет вечной, а имя — вписано в Книгу Героев!"
+    
+    # Генерируем название книги
+    full_name = context_data.get('full_name', 'героя')
+    book_titles = [
+        f"Хроники {full_name}",
+        f"Летопись великого героя {full_name}",
+        f"Сага о {full_name}",
+        f"Песнь магии и судьбы {full_name}",
+        f"Завет древних для {full_name}"
+    ]
+    book_title = random.choice(book_titles)
+    
+    total_time = time.time() - start_time
+    print(f"⏱️ Все главы сгенерированы за {total_time:.1f} секунд")
+    
+    return FantasyBook(
+        title=book_title,
+        chapters=chapters,
+        final_message=final_message
+    )
+
+# Синхронная обертка для запуска асинхронного агента
+def run_fantasy_book_agent_sync(chapter_configs: List[dict], context_data: dict, quick_fallbacks: dict) -> FantasyBook:
+    """Синхронная обертка для запуска асинхронного агента"""
+    try:
+        # Проверяем, есть ли уже запущенный event loop
+        try:
+            loop = asyncio.get_running_loop()
+            # Если loop уже запущен, создаем новую задачу
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, generate_fantasy_book_agent(chapter_configs, context_data, quick_fallbacks))
+                return future.result()
+        except RuntimeError:
+            # Если нет запущенного loop, используем asyncio.run
+            return asyncio.run(generate_fantasy_book_agent(chapter_configs, context_data, quick_fallbacks))
+    except Exception as e:
+        print(f"❌ Ошибка запуска агента: {e}")
+        # Возвращаем fallback книгу
+        chapters = [
+            FantasyChapter(
+                key=config['key'],
+                title=config['title'],
+                text=quick_fallbacks.get(config['key'], f"Глава о {config['title'].lower()} полна магии и древних тайн.")
+            )
+            for config in chapter_configs
+        ]
+        return FantasyBook(
+            title=f"Хроники {context_data.get('full_name', 'героя')}",
+            chapters=chapters,
+            final_message="Пусть твоя сага будет вечной, а имя — вписано в Книгу Героев!"
+        )
+
+# Асинхронная версия generate_memoir_chapter
+async def async_generate_memoir_chapter(chapter_type: str, params: dict) -> str:
+    """Асинхронная версия generate_memoir_chapter"""
+    try:
+        from app.services.llm_client import async_client, settings
+        
+        prompt = params.get('prompt', '')
+        context = params.get('context', {})
+        style = params.get('style', 'epic_fantasy')
+        
+        # Формируем сообщение для LLM (сокращенное)
+        system_message = f"Ты — мастер эпического фэнтези. Создавай тексты в стиле {style}."
+        user_message = f"{prompt}"
+        
+        response = await async_client.chat.completions.create(
+            model=settings.AZURE_OPENAI_GPT4_DEPLOYMENT,
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message}
+            ],
+            temperature=0.7,
+            max_tokens=800  # Минимальный лимит токенов
+        )
+        
+        result = response.choices[0].message.content.strip()
+        return result if result else ""
+        
+    except Exception as e:
+        print(f"❌ Ошибка async_generate_memoir_chapter: {e}")
+        return ""
 
 def analyze_profile_data(posts_data: list) -> dict:
     if not posts_data:
@@ -1952,4 +2125,544 @@ async def generate_text_pages(run_id: str, style: str,
 
 
 # --- КОНЕЦ НОВОГО КОДА ---
+
+def build_fantasy_book(run_id: str, images: list[Path], texts: str, book_format: str = "classic", user_id: str = None):
+    """Создание HTML фэнтези-книги"""
+    try:
+        run_dir = Path("data") / run_id
+        posts_json = run_dir / "posts.json"
+        images_dir = run_dir / "images"
+
+        if posts_json.exists():
+            posts_data = json.loads(posts_json.read_text(encoding="utf-8"))
+        else:
+            posts_data = []
+
+        analysis = analyze_profile_data(posts_data)
+        username = analysis.get("username", "...")
+
+        actual_images = []
+        if images_dir.exists():
+            for img_file in sorted(images_dir.glob("*")):
+                if img_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp']:
+                    actual_images.append(img_file)
+
+        # Фэнтези-сообщения о процессе анализа
+        fantasy_analysis_messages = [
+            f"Взираю в магический кристалл @{username}... Судьба героя начинает свой путь",
+            f"Читаю руны древних постов... В каждом скрыта искра приключения",
+            f"Изучаю ауру твоих снимков — в них таится сила и тайна",
+            f"Вижу отблеск легенды в каждом кадре... История оживает",
+            f"Собираю осколки эпоса из твоих мгновений — начинается хроника судьбы"
+        ]
+        fantasy_photo_messages = [
+            f"Архивирую {len(actual_images)} артефактов для великой летописи...",
+            f"Каждое из {len(actual_images)} изображений — страница древнего манускрипта",
+            f"Собрал {len(actual_images)} магических порталов — хроника будет полной",
+            f"{len(actual_images)} фрагментов судьбы героя сохранены в свитке времени",
+            f"Запечатываю {len(actual_images)} мгновений в книге судеб"
+        ]
+        print(random.choice(fantasy_analysis_messages))
+        print(random.choice(fantasy_photo_messages))
+
+        # Генерируем контент в зависимости от формата
+        content = {"format": "fantasy"}
+        html = create_fantasy_instagram_book_html(content, analysis, actual_images)
+
+        out = Path("data") / run_id
+        out.mkdir(parents=True, exist_ok=True)
+
+        html_file = out / "book.html"
+        html_file.write_text(html, encoding="utf-8")
+
+        # Генерируем PDF версию
+        try:
+            pdf_file = out / "book.pdf"
+            create_pdf_with_weasyprint(pdf_file, html)
+            print(f"📄 Фэнтези PDF версия создана: {pdf_file}")
+        except Exception as pdf_error:
+            print(f"❌ Ошибка создания PDF: {pdf_error}")
+
+        # Автоматическое сохранение в библиотеку пользователя
+        if user_id:
+            try:
+                import uuid
+                import datetime
+                import shutil
+                profile_username = analysis.get("username")
+                profile_full_name = analysis.get("full_name")
+                book_id = str(uuid.uuid4())
+                title = f"Летопись для {profile_full_name or profile_username or 'Неизвестный'}"
+                def get_user_books_db_path_local(user_id: str) -> Path:
+                    user_books_dir = Path("data") / "user_books"
+                    user_books_dir.mkdir(parents=True, exist_ok=True)
+                    return user_books_dir / f"{user_id}.json"
+                def load_user_books_local(user_id: str) -> list[dict]:
+                    books_file = get_user_books_db_path_local(user_id)
+                    if not books_file.exists():
+                        return []
+                    try:
+                        return json.loads(books_file.read_text(encoding="utf-8"))
+                    except:
+                        return []
+                def save_user_books_local(user_id: str, books: list[dict]):
+                    books_file = get_user_books_db_path_local(user_id)
+                    books_file.write_text(json.dumps(books, ensure_ascii=False, indent=2), encoding="utf-8")
+                def copy_book_to_user_library_local(run_id: str, user_id: str, book_id: str) -> bool:
+                    try:
+                        source_dir = Path("data") / run_id
+                        user_library_dir = Path("data") / "user_books" / user_id / book_id
+                        user_library_dir.mkdir(parents=True, exist_ok=True)
+                        for file in ["book.html", "book.pdf", "posts.json"]:
+                            source_file = source_dir / file
+                            if source_file.exists():
+                                shutil.copy2(source_file, user_library_dir / file)
+                        source_images = source_dir / "images"
+                        if source_images.exists():
+                            target_images = user_library_dir / "images"
+                            if target_images.exists():
+                                shutil.rmtree(target_images)
+                            shutil.copytree(source_images, target_images)
+                        return True
+                    except Exception as e:
+                        print(f"Ошибка копирования книги {run_id} для пользователя {user_id}: {e}")
+                        return False
+                books = load_user_books_local(user_id)
+                already_saved = False
+                for book in books:
+                    if book["run_id"] == run_id:
+                        already_saved = True
+                        break
+                if not already_saved:
+                    if copy_book_to_user_library_local(run_id, user_id, book_id):
+                        new_book = {
+                            "id": book_id,
+                            "run_id": run_id,
+                            "title": title,
+                            "created_at": datetime.datetime.now().isoformat(),
+                            "profile_username": profile_username,
+                            "profile_full_name": profile_full_name,
+                            "has_pdf": pdf_file.exists(),
+                            "has_html": html_file.exists()
+                        }
+                        books.append(new_book)
+                        save_user_books_local(user_id, books)
+                        print(f"📚 Книга автоматически сохранена в библиотеку пользователя {user_id}")
+                    else:
+                        print("❌ Ошибка автоматического сохранения книги в библиотеку")
+                else:
+                    print("📚 Книга уже была сохранена в библиотеке пользователя")
+            except Exception as save_error:
+                print(f"❌ Ошибка автоматического сохранения: {save_error}")
+        final_messages = [
+            f"Судьба свершилась! Фэнтези-книга о @{username} готова к прочтению: {html_file}",
+            f"Ваша персональная летопись создана! @{username}, вы теперь — герой саги: {html_file}",
+            f"Хроника приключений @{username} завершена! Каждая страница наполнена магией: {html_file}",
+            f"Книга-эпос @{username} готова! В ней живёт дух древних легенд: {html_file}"
+        ]
+        print(random.choice(final_messages))
+    except Exception as e:
+        print(f"Ошибка при создании фэнтези-книги о @{username}: {e}")
+        try:
+            basic_html = f"""
+            <html>
+            <head>
+                <title>Фэнтези-книга</title>
+                <style>
+                    body {{ background: #f5f3e7; font-family: serif; padding: 20px; }}
+                    .error {{ background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; }}
+                </style>
+            </head>
+            <body>
+                <div class="error">
+                    <h1>Фэнтези-книга</h1>
+                    <p>Извините, произошла ошибка при создании книги: {e}</p>
+                    <p>Попробуйте еще раз позже</p>
+                </div>
+            </body>
+            </html>
+            """
+            html_file = Path("data") / run_id / "book.html"
+            html_file.write_text(basic_html, encoding="utf-8")
+        except Exception as final_error:
+            print(f"Критическая ошибка: {final_error}")
+
+def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: list[Path]) -> str:
+    """Создает HTML фэнтези-книгу в стиле возвышенной личной фантастики, как в примере пользователя."""
+    import random, time
+    from app.services.llm_client import strip_cliches
+    full_name = analysis.get('full_name', analysis.get('username', 'герой древних хроник'))
+    username = analysis.get('username', 'hero')
+    followers = analysis.get('followers', 0)
+    posts_count = analysis.get('posts_count', 0)
+    bio = analysis.get('bio', '')
+    post_details = analysis.get('post_details', []) if 'post_details' in analysis else []
+    real_captions = [p.get('caption', '') for p in post_details[:5] if p.get('caption')]
+    locations = [p.get('location', '') for p in post_details[:3] if p.get('location')]
+    processed_images = []
+    selected_photo_data = []
+    detected_gender = "unknown"
+    if images:
+        total_images = len(images)
+        if total_images >= 10:
+            selected_indices = random.sample(range(total_images), 10)
+            selected_indices.sort()
+        elif total_images >= 5:
+            selected_indices = list(range(total_images))
+            while len(selected_indices) < 10:
+                random_idx = random.randint(0, total_images - 1)
+                selected_indices.append(random_idx)
+        else:
+            selected_indices = []
+            for _ in range(10):
+                random_idx = random.randint(0, total_images - 1)
+                selected_indices.append(random_idx)
+        for i, idx in enumerate(selected_indices):
+            img_path = images[idx]
+            if img_path.exists():
+                try:
+                    from PIL import Image, ImageEnhance
+                    from io import BytesIO
+                    import base64
+                    with Image.open(img_path) as img:
+                        if img.mode != 'RGB':
+                            img = img.convert('RGB')
+                        max_size = (700, 500)
+                        img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                        enhancer = ImageEnhance.Contrast(img)
+                        img = enhancer.enhance(1.05)
+                        enhancer = ImageEnhance.Color(img)
+                        img = enhancer.enhance(1.1)
+                        buffer = BytesIO()
+                        img.save(buffer, format='JPEG', quality=90)
+                        img_str = base64.b64encode(buffer.getvalue()).decode()
+                        processed_images.append(f"data:image/jpeg;base64,{img_str}")
+                        fallback_descriptions = [
+                            "Взгляд, в котором отражается древняя магия",
+                            "Аура героя, сияющая сквозь века",
+                            "Сила стихий в каждом движении",
+                            "Тайна, скрытая за улыбкой",
+                            "Мудрость древних в глазах",
+                            "Союзник драконов и духов",
+                            "Печать судьбы на челе героя",
+                            "Свет, что ведёт сквозь тьму",
+                            "Тёплый кристалл мыслей",
+                            "Завет света в каждом взгляде"
+                        ]
+                        selected_photo_data.append({
+                            'index': idx + 1,
+                            'analysis': fallback_descriptions[i % len(fallback_descriptions)],
+                            'image': f"data:image/jpeg;base64,{img_str}"
+                        })
+                except Exception as e:
+                    print(f"❌ Ошибка обработки изображения {img_path}: {e}")
+    def get_safe_photo_analysis(index: int, fallback_text: str) -> str:
+        if not selected_photo_data:
+            return fallback_text
+        safe_index = index % len(selected_photo_data)
+        return selected_photo_data[safe_index]['analysis']
+    context_data = {
+        'full_name': full_name,
+        'username': username
+    }
+    # Темы глав и стиль — как в примере пользователя
+    chapter_configs = [
+        {'key': 'destiny_bell', 'title': 'Звон Судьбы', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Звон Судьбы' о человеке по имени {full_name}. Стиль — возвышенная фантастика про личность, как будто ты пишешь личное письмо герою. Используй метафоры света, судьбы, внутренней силы, но не уходи в сказку. Пиши лично, с эмоциями, как будто обращаешься к герою. Не повторяй пример, но держи такой же стиль, как в образце пользователя."},
+        {'key': 'primordial_sparks', 'title': 'Искры Первоначала', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Искры Первоначала' о {full_name}. Стиль — возвышенная фантастика про личность, метафоры света, силы, внутреннего пробуждения. Пиши лично, с эмоциями, не повторяя пример, но в том же стиле."},
+        {'key': 'ancient_whisper', 'title': 'Шепот Древних', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Шепот Древних' о {full_name}. Стиль — возвышенная фантастика про личность, метафоры времени, памяти, внутренней мудрости. Пиши лично, с эмоциями, не повторяя пример, но в том же стиле."},
+        {'key': 'flame_of_memory', 'title': 'Пламя Памяти', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Пламя Памяти' о {full_name}. Стиль — возвышенная фантастика про личность, метафоры огня, воспоминаний, внутренней силы. Пиши лично, с эмоциями, не повторяя пример, но в том же стиле."},
+        {'key': 'echo_of_heart', 'title': 'Эхо Сердца', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Эхо Сердца' о {full_name}. Стиль — возвышенная фантастика про личность, метафоры сердца, энергии, связи с другими. Пиши лично, с эмоциями, не повторяя пример, но в том же стиле."},
+        {'key': 'ice_and_stars', 'title': 'Лёд и Звёзды', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Лёд и Звёзды' о {full_name}. Стиль — возвышенная фантастика про личность, метафоры холода, звёзд, внутреннего тепла. Пиши лично, с эмоциями, не повторяя пример, но в том же стиле."},
+        {'key': 'shadow_of_mystery', 'title': 'Тень Тайны', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Тень Тайны' о {full_name}. Стиль — возвышенная фантастика про личность, метафоры тени, загадки, поиска себя. Пиши лично, с эмоциями, не повторяя пример, но в том же стиле."},
+        {'key': 'awakening_path', 'title': 'Путь Пробуждения', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Путь Пробуждения' о {full_name}. Стиль — возвышенная фантастика про личность, метафоры света, пути, внутреннего роста. Пиши лично, с эмоциями, не повторяя пример, но в том же стиле."},
+        {'key': 'crystal_of_thoughts', 'title': 'Кристалл Мыслей', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Кристалл Мыслей' о {full_name}. Стиль — возвышенная фантастика про личность, метафоры кристаллов, мыслей, мудрости. Пиши лично, с эмоциями, не повторяя пример, но в том же стиле."},
+        {'key': 'legacy_of_light', 'title': 'Завет Света', 'prompt': f"Напиши короткую главу (1-2 абзаца, 60-100 слов) с заголовком 'Завет Света' — итоговые мысли и пожелания для {full_name}. Стиль — возвышенная фантастика про личность, метафоры света, надежды, будущего. Пиши лично, с эмоциями, не повторяя пример, но в том же стиле."},
+    ]
+    try:
+        fantasy_book = run_fantasy_book_agent_sync([
+            {
+                'key': c['key'],
+                'title': c['title'],
+                'prompt': c['prompt']
+            } for c in chapter_configs
+        ], context_data, {})
+        chapters = {chapter.key: chapter.text for chapter in fantasy_book.chapters}
+        final_page_content = fantasy_book.final_message
+        book_title = fantasy_book.title
+    except Exception:
+        chapters = {c['key']: '' for c in chapter_configs}
+        final_page_content = "Пусть твоя сага будет вечной, а имя — вписано в Книгу Героев!"
+        book_title = f"Хроники {full_name}"
+    html = f"""<!DOCTYPE html>
+<html lang=\"ru\">
+<head>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>{book_title}</title>
+    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">
+    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>
+    <link href=\"https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap\" rel=\"stylesheet\">
+    <style>
+    :root {{
+        --accent-color: #222;
+        --background-color: #fff;
+        --text-color: #222;
+        --font-body: 'Crimson Text', serif;
+        --font-caption: 'Cinzel', serif;
+    }}
+    @page {{
+        size: A5 portrait;
+        margin: 2.5cm;
+        @bottom-center {{
+            content: counter(page);
+            font-family: 'Cinzel', serif;
+            font-size: 14pt;
+            color: #555;
+            border-top: 1px solid #ddd;
+            padding-top: 0.25cm;
+            width: 100%;
+        }}
+    }}
+    body {{
+        font-family: var(--font-body);
+        background-color: var(--background-color) !important;
+        color: var(--text-color);
+        line-height: 1.6;
+        font-size: 20pt;
+        margin: 0;
+        counter-reset: page;
+    }}
+    .book-page {{
+        page-break-after: always;
+        position: relative;
+        overflow: hidden;
+        background-color: var(--background-color) !important;
+        box-shadow: none;
+    }}
+    .book-page:last-of-type {{
+        page-break-after: auto;
+    }}
+    .cover-page {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+    }}
+    .cover-title {{
+        font-family: 'Cinzel', serif;
+        font-size: 40pt;
+        font-weight: 700;
+        margin: 0;
+    }}
+    .cover-subtitle {{
+        font-family: 'Cinzel', serif;
+        font-style: italic;
+        font-size: 20pt;
+        margin: 1rem 0 3rem 0;
+    }}
+    .cover-content {{
+        border: none;
+        padding: 2rem 3rem;
+    }}
+    .cover-separator {{
+        width: 80px;
+        height: 1px;
+        background: #222;
+        margin: 0 auto 1.5rem;
+    }}
+    .cover-dedication {{
+        font-family: 'Crimson Text', serif;
+        font-style: italic;
+        font-size: 12pt;
+    }}
+    .toc-title {{
+        font-size: 28pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-align: center;
+        margin-top: 1cm;
+        margin-bottom: 2cm;
+        color: var(--accent-color);
+    }}
+    .toc-list {{
+        list-style: none;
+        padding: 0;
+        font-size: 16pt;
+        font-family: 'Cinzel', serif;
+    }}
+    .toc-item {{
+        display: flex;
+        margin-bottom: 0.5rem;
+        align-items: baseline;
+    }}
+    .toc-item .chapter-name {{
+        order: 1;
+        text-decoration: none;
+        color: var(--text-color);
+    }}
+    .toc-item .leader {{
+        flex-grow: 0;
+        border-bottom: none;
+        margin: 0;
+        position: static;
+    }}
+    .toc-item .page-ref {{
+        order: 3;
+        text-decoration: none;
+        color: var(--text-color);
+    }}
+    .toc-item .page-ref::after {{
+        content: target-counter(attr(href), page);
+    }}
+    .chapter-page {{
+        padding: 0;
+    }}
+    .chapter-main-title {{
+        font-family: var(--font-body);
+        font-weight: bold;
+        font-size: 24pt;
+        text-align: center;
+        text-transform: uppercase;
+        color: var(--accent-color);
+        margin: 1cm 0;
+        line-height: 1.2;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }}
+    .chapter-subtitle {{
+        font-family: var(--font-body);
+        font-style: italic;
+        font-size: 14pt;
+        text-align: left;
+        margin: 0 0 1rem 0;
+    }}
+    .chapter-image-container {{
+        text-align: center;
+        margin: 1cm 0;
+        page-break-inside: avoid;
+    }}
+    .chapter-image {{
+        max-width: 90%;
+        border: none;
+        padding: 0.5cm;
+    }}
+    .chapter-image-caption {{
+        font-family: var(--font-caption);
+        font-style: italic;
+        font-size: 12pt;
+        margin-top: 0.5rem;
+        color: var(--accent-color);
+    }}
+    .chapter-body p {{
+        font-size: 20pt;
+        line-height: 1.6;
+        margin-bottom: 1em;
+    }}
+    .chapter-body p:first-of-type::first-letter {{
+        initial-letter: 2;
+        font-weight: bold;
+        padding-right: 0.2em;
+        color: #555;
+    }}
+    .final-page {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }}
+    .final-content {{
+        font-family: 'Cinzel', serif;
+        font-style: italic;
+        font-size: 20pt;
+        line-height: 1.7;
+        max-width: 80%;
+    }}
+    .final-ornament {{
+        font-size: 28pt;
+        color: var(--accent-color);
+        margin: 2rem 0;
+        font-family: serif;
+    }}
+    .final-signature {{
+        margin-top: 1rem;
+        font-size: 14pt;
+        font-style: normal;
+    }}
+    @media screen {{
+        body {{ font-size: 12px; }}
+        .book-page {{ width: 148mm; min-height: 210mm; margin: 2rem auto; padding: 2.5cm; box-sizing: border-box; height: auto; }}
+        .cover-page {{ height: 210mm; position: relative; }}
+        .chapter-body p {{ font-size: 12pt; }}
+        .chapter-body p:first-of-type::first-letter {{ font-size: 28pt; }}
+        .cover-title {{ font-size: 24pt; }}
+        .cover-subtitle {{ font-size: 14pt; }}
+        .toc-title {{ font-size: 18pt; }}
+        .toc-list {{ font-size: 12pt; }}
+        .chapter-main-title {{ font-size: 16pt; }}
+        .chapter-subtitle {{ font-size: 10pt; }}
+        .final-content {{ font-size: 12pt; }}
+        .final-signature {{ font-size: 10pt; }}
+    }}
+    </style>
+</head>
+<body>
+<!-- Cover Page -->
+<div class="book-page cover-page">
+    <div class="cover-content">
+        <h1 class="cover-title">{full_name.upper()}</h1>
+        <p class="cover-subtitle">Фантастическая история личности</p>
+        <div class="cover-separator"></div>
+        <p class="cover-dedication">A tale of inner power and destiny</p>
+    </div>
+</div>
+<!-- Table of Contents -->
+<div class="book-page toc-page">
+    <h2 class="toc-title">Содержание</h2>
+    <ul class="toc-list">
+        {"".join([f'''
+            <li class="toc-item">
+                <a href="#chapter-{config['key']}" class="chapter-name">Глава {i+1} – {config['title']}</a>
+                <span class="leader"></span>
+                <a href="#chapter-{config['key']}" class="page-ref"></a>
+            </li>
+        ''' for i, config in enumerate(chapter_configs)])}
+    </ul>
+</div>
+<!-- Chapter Pages -->
+{"".join([f'''
+<div id="chapter-{config['key']}" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава {i+1}</h3>
+    <h2 class="chapter-main-title">{config['title']}</h2>
+    {(f"""
+    <div class=\"chapter-image-container\">
+        <img src=\"{selected_photo_data[i]['image']}\" alt=\"Photo for Chapter {i+1}\" class=\"chapter-image\">
+        <p class=\"chapter-image-caption\">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
+    </div>
+    """ if i < len(selected_photo_data) else "")}
+    <div class="chapter-body">
+        {chapters.get(config['key'], '<p>Эта глава скоро наполнится магией и древними тайнами...</p>')}
+    </div>
+</div>
+''' for i, config in enumerate(chapter_configs)])}
+<!-- Final Page -->
+<div class="book-page final-page">
+    <div class="final-content">
+        <p>{final_page_content.replace('\\n', '<br>')}</p>
+    </div>
+    <div class="final-ornament">
+        ✦
+    </div>
+    <div class="final-signature">
+        <p>Пусть твоя история вдохновляет других.</p>
+    </div>
+</div>
+</body>
+</html>"""
+    return html
+
+
+
 

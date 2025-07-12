@@ -3,7 +3,7 @@ import json
 import random
 import time
 from app.services.llm_client import generate_memoir_chapter, strip_cliches, analyze_photo_for_memoir
-from app.services.book_builder import analyze_profile_data, format_chapter_text
+from app.services.book_builder import analyze_profile_data, format_chapter_text, build_fantasy_book as _build_fantasy_book
 
 def analyze_profile_for_fantasy(posts_data: list) -> dict:
     """Анализирует профиль для фэнтези-контекста"""
@@ -661,37 +661,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     
     return html
 
-def build_book(run_id: str, images, comments, book_format: str = 'classic', user_id: str = None):
-    """Создаёт полноценную фэнтези-книгу с собственными промптами и дизайном"""
-    print("🧙‍♂️ Создание фэнтези-книги...")
-    
-    # Загружаем данные профиля
-    run_dir = Path("data") / run_id
-    posts_json = run_dir / "posts.json"
-    images_dir = run_dir / "images"
-    
-    if posts_json.exists():
-        posts_data = json.loads(posts_json.read_text(encoding="utf-8"))
-    else:
-        posts_data = []
-    
-    # Анализируем профиль для фэнтези
-    analysis = analyze_profile_for_fantasy(posts_data)
-    
-    # Собираем изображения
-    actual_images = []
-    if images_dir.exists():
-        for img_file in sorted(images_dir.glob("*")):
-            if img_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp']:
-                actual_images.append(img_file)
-    
-    # Генерируем контент в зависимости от формата
-    # Классический формат
-    chapters = generate_fantasy_chapters(analysis, actual_images)
-    html = create_fantasy_html(analysis, chapters, actual_images)
-    
-    # Сохраняем
-    html_file = run_dir / "book.html"
-    html_file.write_text(html, encoding="utf-8")
-    
-    print("✨ Фэнтези-книга создана!") 
+
+
+def build_fantasy_book(run_id, images, comments, book_format='classic', user_id=None):
+    return _build_fantasy_book(run_id, images, comments, book_format, user_id) 
