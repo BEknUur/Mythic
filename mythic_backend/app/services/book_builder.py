@@ -2663,6 +2663,190 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
 </html>"""
     return html
 
+def build_humor_book(run_id: str, images: list[Path], texts: str, book_format: str = "classic", user_id: str = None):
+    """Создание HTML юмористической книги"""
+    try:
+        run_dir = Path("data") / run_id
+        posts_json = run_dir / "posts.json"
+        images_dir = run_dir / "images"
+        
+        if posts_json.exists():
+            posts_data = json.loads(posts_json.read_text(encoding="utf-8"))
+        else:
+            posts_data = []
+        
+        analysis = analyze_profile_data(posts_data)
+        username = analysis.get("username", "...")
+        
+        actual_images = []
+        if images_dir.exists():
+            for img_file in sorted(images_dir.glob("*")):
+                if img_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp']:
+                    actual_images.append(img_file)
+        
+        # Юмористические сообщения о процессе анализа
+        humor_analysis_messages = [
+            f"Изучаю профиль @{username} с улыбкой... Каждый пост — потенциальная шутка!",
+            f"Анализирую чувство юмора @{username}... Готовлюсь к стендапу!",
+            f"Читаю посты @{username} как комедийный сценарий... Смех гарантирован!",
+            f"Изучаю стиль @{username} — готовлюсь к юмористическому шоу!",
+            f"Анализирую характер @{username} через призму юмора... Будет весело!"
+        ]
+        
+        humor_photo_messages = [
+            f"Собираю {len(actual_images)} забавных кадров для комедийного альбома...",
+            f"Каждое из {len(actual_images)} фото — материал для стендапа!",
+            f"Готовлю {len(actual_images)} кадров для юмористического шоу!",
+            f"{len(actual_images)} фотографий — источник вдохновения для комедии!",
+            f"Архивирую {len(actual_images)} моментов для весёлой истории!"
+        ]
+        
+        print(random.choice(humor_analysis_messages))
+        print(random.choice(humor_photo_messages))
+        
+        # Импортируем функции из humor.py
+        from app.styles.humor import generate_humor_chapters, create_humor_html
+        
+        # Генерируем главы юмористической книги
+        chapters = generate_humor_chapters(analysis, actual_images)
+        
+        # Создаём HTML
+        html = create_humor_html(analysis, chapters, actual_images)
+        
+        out = Path("data") / run_id
+        out.mkdir(parents=True, exist_ok=True)
+        
+        html_file = out / "book.html"
+        html_file.write_text(html, encoding="utf-8")
+        
+        # Генерируем PDF версию
+        try:
+            pdf_file = out / "book.pdf"
+            create_pdf_with_weasyprint(pdf_file, html)
+            print(f"📄 Юмористическая PDF версия создана: {pdf_file}")
+        except Exception as pdf_error:
+            print(f"❌ Ошибка создания PDF: {pdf_error}")
+        
+        # Автоматическое сохранение в библиотеку пользователя
+        if user_id:
+            try:
+                import uuid
+                import datetime
+                import shutil
+                
+                profile_username = analysis.get("username")
+                profile_full_name = analysis.get("full_name")
+                book_id = str(uuid.uuid4())
+                title = f"Весёлые истории о {profile_full_name or profile_username or 'Неизвестный'}"
+                
+                def get_user_books_db_path_local(user_id: str) -> Path:
+                    user_books_dir = Path("data") / "user_books"
+                    user_books_dir.mkdir(parents=True, exist_ok=True)
+                    return user_books_dir / f"{user_id}.json"
+
+                def load_user_books_local(user_id: str) -> list[dict]:
+                    books_file = get_user_books_db_path_local(user_id)
+                    if not books_file.exists():
+                        return []
+                    try:
+                        return json.loads(books_file.read_text(encoding="utf-8"))
+                    except:
+                        return []
+
+                def save_user_books_local(user_id: str, books: list[dict]):
+                    books_file = get_user_books_db_path_local(user_id)
+                    books_file.write_text(json.dumps(books, ensure_ascii=False, indent=2), encoding="utf-8")
+
+                def copy_book_to_user_library_local(run_id: str, user_id: str, book_id: str) -> bool:
+                    try:
+                        source_dir = Path("data") / run_id
+                        user_library_dir = Path("data") / "user_books" / user_id / book_id
+                        user_library_dir.mkdir(parents=True, exist_ok=True)
+                        
+                        for file in ["book.html", "book.pdf", "posts.json"]:
+                            source_file = source_dir / file
+                            if source_file.exists():
+                                shutil.copy2(source_file, user_library_dir / file)
+                        
+                        source_images = source_dir / "images"
+                        if source_images.exists():
+                            target_images = user_library_dir / "images"
+                            if target_images.exists():
+                                shutil.rmtree(target_images)
+                            shutil.copytree(source_images, target_images)
+                        
+                        return True
+                    except Exception as e:
+                        print(f"Ошибка копирования книги {run_id} для пользователя {user_id}: {e}")
+                        return False
+                
+                books = load_user_books_local(user_id)
+                already_saved = False
+                for book in books:
+                    if book["run_id"] == run_id:
+                        already_saved = True
+                        break
+                
+                if not already_saved:
+                    if copy_book_to_user_library_local(run_id, user_id, book_id):
+                        new_book = {
+                            "id": book_id,
+                            "run_id": run_id,
+                            "title": title,
+                            "created_at": datetime.datetime.now().isoformat(),
+                            "profile_username": profile_username,
+                            "profile_full_name": profile_full_name,
+                            "has_pdf": pdf_file.exists(),
+                            "has_html": html_file.exists()
+                        }
+                        
+                        books.append(new_book)
+                        save_user_books_local(user_id, books)
+                        
+                        print(f"📚 Книга автоматически сохранена в библиотеку пользователя {user_id}")
+                    else:
+                        print("❌ Ошибка автоматического сохранения книги в библиотеку")
+                else:
+                    print("📚 Книга уже была сохранена в библиотеке пользователя")
+                    
+            except Exception as save_error:
+                print(f"❌ Ошибка автоматического сохранения: {save_error}")
+        
+        final_messages = [
+            f"Смех свершился! Юмористическая книга о @{username} готова к прочтению: {html_file}",
+            f"Ваша персональная комедия создана! @{username}, вы теперь — звезда стендапа: {html_file}",
+            f"Весёлая история @{username} завершена! Каждая страница полна позитива: {html_file}",
+            f"Книга-юмор @{username} готова! В ней живёт дух хорошего настроения: {html_file}"
+        ]
+        print(random.choice(final_messages))
+        
+    except Exception as e:
+        print(f"Ошибка при создании юмористической книги о @{username}: {e}")
+        try:
+            basic_html = f"""
+            <html>
+            <head>
+                <title>Юмористическая книга</title>
+                <style>
+                    body {{ background: #fffde7; font-family: sans-serif; padding: 20px; }}
+                    .error {{ background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center; }}
+                </style>
+            </head>
+            <body>
+                <div class="error">
+                    <h1>Юмористическая книга</h1>
+                    <p>Извините, произошла ошибка при создании книги: {e}</p>
+                    <p>Попробуйте еще раз позже</p>
+                </div>
+            </body>
+            </html>
+            """
+            html_file = Path("data") / run_id / "book.html"
+            html_file.write_text(basic_html, encoding="utf-8")
+            
+        except Exception as final_error:
+            print(f"Критическая ошибка: {final_error}")
+
 
 
 

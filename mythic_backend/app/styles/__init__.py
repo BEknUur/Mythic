@@ -43,6 +43,20 @@ async def build_book(style: str, run_id: str, images: list, comments: list, book
             print(f"❌ Ошибка при создании flipbook: {e}")
         return
 
+    # Специальная обработка для humor стиля
+    if style == 'humor':
+        try:
+            from app.services.book_builder import build_humor_book
+            build_humor_book(run_id, images, comments, book_format, user_id)
+            print(f"✅ Юмористическая книга успешно сгенерирована.")
+            return
+        except Exception as e:
+            print(f"❌ Ошибка при создании юмористической книги: {e}")
+            # Фоллбэк на романтический стиль
+            from .romantic import build_romantic_book
+            build_romantic_book(run_id, images, comments, book_format, user_id)
+            return
+
     # Динамический импорт и вызов сборщика для классических форматов
     try:
         # Имя модуля соответствует стилю (e.g., 'romantic', 'fantasy')
