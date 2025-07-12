@@ -6,7 +6,10 @@ import { api } from '@/lib/api';
 import { useAuth } from '@clerk/clerk-react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import React from 'react'; // Added missing import
+import React from 'react';
+import { HumorPage } from './HumorPage';
+import { RomanticPage } from './RomanticPage';
+import { FantasyPage } from './FantasyPage';
 
 interface FlipBookReaderProps {
   bookId?: string;
@@ -14,65 +17,116 @@ interface FlipBookReaderProps {
   onBack: () => void;
 }
 
-// Custom Page component that preserves the cyber-magic styling
-const CyberMagicPage = React.forwardRef<HTMLDivElement, { children: React.ReactNode; number: number }>(
-  ({ children, number }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className="w-full h-full relative overflow-hidden select-none cyber-magic-page"
-        style={{
-          background: 'linear-gradient(135deg, #f8f6f0 0%, #f0ede5 30%, #e8e3d3 100%)',
-          border: '1px solid rgba(200, 180, 140, 0.4)',
-          boxShadow: `
-            0 4px 20px rgba(160, 140, 100, 0.2),
-            0 8px 40px rgba(140, 120, 80, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6)
-          `,
-          borderRadius: '8px',
-          fontFamily: "'Cormorant Garamond', serif",
-          color: '#4a453f',
-          textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)',
-        }}
-      >
-        {/* Subtle animated border */}
-        <div 
-          className="absolute inset-0 rounded-lg pointer-events-none neon-border"
-          style={{
-            background: 'linear-gradient(45deg, rgba(220, 190, 150, 0.3), rgba(200, 170, 130, 0.2), rgba(240, 210, 170, 0.3))',
-            backgroundSize: '300% 300%',
-            opacity: 0.6,
-            zIndex: -1,
-          }}
-        />
-        
-        {/* Inner subtle glow */}
-        <div 
-          className="absolute pointer-events-none z-10 inner-glow rounded-lg"
-          style={{
-            top: '8px',
-            left: '8px', 
-            right: '8px',
-            bottom: '8px',
-            border: '1px solid rgba(210, 180, 140, 0.5)',
-            boxShadow: `
-              0 0 8px rgba(220, 190, 150, 0.3) inset,
-              0 0 15px rgba(200, 170, 130, 0.2)
-            `,
-            borderRadius: '6px',
-          }}
-        />
-        
-        {/* Content with enhanced styling */}
-        <div 
-          className="relative z-20 w-full h-full cyber-content"
-          dangerouslySetInnerHTML={{ __html: children as string }}
-        />
-      </div>
-    );
+// Интерфейс для данных страницы
+interface PageData {
+  title?: string;
+  text?: string;
+  image?: string;
+  caption?: string;
+}
+
+// Компонент для выбора стиля страницы
+const StylePage = React.forwardRef<HTMLDivElement, { 
+  children: React.ReactNode; 
+  number: number;
+  style?: string;
+  pageData?: PageData;
+}>(
+  ({ children, number, style, pageData }, ref) => {
+    // Выбираем компонент в зависимости от стиля
+    switch (style) {
+      case 'humor':
+        return (
+          <HumorPage
+            ref={ref}
+            number={number}
+            title={pageData?.title}
+            text={pageData?.text}
+            image={pageData?.image}
+            caption={pageData?.caption}
+          />
+        );
+      case 'romantic':
+        return (
+          <RomanticPage
+            ref={ref}
+            number={number}
+            title={pageData?.title}
+            text={pageData?.text}
+            image={pageData?.image}
+            caption={pageData?.caption}
+          />
+        );
+      case 'fantasy':
+        return (
+          <FantasyPage
+            ref={ref}
+            number={number}
+            title={pageData?.title}
+            text={pageData?.text}
+            image={pageData?.image}
+            caption={pageData?.caption}
+          />
+        );
+      default:
+        // Fallback на старый CyberMagicPage для обратной совместимости
+        return (
+          <div
+            ref={ref}
+            className="w-full h-full relative overflow-hidden select-none cyber-magic-page"
+            style={{
+              background: 'linear-gradient(135deg, #f8f6f0 0%, #f0ede5 30%, #e8e3d3 100%)',
+              border: '1px solid rgba(200, 180, 140, 0.4)',
+              boxShadow: `
+                0 4px 20px rgba(160, 140, 100, 0.2),
+                0 8px 40px rgba(140, 120, 80, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6)
+              `,
+              borderRadius: '8px',
+              fontFamily: "'Cormorant Garamond', serif",
+              color: '#4a453f',
+              textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)',
+            }}
+          >
+            {/* Subtle animated border */}
+            <div 
+              className="absolute inset-0 rounded-lg pointer-events-none neon-border"
+              style={{
+                background: 'linear-gradient(45deg, rgba(220, 190, 150, 0.3), rgba(200, 170, 130, 0.2), rgba(240, 210, 170, 0.3))',
+                backgroundSize: '300% 300%',
+                opacity: 0.6,
+                zIndex: -1,
+              }}
+            />
+            
+            {/* Inner subtle glow */}
+            <div 
+              className="absolute pointer-events-none z-10 inner-glow rounded-lg"
+              style={{
+                top: '8px',
+                left: '8px', 
+                right: '8px',
+                bottom: '8px',
+                border: '1px solid rgba(210, 180, 140, 0.5)',
+                boxShadow: `
+                  0 0 8px rgba(220, 190, 150, 0.3) inset,
+                  0 0 15px rgba(200, 170, 130, 0.2)
+                `,
+                borderRadius: '6px',
+              }}
+            />
+            
+            {/* Content with enhanced styling */}
+            <div 
+              className="relative z-20 w-full h-full cyber-content"
+              dangerouslySetInnerHTML={{ __html: children as string }}
+            />
+          </div>
+        );
+    }
   }
 );
-CyberMagicPage.displayName = 'CyberMagicPage';
+StylePage.displayName = 'StylePage';
 
 // Extract and preserve CSS styles from the backend template
 function extractAndPreserveStyles(rawHtml: string): { pages: string[], css: string } {
@@ -423,6 +477,7 @@ function enhancePageContent(htmlContent: string): string {
 export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookStyle, setBookStyle] = useState<string>('romantic'); // По умолчанию романтический стиль
   const { getToken } = useAuth();
   const { toast } = useToast();
 
@@ -445,6 +500,21 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
         to { transform: translateY(-100px); }
       }
       
+      @keyframes emojiBounce {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+      }
+      
+      @keyframes heartBeat {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+      }
+      
+      @keyframes swordSwing {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(10deg); }
+      }
+      
       .neon-border {
         animation: neonFlow 8s ease infinite;
       }
@@ -455,6 +525,33 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
       
       .sparkle-bg {
         animation: sparkle 30s linear infinite;
+      }
+      
+      /* Анимации для юмористического стиля */
+      .humor-page .emoji-border {
+        animation: neonFlow 6s ease infinite;
+      }
+      
+      .humor-page .inner-glow {
+        animation: pulse 3s ease-in-out infinite;
+      }
+      
+      /* Анимации для романтического стиля */
+      .romantic-page .romantic-border {
+        animation: neonFlow 10s ease infinite;
+      }
+      
+      .romantic-page .inner-glow {
+        animation: heartBeat 4s ease-in-out infinite;
+      }
+      
+      /* Анимации для фэнтезийного стиля */
+      .fantasy-page .fantasy-border {
+        animation: neonFlow 12s ease infinite;
+      }
+      
+      .fantasy-page .inner-glow {
+        animation: swordSwing 6s ease-in-out infinite;
       }
     `;
     document.head.appendChild(style);
@@ -470,11 +567,24 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
         setLoading(true);
         const token = await getToken();
         let html: string;
+        let status: any = null;
+        
         if (runId) {
           html = await api.getBookContent(runId, token || undefined);
+          // Получаем статус для определения стиля
+          try {
+            status = await api.getStatus(runId, token || undefined);
+            if (status?.style) {
+              setBookStyle(status.style);
+            }
+          } catch (err) {
+            console.warn('Не удалось получить статус для определения стиля:', err);
+          }
         } else if (bookId) {
           const res = await fetch(api.getSavedBookViewUrl(bookId, token || undefined));
           html = await res.text();
+          // Для сохраненных книг стиль может быть в метаданных
+          // Пока используем романтический по умолчанию
         } else {
           throw new Error('Нужен bookId или runId');
         }
@@ -510,11 +620,36 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
     }
   };
 
-  const pageComponents = pages.map((html, idx) => (
-    <CyberMagicPage key={idx} number={idx + 1}>
-      {html}
-    </CyberMagicPage>
-  ));
+  // Создаем компоненты страниц с учетом стиля
+  const pageComponents = pages.map((html, idx) => {
+    // Парсим HTML для извлечения данных страницы
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    // Извлекаем данные страницы
+    const titleEl = temp.querySelector('h1, h2, h3');
+    const textEl = temp.querySelector('p');
+    const imageEl = temp.querySelector('img');
+    const captionEl = temp.querySelector('.image-caption, .chapter-image-caption');
+    
+    const pageData: PageData = {
+      title: titleEl?.textContent || undefined,
+      text: textEl?.textContent || html,
+      image: imageEl?.getAttribute('src') || undefined,
+      caption: captionEl?.textContent || undefined,
+    };
+
+    return (
+      <StylePage 
+        key={idx} 
+        number={idx + 1} 
+        style={bookStyle}
+        pageData={pageData}
+      >
+        {html}
+      </StylePage>
+    );
+  });
 
   return (
     <div 
