@@ -124,7 +124,7 @@ export function BookReadyDialog({
     }
   };
 
-  const shareableUrl = `${window.location.origin}/view/${runId}/book.html`;
+  const shareableUrl = `${window.location.origin}/reader/${runId}`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shareableUrl);
@@ -173,9 +173,9 @@ export function BookReadyDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] bg-white border-none rounded-xl shadow-2xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] bg-white border-none rounded-xl shadow-2xl pb-8 overflow-y-auto">
         <DialogHeader className="text-center pt-4">
-          <DialogTitle className="text-3xl font-normal text-violet-600">
+          <DialogTitle className="text-3xl font-normal text-black">
             {status?.style === 'fantasy' ? 'Эпическая книга готова!' :
              status?.style === 'humor' ? 'Веселая книга готова!' :
              'Книга готова!'}
@@ -188,7 +188,7 @@ export function BookReadyDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="relative border bg-white rounded-lg overflow-hidden h-[60vh]">
+          <div className="relative border bg-white rounded-lg overflow-hidden h-[50vh]">
             {status?.format === 'flipbook' ? (
               <iframe
                 src={`/view/${runId}/book.html`}
@@ -206,9 +206,14 @@ export function BookReadyDialog({
                 </div>
               </div>
             ) : (
-              <div className="h-full overflow-auto p-6 book-content">
-                <div dangerouslySetInnerHTML={{ __html: bookContent }} />
-              </div>
+              <iframe
+                src={`/view/${runId}/book.html`}
+                width="100%"
+                height="100%"
+                className="rounded-xl border"
+                style={{ minHeight: '400px', minWidth: '100%', background: 'white' }}
+                title="Book Preview"
+              />
             )}
           </div>
 
@@ -231,22 +236,22 @@ export function BookReadyDialog({
                 href={`/reader/${runId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center h-16 px-6 rounded-lg bg-violet-600 text-white font-semibold text-lg hover:bg-violet-700 transition-colors justify-start"
+                className="inline-flex items-center h-20 px-6 w-full rounded-lg bg-black text-white font-semibold text-lg hover:bg-neutral-800 transition-colors justify-start"
                 style={{ textDecoration: 'none' }}
               >
                 <ExternalLink className="h-5 w-5 mr-2" />
-                <div className="text-left">
+                <div className="text-left leading-tight">
                   <div className="font-semibold">Открыть в новой вкладке</div>
-                  <div className="text-xs opacity-80">Полноэкранный режим</div>
+                  <div className="text-xs opacity-80 leading-tight">Полноэкранный режим</div>
                 </div>
               </a>
               {/* PDF download button removed for flipbook */}
               {status?.format !== 'flipbook' && (
-                <Button onClick={downloadBook} variant="outline" size="lg" className="h-16">
+                <Button onClick={downloadBook} size="lg" className="inline-flex items-center h-20 px-6 w-full rounded-lg bg-black text-white font-semibold text-lg hover:bg-neutral-800 transition-colors justify-start">
                   <Download className="h-5 w-5 mr-2" />
-                  <div className="text-left">
+                  <div className="text-left leading-tight">
                     <div className="font-semibold">Скачать PDF</div>
-                    <div className="text-xs opacity-80">Сохранить на устройство</div>
+                    <div className="text-xs opacity-80 leading-tight">Сохранить на устройство</div>
                   </div>
                 </Button>
               )}

@@ -4,6 +4,28 @@ import random
 import time
 from app.services.llm_client import generate_memoir_chapter, strip_cliches, analyze_photo_for_memoir
 from app.services.book_builder import analyze_profile_data, format_chapter_text
+import re
+
+ROMANTIC_WORDS = re.compile(r"(нежн|романт|любов|искренн|я\\W+создан)", re.I)
+SYSTEM_STANDUP = """
+Ты — стендап-комик. Пиши ДЕРЗКО, с ПАНЧАМИ, как на сцене.
+ИСПОЛЬЗУЙ:
+• Абсурдные сравнения (колобок на электросамокате, Wi-Fi пароль от Вселенной)
+• Современные отсылки (TikTok, Dolby Atmos, Excel-файлы)
+• Обращение к залу («Зал, признайтесь», «Ребята»)
+• Диалоги и внутренние монологи
+• Гиперболу и неожиданные повороты
+
+⚠️ ЗАПРЕЩЕНО:
+• романтические интонации
+• «искренне», «нежно», «тепло», «любовь», «я создан…»
+• лирические отступления
+• сентиментальность
+• банальные описания
+
+Если в тексте появляется хоть намёк на романтику — ОТВЕТ СЧИТАЕТСЯ ОШИБОЧНЫМ.
+Пиши так, будто ты на сцене и нужно «рвать» зал.
+""".strip()
 
 def analyze_profile_for_humor(posts_data: list) -> dict:
     """Анализирует профиль для юмористического контекста"""
@@ -19,6 +41,37 @@ def analyze_profile_for_humor(posts_data: list) -> dict:
         "posts": profile.get("latestPosts", []),
         "profile_pic": profile.get("profilePicUrl", ""),
     }
+    
+    # Определяем пол по имени и био
+    full_name = analysis["full_name"].lower()
+    bio = analysis["bio"].lower()
+    
+    # Простая логика определения пола
+    female_indicators = ["девушка", "женщина", "она", "её", "красавица", "принцесса", "королева"]
+    male_indicators = ["парень", "мужчина", "он", "его", "красавец", "принц", "король"]
+    
+    is_female = any(indicator in bio for indicator in female_indicators)
+    is_male = any(indicator in bio for indicator in male_indicators)
+    
+    # Если не определили по био, пробуем по имени
+    if not is_female and not is_male:
+        # Простая эвристика по окончаниям имен
+        female_endings = ["а", "я", "на", "ина", "ова", "ева"]
+        male_endings = ["ов", "ев", "ин", "ый", "ой"]
+        
+        for ending in female_endings:
+            if full_name.endswith(ending):
+                is_female = True
+                break
+        for ending in male_endings:
+            if full_name.endswith(ending):
+                is_male = True
+                break
+    
+    # По умолчанию считаем женским полом (для безопасности)
+    analysis["gender"] = "female" if is_female or not is_male else "male"
+    analysis["pronoun"] = "она" if analysis["gender"] == "female" else "он"
+    analysis["pronoun_genitive"] = "её" if analysis["gender"] == "female" else "его"
     
     # Анализируем для юмористического контекста
     analysis["comedian_name"] = analysis["full_name"] or analysis["username"]
@@ -91,6 +144,11 @@ def generate_humor_chapters(analysis: dict, images: list[Path]) -> dict:
             chapters[config['key']] = quick_fallbacks[config['key']]
     return chapters
 
+def format_paragraphs(text):
+    # Разбиваем по двойному или одинарному переносу строки и оборачиваем в <p>
+    paragraphs = [f"<p>{p.strip()}</p>" for p in text.split('\n') if p.strip()]
+    return "\n".join(paragraphs)
+
 def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str:
     """Создает HTML для юмористической книги"""
     
@@ -120,7 +178,6 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    
     <style>
     :root {{
         --accent-color: #333333;
@@ -128,15 +185,10 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         --text-color: #333;
         --font-body: 'Playfair Display', serif;
         --font-caption: 'Open Sans', sans-serif;
-        --humor-accent: #ffd54f;
-        --humor-secondary: #ff7043;
-        --shadow-soft: rgba(0, 0, 0, 0.1);
     }}
-
     @page {{
         size: A5 portrait;
         margin: 2.5cm;
-        
         @bottom-center {{
             content: counter(page);
             font-family: 'Playfair Display', serif;
@@ -147,7 +199,6 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
             width: 100%;
         }}
     }}
-
     body {{
         font-family: var(--font-body);
         background-color: var(--background-color) !important;
@@ -157,7 +208,6 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         margin: 0;
         counter-reset: page;
     }}
-
     .book-page {{
         page-break-after: always;
         position: relative;
@@ -165,11 +215,9 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         background-color: var(--background-color) !important;
         box-shadow: none;
     }}
-
     .book-page:last-of-type {{
         page-break-after: auto;
     }}
-
     /* Cover Page */
     .cover-page {{
         display: flex;
@@ -179,50 +227,42 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         height: 100vh;
         text-align: center;
     }}
-
     .cover-title {{
         font-family: 'Playfair Display', serif;
         font-size: 48pt;
         font-weight: 700;
         margin: 0;
     }}
-
     .cover-subtitle {{
         font-family: 'Playfair Display', serif;
         font-style: italic;
         font-size: 24pt;
         margin: 1rem 0 3rem 0;
     }}
-
     .cover-author {{
         position: absolute;
         bottom: 1.5cm;
         font-size: 18pt;
     }}
-
     .cover-content {{
         border: 2px solid #333;
         padding: 2rem 3rem;
     }}
-    
     .cover-separator {{
         width: 80px;
         height: 1px;
         background: #333;
         margin: 0 auto 1.5rem;
     }}
-
     .cover-dedication {{
         font-family: 'Open Sans', sans-serif;
         font-style: italic;
         font-size: 14pt;
     }}
-
     /* Table of Contents */
     .toc-page {{
         padding: 0;
     }}
-
     .toc-title {{
         font-size: 36pt;
         font-weight: bold;
@@ -232,48 +272,40 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         margin-bottom: 2cm;
         color: var(--accent-color);
     }}
-
     .toc-list {{
         list-style: none;
         padding: 0;
         font-size: 20pt;
         font-family: 'Playfair Display', serif;
     }}
-
     .toc-item {{
         display: flex;
         margin-bottom: 0.5rem;
         align-items: baseline;
     }}
-
     .toc-item .chapter-name {{
         order: 1;
         text-decoration: none;
         color: var(--text-color);
     }}
-    
     .toc-item .leader {{
         flex-grow: 0;
         border-bottom: none;
         margin: 0;
         position: static;
     }}
-
     .toc-item .page-ref {{
         order: 3;
         text-decoration: none;
         color: var(--text-color);
     }}
-
     .toc-item .page-ref::after {{
         content: target-counter(attr(href), page);
     }}
-    
     /* Chapter Page */
     .chapter-page {{
         padding: 0;
     }}
-
     .chapter-main-title {{
         font-family: var(--font-body);
         font-weight: bold;
@@ -286,7 +318,6 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         overflow-wrap: break-word;
         hyphens: auto;
     }}
-    
     .chapter-subtitle {{
         font-family: var(--font-body);
         font-style: italic;
@@ -294,19 +325,16 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         text-align: left;
         margin: 0 0 1rem 0;
     }}
-
     .chapter-image-container {{
         text-align: center;
         margin: 1cm 0;
         page-break-inside: avoid;
     }}
-
     .chapter-image {{
         max-width: 90%;
         border: 1px solid #ddd;
         padding: 0.5cm;
     }}
-
     .chapter-image-caption {{
         font-family: var(--font-caption);
         font-style: italic;
@@ -314,20 +342,17 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         margin-top: 0.5rem;
         color: var(--accent-color);
     }}
-    
     .chapter-body p {{
         font-size: 24pt;
         line-height: 1.6;
         margin-bottom: 1em;
     }}
-
     .chapter-body p:first-of-type::first-letter {{
         initial-letter: 3;
         font-weight: bold;
         padding-right: 0.2em;
-        color: var(--humor-accent);
+        color: #555;
     }}
-    
     /* Final Page Styles */
     .final-page {{
         display: flex;
@@ -345,7 +370,7 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     }}
     .final-ornament {{
         font-size: 32pt;
-        color: var(--humor-accent);
+        color: var(--accent-color);
         margin: 2rem 0;
         font-family: serif;
     }}
@@ -354,18 +379,6 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         font-size: 18pt;
         font-style: normal;
     }}
-
-    /* Юмористические акценты */
-    .humor-accent {{
-        color: var(--humor-accent);
-    }}
-    
-    .humor-emoji {{
-        font-size: 1.2em;
-        margin: 0 0.2em;
-        opacity: 0.7;
-    }}
-
     @media screen {{
         body {{
             font-size: 16px;
@@ -393,6 +406,34 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
         .final-content {{ font-size: 18pt; }}
         .final-signature {{ font-size: 14pt; }}
     }}
+    </style>
+    <style>
+    /* Книжная верстка: узкая колонка, переносы, номер страницы сверху */
+    .chapter-body {
+        max-width: 440px;
+        margin: 0 auto;
+        text-align: justify;
+        line-height: 1.65;
+        hyphens: auto;
+    }
+    .chapter-body p:first-of-type::first-letter{
+        initial-letter: 2;
+        font-weight: 700;
+        padding-right: 0.15em;
+    }
+    .chapter-body p{
+        margin: 0 0 1.2em;
+    }
+    @page{
+        margin: 2.5cm;
+        @top-center{
+            content: counter(page);
+            font-family: 'Playfair Display', serif;
+            font-size: 14pt;
+            color: #666;
+        }
+        @bottom-center{ content: ""; }
+    }
     </style>
 </head>
 <body>
@@ -467,12 +508,12 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     {f"""
     <div class="chapter-image-container">
         <img src="{processed_images[0]}" alt="Photo for Chapter 1" class="chapter-image">
-        <p class="chapter-image-caption">🌟 Наш главный герой в действии! 🌟</p>
+        <p class="chapter-image-caption"><span class="emoji-colorful">😆</span> Наш главный герой в действии! <span class="emoji-colorful">🌟</span></p>
     </div>
     """ if processed_images else ""}
 
     <div class="chapter-body">
-        {chapters.get('introduction', 'Знакомьтесь - наш главный герой!')}
+        {format_paragraphs(chapters.get('introduction', 'Знакомьтесь - наш главный герой!'))}
     </div>
 </div>
 
@@ -488,7 +529,7 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     """ if len(processed_images) > 1 else ""}
 
     <div class="chapter-body">
-        {chapters.get('daily_comedy', 'Каждый день - новая комедия!')}
+        {format_paragraphs(chapters.get('daily_comedy', 'Каждый день - новая комедия!'))}
     </div>
 </div>
 
@@ -504,7 +545,7 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     """ if len(processed_images) > 2 else ""}
 
     <div class="chapter-body">
-        {chapters.get('social_media_star', 'Instagram как источник веселья!')}
+        {format_paragraphs(chapters.get('social_media_star', 'Instagram как источник веселья!'))}
     </div>
 </div>
 
@@ -520,7 +561,7 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     """ if len(processed_images) > 3 else ""}
 
     <div class="chapter-body">
-        {chapters.get('photo_adventures', 'Каждое фото - приключение!')}
+        {format_paragraphs(chapters.get('photo_adventures', 'Каждое фото - приключение!'))}
     </div>
 </div>
 
@@ -536,7 +577,7 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     """ if len(processed_images) > 4 else ""}
 
     <div class="chapter-body">
-        {chapters.get('unique_style', 'Стиль - это состояние души!')}
+        {format_paragraphs(chapters.get('unique_style', 'Стиль - это состояние души!'))}
     </div>
 </div>
 
@@ -552,7 +593,7 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     """ if len(processed_images) > 5 else ""}
 
     <div class="chapter-body">
-        {chapters.get('funny_wisdom', 'Философия смеха!')}
+        {format_paragraphs(chapters.get('funny_wisdom', 'Философия смеха!'))}
     </div>
 </div>
 
@@ -568,7 +609,7 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     """ if len(processed_images) > 6 else ""}
 
     <div class="chapter-body">
-        {chapters.get('social_butterfly', 'Там где он - там веселье!')}
+        {format_paragraphs(chapters.get('social_butterfly', 'Там где он - там веселье!'))}
     </div>
 </div>
 
@@ -584,7 +625,7 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     """ if len(processed_images) > 7 else ""}
 
     <div class="chapter-body">
-        {chapters.get('creative_chaos', 'Креативность без границ!')}
+        {format_paragraphs(chapters.get('creative_chaos', 'Креативность без границ!'))}
     </div>
 </div>
 
@@ -600,7 +641,7 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
     """ if len(processed_images) > 8 else ""}
 
     <div class="chapter-body">
-        {chapters.get('finale_applause', 'Спасибо за веселье!')}
+        {format_paragraphs(chapters.get('finale_applause', 'Спасибо за веселье!'))}
     </div>
 </div>
 
@@ -624,6 +665,71 @@ def create_humor_html(analysis: dict, chapters: dict, images: list[Path]) -> str
 </body>
 </html>"""
     
+    return html
+
+def generate_standup_humor_book(run_id: str, images, comments, user_id=None):
+    """Генерирует угарную стендап-книгу с дерзкими промптами и стилем standup_comedy"""
+    print("🔥 Создание стендап-книги (дерзкий юмор)...")
+    from app.services.llm_client import generate_memoir_chapter, strip_cliches
+    from app.services.book_builder import analyze_profile_data, format_chapter_text
+    from pathlib import Path
+    import json
+    run_dir = Path("data") / run_id
+    posts_json = run_dir / "posts.json"
+    images_dir = run_dir / "images"
+    if posts_json.exists():
+        posts_data = json.loads(posts_json.read_text(encoding="utf-8"))
+    else:
+        posts_data = []
+    analysis = analyze_profile_for_humor(posts_data)
+    full_name = analysis.get("full_name", analysis.get("username", "Комик"))
+    username = analysis.get("username", "comedian")
+    actual_images = []
+    if images_dir.exists():
+        for img_file in sorted(images_dir.glob("*")):
+            if img_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp']:
+                actual_images.append(img_file)
+    standup_configs = [
+        {'key': 'meeting', 'title': 'Пролог: Первая встреча', 'prompt': f"""Ты стендап-комик. Начни дерзко и коротко: 'Дамы и господа, знакомьтесь: {full_name}. Это не имя — это push-уведомление о том, что сейчас будет шумно.' Добавь: 'У каждого из нас есть знакомый-экскаватор: роет тему даже там, где уже асфальт. Вот {full_name} — тот самый.' Используй короткие, хлёсткие фразы, панчи, обращение к залу. НИКОГДА не пиши романтично!"""},
+        {'key': 'first_impression', 'title': 'Глава первая: Первое впечатление', 'prompt': f"""Начни: 'Я захожу на тусовку, вижу {full_name} — и сразу вопрос: почему человек светится ярче, чем лампа эконом-класса?' Добавь: 'У {analysis.get("pronoun", "неё")} на лице та самая улыбка «— знаешь секрет? — какой? — не скажу!»' Используй современные сравнения (Wi-Fi, TikTok, Dolby Atmos), абсурдные ситуации. Пиши как стендап-комик на сцене. НИКОГДА не пиши романтично!"""},
+        {'key': 'world_view', 'title': 'Глава вторая: Мир глазами комика', 'prompt': f"""Начни: 'У обычных людей дождь — это «влажно, зонт, спасибо». У {full_name} дождь — это когда небо чихает, потому что на земле жарят шашлык без разрешения.' Добавь диалоги с природой, абсурдные наблюдения. Используй: 'Ветер? Нам он портит причёску, {full_name} — настроение.' Пиши дерзко, с панчами. НИКОГДА не пиши романтично!"""},
+        {'key': 'memorable_moments', 'title': 'Глава третья: Самые смешные моменты', 'prompt': f"""Начни: 'Попытка {full_name} купить хлеб превращается в шоу:' Добавь абсурдные диалоги типа: '— Дайте батон. — Режем? — Нет, я хочу, чтобы он страдал целиком!' Используй современные отсылки (YouTube, HR, Ньютон), неожиданные повороты. Пиши как стендап-комик. НИКОГДА не пиши романтично!"""},
+        {'key': 'energy', 'title': 'Глава четвертая: Энергия и харизма', 'prompt': f"""Начни: 'Харизма {full_name}, ребята, — как вай-фай метро: не знаешь, кто настроил, но ловишь даже в туннеле.' Добавь: '{analysis.get("pronoun", "Она").title()} заходит в комнату, и лампочки такие: «Мы погорели, но держимся».' Используй современные сравнения (батарея телефона, самооценка), абсурдные ситуации. НИКОГДА не пиши романтично!"""},
+        {'key': 'beauty_style', 'title': 'Глава пятая: Стиль и мода', 'prompt': f"""Начни: 'Пальто в цвет обоев из бабушкиной кухни? Есть. Кроссовки, будто ими уже сбежали из четырёх реальностей? Тоже.' Добавь: 'И ты такой: это провал моды или экзамен на широту души?' Используй абсурдные сравнения, современные отсылки, дерзкие вопросы. НИКОГДА не пиши романтично!"""},
+        {'key': 'mystery', 'title': 'Глава шестая: Загадка личности', 'prompt': f"""Начни с вопросов: 'Почему {analysis.get("pronoun", "она")} опаздывает? Где теряются {analysis.get("pronoun_genitive", "её")} ключи? Чего {analysis.get("pronoun", "она")} не покажет в сторис?' Добавь абсурдные ответы типа: 'Там, где слоны боятся йоги времени, {full_name} ещё прикручивает люстру вдохновения.' Используй современные отсылки (параллельные вселенные, суперсилы). НИКОГДА не пиши романтично!"""},
+        {'key': 'influence_on_me', 'title': 'Глава седьмая: Влияние на друзей', 'prompt': f"""Начни: 'После двух кофе с {full_name} друзья начинают разговаривать с микроволновкой:' Добавь абсурдные диалоги: '— Как думаешь, стоит ли менять работу? Динь! — «Подогрев завершён» — Вот видишь, знак!' Используй современные отсылки (солнечные очки ночью, идеи 24/7). НИКОГДА не пиши романтично!"""},
+        {'key': 'observations', 'title': 'Глава восьмая: Наблюдения за жизнью', 'prompt': f"""Начни: 'Чтобы не чинить кран, надо… завести бассейн и мыть посуду там. Экология и спа-процедуры, две в одной!' Добавь лайфхаки типа: 'Опоздал? Скажи, что спас кота из горящего Excel-файла — и никто не станет уточнять.' Используй абсурдные советы, современные отсылки. НИКОГДА не пиши романтично!"""},
+        {'key': 'funny_final', 'title': 'Глава девятая: Финальный аккорд', 'prompt': f"""Начни: 'Стоит пробке задохнуться, как появляется {full_name}, в плаще «LOL».' Добавь: '— Эй, седан на третьей полосе, перестань играть в тетрис, машины — не фигурки!' Используй современные отсылки (навигатор, анекдоты), абсурдные ситуации. НИКОГДА не пиши романтично!"""},
+        {'key': 'gratitude_wishes', 'title': 'Эпилог: Благодарность и пожелания', 'prompt': f"""Начни: 'Ребята, вы — как TikTok: пролистываюсь, но хочется ещё.' Добавь: 'Не забудьте лайкнуть жизнь: ставьте сердечко утрам, подписывайтесь на удачу днём и делитесь мемами перед сном.' Используй современные отсылки, дерзкие пожелания. Заверши: 'Улыбайтесь бесплатнее, живите громче — и да пребудет с вами вай-фай харизмы {full_name}!' НИКОГДА не пиши романтично!"""},
+    ]
+    chapters = {}
+    for config in standup_configs:
+        for _ in range(3):
+            try:
+                generated_content = generate_memoir_chapter(
+                    "humor_chapter",
+                    {
+                        'prompt': config['prompt'],
+                        'style': 'standup_comedy',
+                        'system_prompt': SYSTEM_STANDUP
+                    },
+                    temperature=0.55,
+                    max_tokens=600
+                )
+                if not generated_content or len(generated_content.strip()) < 100:
+                    continue
+                if not ROMANTIC_WORDS.search(generated_content):
+                    clean_content = strip_cliches(generated_content)
+                    chapters[config['key']] = clean_content
+                    break
+            except Exception as e:
+                print(f"❌ Ошибка генерации главы '{config['title']}': {e}")
+        else:
+            chapters[config['key']] = f"{config['title']} о {full_name} — настолько смешной, что даже GPT не справился! Зато мы попробовали!"
+    html = create_humor_html(analysis, chapters, actual_images)
+    html_file = run_dir / "book.html"
+    html_file.write_text(html, encoding="utf-8")
+    print("🔥 Стендап-книга создана!")
     return html
 
 def build_book(run_id: str, images, comments, book_format: str = 'classic', user_id: str = None):

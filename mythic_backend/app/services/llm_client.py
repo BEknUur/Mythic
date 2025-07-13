@@ -161,25 +161,16 @@ async def generate_flipbook_json(image_paths: list[str]) -> dict:
         return {"prologue": "Что-то пошло не так...", "pages": []}
 
 def generate_text(prompt: str,
+                  system_prompt: str | None = None,   # <-- add system_prompt param
                   model: str = "gpt-4.1-mini",
-                  max_tokens: int = 1500,  # Возвращаем обратно к 1500 для качественных текстов
-                  temperature: float = 0.8,  # Возвращаем к 0.8 для более творческих ответов
+                  max_tokens: int = 1500,
+                  temperature: float = 0.8,
                   image_data: Optional[str] = None) -> str:
     """Генерирует текст с помощью Azure OpenAI API (только GPT-4o), с поддержкой изображений"""
     try:
-        # Всегда используем GPT-4o deployment
         deployment = settings.AZURE_OPENAI_GPT4_DEPLOYMENT
-        
-        # БЫСТРАЯ система для романтического рассказчика (сокращенная версия)
-        fast_system_message = """Ты - романтический рассказчик. Пиши просто, искренне, романтично.
-
-СТИЛЬ: Дневник влюбленного
-ЯЗЫК: Русский, простой, теплый
-ДЛИНА: Кратко, по сути
-
-ЗАПРЕЩЕНО: "Не могу поверить!", "Потрясающе!", сложные фразы"""
-
-        # Если есть изображение, используем vision model
+        # Нейтральная система по умолчанию
+        fast_system_message = system_prompt or "Ты — современный рассказчик. Пиши ясно, интересно, без клише."
         if image_data:
             messages = [
                 {
@@ -190,22 +181,19 @@ def generate_text(prompt: str,
                             "type": "image_url",
                             "image_url": {
                                 "url": image_data,
-                                "detail": "low"  # Для определения пола достаточно низкого качества
+                                "detail": "low"
                             }
                         }
                     ]
                 }
             ]
-
             response = client.chat.completions.create(
                 model=deployment,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature
             )
-            
         else:
-            # Обычная генерация текста (БЫСТРАЯ)
             response = client.chat.completions.create(
                 model=deployment,
                 messages=[
@@ -214,16 +202,15 @@ def generate_text(prompt: str,
                 ],
                 max_tokens=max_tokens,
                 temperature=temperature,
-                presence_penalty=0.3,  # Снижено для скорости
-                frequency_penalty=0.2  # Снижено для скорости
+                presence_penalty=0.3,
+                frequency_penalty=0.2
             )
-        
-        result = response.choices[0].message.content.strip()
-        return strip_cliches(result)
-        
+        result = response.choices[0].message.content
+        if not result:
+            return ""
+        return strip_cliches(result.strip())
     except Exception as e:
         logger.error(f"Ошибка в generate_text: {e}")
-        # Быстрый fallback вместо ошибки
         return f"Этот момент наполнен особой красотой и теплом. Каждая деталь говорит о твоей уникальности."
 
 
@@ -307,7 +294,7 @@ def analyze_photo_for_memoir(image_path: Path, context: str = "", chapter_focus:
         return f"Память сохранила лишь ощущение света и тепла..."
 
 
-def generate_memoir_chapter(chapter_type: str, data: dict, photo_analysis: str = "") -> str:
+def generate_memoir_chapter(chapter_type: str, data: dict, photo_analysis: str = "", temperature: float = 0.8, max_tokens: int = 1200) -> str:
     """Генерирует главу мемуаров по конкретной структуре"""
     
     # Проверяем, передан ли готовый промпт в данных
@@ -316,23 +303,33 @@ def generate_memoir_chapter(chapter_type: str, data: dict, photo_analysis: str =
         prompt = data["prompt"]
         
         # НЕ обрезаем промпты с пословицами - они уже оптимизированы
-        result = generate_text(prompt, max_tokens=1200, temperature=0.8)  # Увеличиваем для качественных текстов
+        result = generate_text(prompt, max_tokens=max_tokens, temperature=temperature)  # Увеличиваем для качественных текстов
         return strip_cliches(result)
     
     # Поддержка фэнтези стиля
     if chapter_type == "fantasy_chapter" and "prompt" in data:
         prompt = data["prompt"]
+        sys_prompt = data.get("system_prompt")  # <-- extract system_prompt if present
         
         # НЕ обрезаем промпты с пословицами - они уже оптимизированы
-        result = generate_text(prompt, max_tokens=1400, temperature=0.9)  # Больше креативности для фэнтези
+        result = generate_text(
+            prompt, 
+            system_prompt=sys_prompt,            # <-- pass system_prompt
+            max_tokens=max_tokens, 
+            temperature=temperature
+        )  # Больше креативности для фэнтези
         return strip_cliches(result)
     
     # Поддержка юмористического стиля
     if chapter_type == "humor_chapter" and "prompt" in data:
         prompt = data["prompt"]
-        
-        # НЕ обрезаем промпты с пословицами - они уже оптимизированы
-        result = generate_text(prompt, max_tokens=1300, temperature=0.85)  # Баланс креативности и связности
+        sys_prompt = data.get("system_prompt")  # <-- extract system_prompt if present
+        result = generate_text(
+            prompt,
+            system_prompt=sys_prompt,            # <-- pass system_prompt
+            max_tokens=max_tokens,
+            temperature=temperature
+        )
         return strip_cliches(result)
     
     username = data.get('username', 'незнакомец')
@@ -485,7 +482,7 @@ def generate_memoir_chapter(chapter_type: str, data: dict, photo_analysis: str =
         result = generate_text(prompt, max_tokens=1200, temperature=0.8)  # Увеличиваем для качественных текстов
         
         # Проверяем качество результата
-        if len(result.strip()) < 50:  # Если слишком короткий ответ
+        if len(result.strip()) < 200:  # Если слишком короткий ответ
             return fallback_content.get(chapter_type, f"Глава о {chapter_type.replace('_', ' ')} наполнена теплом и восхищением.")
             
         return strip_cliches(result)
