@@ -98,17 +98,22 @@
       <div class="page">
         <div class="toc-title">{{ toc_title }}</div>
         <ul style="list-style:none; padding:0;">
-          {% for page in pages %}
-          <li style="margin-bottom:0.7em; color:#5c6e91; font-size:1.1em;">Глава {{ loop.index }}: {{ page.title }}</li>
+          {% set text_pages = pages | selectattr('type', 'equalto', 'text') | list %}
+          {% for page in text_pages %}
+            <li style="margin-bottom:0.7em; color:#5c6e91; font-size:1.1em;">
+              {{ page.title | striptags }}
+            </li>
           {% endfor %}
         </ul>
       </div>
       <!-- Главы -->
+      {% set text_page_idx = 0 %}
       {% for page in pages %}
       <div class="page">
         {% if page.type == 'text' %}
-          <div class="chapter-title">Глава {{ loop.index // 2 + 1 }}: {{ page.title }}</div>
+          <div class="chapter-title">{{ page.title | striptags }}</div>
           <div class="chapter-body">{{ page.text|safe }}</div>
+          {% set text_page_idx = text_page_idx + 1 %}
         {% elif page.type == 'image' %}
           {% if page.image %}<img src="{{ page.image }}" style="max-width:90%;border-radius:12px;margin:1em 0;" />{% endif %}
           {% if page.caption %}<div style="color:#6a4caf;font-style:italic;margin-top:0.5em;">{{ page.caption }}</div>{% endif %}

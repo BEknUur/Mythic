@@ -315,16 +315,7 @@ def generate_memoir_chapter(chapter_type: str, data: dict, photo_analysis: str =
         # Для романтических книг используем переданный промпт
         prompt = data["prompt"]
         
-        # КРИТИЧЕСКАЯ ОПТИМИЗАЦИЯ: сокращаем все промпты в 3-4 раза
-        # Берем только первые 500 символов промпта для быстрого ответа
-        if len(prompt) > 500:
-            # Находим конец первого абзаца с инструкциями
-            cut_point = prompt.find("СТРУКТУРА ГЛАВЫ:")
-            if cut_point > 0:
-                prompt = prompt[:cut_point] + "\n\nНапиши 3-4 абзаца романтично и лично."
-            else:
-                prompt = prompt[:500] + "... Напиши кратко и романтично."
-        
+        # НЕ обрезаем промпты с пословицами - они уже оптимизированы
         result = generate_text(prompt, max_tokens=1200, temperature=0.8)  # Увеличиваем для качественных текстов
         return strip_cliches(result)
     
@@ -332,14 +323,7 @@ def generate_memoir_chapter(chapter_type: str, data: dict, photo_analysis: str =
     if chapter_type == "fantasy_chapter" and "prompt" in data:
         prompt = data["prompt"]
         
-        # Оптимизация для фэнтези
-        if len(prompt) > 600:
-            cut_point = prompt.find("СТРУКТУРА:")
-            if cut_point > 0:
-                prompt = prompt[:cut_point] + "\n\nНапиши 4-5 абзацев в жанре эпического фэнтези."
-            else:
-                prompt = prompt[:600] + "... Напиши в стиле эпического фэнтези."
-        
+        # НЕ обрезаем промпты с пословицами - они уже оптимизированы
         result = generate_text(prompt, max_tokens=1400, temperature=0.9)  # Больше креативности для фэнтези
         return strip_cliches(result)
     
@@ -347,14 +331,7 @@ def generate_memoir_chapter(chapter_type: str, data: dict, photo_analysis: str =
     if chapter_type == "humor_chapter" and "prompt" in data:
         prompt = data["prompt"]
         
-        # Оптимизация для юмора
-        if len(prompt) > 600:
-            cut_point = prompt.find("СТРУКТУРА:")
-            if cut_point > 0:
-                prompt = prompt[:cut_point] + "\n\nНапиши 4-5 абзацев с юмором, легко и позитивно."
-            else:
-                prompt = prompt[:600] + "... Напиши с юмором и позитивом."
-        
+        # НЕ обрезаем промпты с пословицами - они уже оптимизированы
         result = generate_text(prompt, max_tokens=1300, temperature=0.85)  # Баланс креативности и связности
         return strip_cliches(result)
     
