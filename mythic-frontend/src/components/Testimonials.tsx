@@ -4,40 +4,40 @@ import { motion } from 'framer-motion';
 
 const testimonials = [
   {
-    name: 'Айзере',
-    handle: '@aizerek',
-    avatar: 'https://avatar.iran.liara.run/public/girl?username=aizere',
-    text: 'Это просто невероятно! Мы с парнем были в восторге. Книга получилась очень личной и трогательной, собраны все самые важные моменты. Спасибо за такие эмоции!',
+    name: 'Tataev Shoqan',
+    position: 'Middle frontend developer at BCC',
+    avatar: 'https://framerusercontent.com/images/iLrfalodnhI8A941IO9W44vOSY.png?scale-down-to=512',
+    text: 'Mythic AI — это магия! Книга получилась очень атмосферной, будто я сам герой эпоса. Такой сервис — находка для любителей фэнтези.',
   },
   {
-    name: 'Алихан',
-    handle: '@alikhan',
-    avatar: 'https://avatar.iran.liara.run/public/boy?username=alikhan',
-    text: 'Сделал подарок своей девушке на годовщину. Она была в шоке! Сказала, что это лучший подарок за все время. Сервис работает быстро, результат превзошел все ожидания.',
+    name: 'Bakhredin Zurgambayev',
+    position: 'Middle Typescript Dev @ BCC',
+    avatar: 'https://framerusercontent.com/images/A2fJNeM0qxgW0jDh9VrONNUhR0.png?scale-down-to=1024',
+    text: 'Я загрузил свои фото, и Mythic AI создал целую сагу! Всё быстро, красиво и с крутым сюжетом. Рекомендую всем друзьям.',
   },
   {
-    name: 'Мадина',
-    handle: '@madina_m',
-    avatar: 'https://avatar.iran.liara.run/public/girl?username=madina',
-    text: 'Изначально отнеслась скептически, но результат меня поразил. ИИ так точно подобрал подписи к фото и создал красивую историю. Теперь советую всем подругам!',
+    name: 'Alikhan Gubayev',
+    position: 'iOS Developer @ 1fit',
+    avatar: 'https://framerusercontent.com/images/2sSG4VoBlQEaePDvTvL05v78ILM.png?scale-down-to=512',
+    text: 'Если бы раньше был Mythic AI, я бы давно сделал подарок родителям. Истории получаются живые, с настоящей магией!',
   },
   {
-    name: 'Тимур',
-    handle: '@timur.pro',
-    avatar: 'https://avatar.iran.liara.run/public/boy?username=timur',
-    text: 'Очень удобный и понятный интерфейс. Буквально в несколько кликов получил готовую книгу. Качество на высоте, и веб-версия, и PDF выглядят отлично.',
+    name: 'Bahauddin Toleu',
+    position: 'Python Developer @ Surfaice',
+    avatar: 'https://framerusercontent.com/images/zCFUAudUGZqUahAAJ1dZIWiw.png?scale-down-to=1024',
+    text: 'Я пробовал разные генераторы, но только Mythic AI сделал книгу, которую не стыдно показать. Очень круто, что можно добавить свои фото!',
   },
   {
-    name: 'Диана',
-    handle: '@di.di',
-    avatar: 'https://avatar.iran.liara.run/public/girl?username=diana',
-    text: 'Это идеальный способ сохранить цифровые воспоминания. Гораздо круче, чем просто фотоальбом. История получилась очень живой, как будто заново все пережила.',
+    name: 'Alibek Seitov',
+    position: 'SWE @ Higgsfield AI',
+    avatar: 'https://framerusercontent.com/images/4HD8lzy7aVGnsg3UzYylfK66Os.png',
+    text: 'PDF и веб-версия книги от Mythic AI — просто топ! Всё стильно, удобно и реально вдохновляет. Спасибо за сервис!',
   },
   {
-    name: 'Санжар',
-    handle: '@sanzhar_b',
-    avatar: 'https://avatar.iran.liara.run/public/boy?username=sanzhar',
-    text: 'Поддержка на высоте! Были небольшие вопросы по процессу, ответили очень быстро и помогли. Сам продукт — 10/10. Обязательно воспользуюсь еще раз.',
+    name: 'Aimurzat Zhetkizgenov',
+    position: 'AI Engineer @ Surfaice',
+    avatar: 'https://framerusercontent.com/images/DYhF6sKoTH39Bu8GAN0zrb13U.png?scale-down-to=512',
+    text: 'Сделал книгу для девушки через Mythic AI — она была в восторге! Очень крутая идея для подарка и просто для себя.',
   },
 ];
 
@@ -47,14 +47,12 @@ export function Testimonials() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-gray-50 mb-4 tracking-tighter">
-            Что говорят наши клиенты
+            Что говорят о Mythic AI
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Отзывы от первых пользователей, которые уже превратили свои воспоминания в книгу.
+            Реальные отзывы пользователей, которые уже создали свою фэнтези-книгу с помощью Mythic AI.
           </p>
         </div>
-        
-        {/* Горизонтальный бесконечный скролл */}
         <div className="overflow-hidden w-full">
           <motion.div
             className="flex gap-8"
@@ -64,7 +62,7 @@ export function Testimonials() {
             {[...testimonials, ...testimonials].map((testimonial, index) => (
               <div
                 key={index}
-                className="min-w-[320px] p-8 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/80"
+                className="min-w-[320px] p-8 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800/80 flex flex-col"
               >
                 <div className="flex items-center gap-4 mb-4">
                   <img
@@ -77,11 +75,11 @@ export function Testimonials() {
                       {testimonial.name}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {testimonial.handle}
+                      {testimonial.position}
                     </p>
                   </div>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300">
+                <p className="text-gray-700 dark:text-gray-300 flex-1">
                   {testimonial.text}
                 </p>
               </div>
