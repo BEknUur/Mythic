@@ -250,16 +250,6 @@ export function BookReadyDialog({
                   </div>
                 </Button>
               )}
-
-              {hasHtmlFile && status?.format !== 'flipbook' && (
-                <Button onClick={() => setIsEditing(true)} variant="secondary" size="lg" className="h-16">
-                  <Pencil className="h-5 w-5 mr-2" />
-                  <div className="text-left">
-                    <div className="font-semibold">Редактировать</div>
-                    <div className="text-xs opacity-80">С помощью AI</div>
-                  </div>
-                </Button>
-              )}
             </div>
           </div>
 

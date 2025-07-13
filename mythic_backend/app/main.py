@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Загружаем переменные из .env файла
 
-from app.routers import edit
 from app.routers import auth
 from app.routers import user_router
 
@@ -42,9 +41,11 @@ from app.config import settings
 from app.services.apify_client import run_actor, fetch_run, fetch_items
 from app.services.downloader import download_photos
 from app.auth import clerk_auth
+import os
 
 log = logging.getLogger("api")
 app = FastAPI(title="Романтическая Летопись Любви", description="Создает красивые романтические книги на основе Instagram профилей для ваших любимых")
+
 
 app.add_middleware(NormalizePathMiddleware)
 app.add_middleware(
@@ -55,7 +56,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(edit.router)
 app.include_router(auth.router)
 app.include_router(user_router.router)
 
@@ -1753,92 +1753,3 @@ async def download_saved_book(
         filename=filename,
         media_type=media_type
     )
-
-@app.post("/ai/suggest")
-async def get_ai_suggestion(
-    request: AISuggestionRequest,
-    current_user: dict = Depends(get_current_user)
-):
-    """Получение AI предложения для выделенного текста"""
-    try:
-        import random, re
-
-        # Набор простых синонимов – расширяйте по необходимости
-        synonyms = {
-            "красивый": ["обаятельный", "прекрасный", "очаровательный"],
-            "интересный": ["захватывающий", "увлекательный", "увлекательнейший"],
-            "роман": ["повесть", "произведение"],
-            "книга": ["произведение", "творение"],
-            "сказка": ["повесть", "история"],
-            "слова": ["фразы", "выражения"],
-        }
-
-        selected_text = request.selected_text
-
-        # Ищем первое слово, для которого есть синонимы
-        tokens = re.findall(r"\w+", selected_text, flags=re.UNICODE)
-        for token in tokens:
-            lower = token.lower()
-            if lower in synonyms:
-                repl = random.choice(synonyms[lower])
-                suggestion = re.sub(rf"\b{token}\b", repl, selected_text, flags=re.IGNORECASE)
-                break
-        else:
-            # Если синоним не найден – просто добавляем эпитет
-            suggestion = selected_text + ", наполнены глубоким чувством"
-
-        return {"suggestion": suggestion}
-    except Exception as exc:
-        print(exc)
-        raise HTTPException(500, "AI error")
-
-@app.post("/books/update-content")
-async def update_book_content(
-    request: UpdateBookContentRequest,
-    current_user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """Обновление содержимого книги после принятия AI предложения"""
-    try:
-        book_or_run_id = request.book_or_run_id
-        updated_content = request.updated_content
-        clerk_user_id = current_user.get("sub")
-        
-        # Проверяем, это book_id или run_id
-        if len(book_or_run_id) == 36:  # UUID формат для book_id
-            # Обновляем сохраненную книгу в БД
-            book = await BookService.get_book_by_id(db, book_or_run_id, clerk_user_id)
-            if not book:
-                raise HTTPException(403, "Нет доступа к этой книге")
-            
-            # Обновляем HTML файл книги
-            book_path = Path("data") / "saved_books" / book_or_run_id / "book.html"
-        else:
-            # Обновляем временную книгу (run_id)
-            run_dir = Path("data") / book_or_run_id
-            if not run_dir.exists():
-                raise HTTPException(404, "Книга не найдена")
-            
-            # Проверяем права доступа
-            user_meta_file = run_dir / "user_meta.json"
-            if user_meta_file.exists():
-                user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
-                if user_meta.get("user_id") != clerk_user_id:
-                    raise HTTPException(403, "Нет доступа к этой книге")
-            
-            book_path = run_dir / "book.html"
-        
-        # Сохраняем обновленное содержимое
-        book_path.parent.mkdir(parents=True, exist_ok=True)
-        book_path.write_text(updated_content, encoding="utf-8")
-        
-        return {
-            "success": True,
-            "message": "Книга успешно обновлена"
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        log.error(f"Ошибка обновления книги: {e}")
-        raise HTTPException(500, f"Ошибка обновления книги: {e}")

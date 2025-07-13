@@ -31,6 +31,7 @@ class User(Base):
 
     email = Column(String, nullable=True)
     full_name = Column(String, nullable=True)
+   # has_seen_tour = Column(Boolean, default=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
