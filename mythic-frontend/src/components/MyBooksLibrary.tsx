@@ -56,7 +56,8 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
 
   const handleViewBook = async (book: UserBook) => {
     try {
-      onOpenBook(book.id, undefined);
+      // Открываем в новой вкладке через SPA роут
+      window.open(`/reader/${book.run_id}`, '_blank');
     } catch (err) {
       toast({
         title: "Ошибка",
@@ -67,7 +68,8 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
   };
 
   const handleFlipBook = (book: UserBook) => {
-    onOpenFlip(book.id, undefined);
+    // Открываем в новой вкладке через SPA роут
+    window.open(`/reader/${book.run_id}`, '_blank');
   };
 
   const handleDownloadBook = async (book: UserBook) => {

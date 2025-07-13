@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, Navigate, useParams } from 'react-router-dom'
 import { MainLayout } from './components/MainLayout'
 import { HomePage } from './components/HomePage'
 import { GeneratePage } from './components/GeneratePage'
@@ -7,6 +7,7 @@ import { ProgressTracker } from './components/ProgressTracker'
 import { MyBooksLibrary } from './components/MyBooksLibrary'
 import { BookReader } from './components/BookReader'
 import { FlipBookReader } from './components/FlipBookReader'
+import { BookViewer } from '@/components/BookViewer'
 import { TikTokPage } from './components/TikTokPage'
 import { FlipBookPage } from './components/FlipBookPage'
 import { HelpPage } from './components/HelpPage'
@@ -18,6 +19,17 @@ import './App.css'
 
 
 const SettingsPage = () => <div className="p-8"><h1>Настройки</h1><p>Скоро здесь можно будет настроить приложение.</p></div>;
+
+// Компонент для роута /reader/:id
+function BookViewerRoute() {
+  const { id } = useParams<{ id: string }>();
+  
+  if (!id) {
+    return <Navigate to="/library" />;
+  }
+
+  return <BookViewer bookId={id} />;
+}
 
 function AppContent() {
   const navigate = useNavigate();
@@ -153,6 +165,10 @@ function AppContent() {
               <Navigate to="/library" />
     )
   }
+        />
+        <Route
+          path="/reader/:id"
+          element={<BookViewerRoute />}
         />
         <Route
           path="/flipreader"

@@ -324,20 +324,14 @@ def download_file(run_id: str, filename: str, request: Request):
 
 @app.get("/view/{run_id}/book.html")
 def view_book_html(run_id: str, request: Request):
-    """Просмотр HTML книги - только для авторизованных пользователей"""
-    # Проверяем аутентификацию из любого источника
-    current_user = get_user_from_request(request)
-    if not current_user:
-        raise HTTPException(401, "Необходима авторизация для просмотра книги")
-    
+    """Просмотр HTML книги — теперь без авторизации"""
+    # --- ОТКЛЮЧЕНО: current_user = get_user_from_request(request)
+    # if not current_user:
+    #     raise HTTPException(401, "Необходима авторизация для просмотра книги")
     run_dir = Path("data") / run_id
     html_file = run_dir / "book.html"
-    
     if not html_file.exists():
         raise HTTPException(404, "Книга не найдена")
-    
-    log.info(f"Book view for run {run_id} by user {current_user.get('sub')}")
-    
     html_content = html_file.read_text(encoding="utf-8")
     return HTMLResponse(content=html_content)
 
@@ -1540,6 +1534,12 @@ async def run_full_build(run_id: str, book_format: str, user: dict):
     """
     run_dir = Path("data") / run_id
     images_dir = run_dir / "images"
+
+    # Если формат flipbook — удаляем старый book.html перед генерацией
+    if book_format == "flipbook":
+        book_html = run_dir / "book.html"
+        if book_html.exists():
+            book_html.unlink()
 
     # 1. Ждем завершения загрузки изображений (с таймаутом)
     try:

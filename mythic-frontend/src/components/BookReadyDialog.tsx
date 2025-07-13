@@ -82,12 +82,17 @@ export function BookReadyDialog({
 
   const openBookInNewTab = async () => {
     if (!runId) return;
-    
+
+    // Если flipbook — открываем прямую ссылку
+    if (status?.format === 'flipbook') {
+      window.open(`/view/${runId}/book.html`, '_blank');
+      return;
+    }
+
+    // Для обычной книги — старый способ
     try {
       const token = await getToken();
       const content = await api.getBookContent(runId, token || undefined);
-      
-      // Создаем новое окно с содержимым книги
       const newWindow = window.open('', '_blank');
       if (newWindow) {
         newWindow.document.write(content);
@@ -184,7 +189,16 @@ export function BookReadyDialog({
 
         <div className="space-y-6">
           <div className="relative border bg-white rounded-lg overflow-hidden h-[60vh]">
-            {isLoadingContent ? (
+            {status?.format === 'flipbook' ? (
+              <iframe
+                src={`/view/${runId}/book.html`}
+                width="100%"
+                height="100%"
+                style={{ border: 'none', minHeight: '100%', minWidth: '100%' }}
+                title="Flipbook Preview"
+                allowFullScreen
+              />
+            ) : isLoadingContent ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-2">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mx-auto"></div>
@@ -212,13 +226,20 @@ export function BookReadyDialog({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button onClick={openBookInNewTab} size="lg" className="h-16">
+              {/* Открыть в новой вкладке — теперь ведет на SPA роут */}
+              <a
+                href={`/reader/${runId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center h-16 px-6 rounded-lg bg-violet-600 text-white font-semibold text-lg hover:bg-violet-700 transition-colors justify-start"
+                style={{ textDecoration: 'none' }}
+              >
                 <ExternalLink className="h-5 w-5 mr-2" />
                 <div className="text-left">
                   <div className="font-semibold">Открыть в новой вкладке</div>
                   <div className="text-xs opacity-80">Полноэкранный режим</div>
                 </div>
-              </Button>
+              </a>
               {/* PDF download button removed for flipbook */}
               {status?.format !== 'flipbook' && (
                 <Button onClick={downloadBook} variant="outline" size="lg" className="h-16">
@@ -230,7 +251,7 @@ export function BookReadyDialog({
                 </Button>
               )}
 
-              {hasHtmlFile && (
+              {hasHtmlFile && status?.format !== 'flipbook' && (
                 <Button onClick={() => setIsEditing(true)} variant="secondary" size="lg" className="h-16">
                   <Pencil className="h-5 w-5 mr-2" />
                   <div className="text-left">

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ book_title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+      font-family: 'Crimson Text', serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .flip-book-container {
+      display: flex; justify-content: center; align-items: center;
+      width: 100vw; height: 100vh;
+      perspective: 2000px;
+      background: none;
+    }
+    #book {
+      box-shadow: 0 8px 40px rgba(34, 34, 34, 0.08);
+      border-radius: 18px;
+      background: none;
+    }
+    .page {
+      background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+      border-radius: 18px;
+      box-shadow: 0 2px 16px rgba(34, 34, 34, 0.07);
+      margin: 0 2px;
+      min-width: 480px; min-height: 600px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      position: relative;
+      padding: 48px 36px;
+    }
+    .cover-title {
+      font-size: 2.6em;
+      color: #2d3a4b;
+      font-weight: 700;
+      margin-bottom: 0.5em;
+      text-shadow: 0 2px 8px #e0eafc;
+    }
+    .cover-subtitle {
+      font-size: 1.2em;
+      color: #5c6e91;
+      margin-bottom: 2em;
+      font-style: italic;
+    }
+    .fantasy-ornament {
+      font-size: 2.5em;
+      color: #b2a4ff;
+      margin-bottom: 0.5em;
+    }
+    .toc-title, .chapter-title {
+      color: #2d3a4b;
+      font-weight: 700;
+      font-size: 2em;
+      margin-bottom: 0.5em;
+      text-align: center;
+    }
+    .chapter-body {
+      color: #3e4a5e;
+      font-size: 1.1em;
+      margin-bottom: 1em;
+      text-align: left;
+    }
+    .page-number {
+      position: absolute;
+      bottom: 24px;
+      right: 36px;
+      color: #2d3a4b;
+      font-size: 1.1em;
+      opacity: 0.7;
+    }
+    .footer-ornament {
+      position: absolute;
+      bottom: 24px;
+      left: 36px;
+      color: #b2a4ff;
+      font-size: 1.2em;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="flip-book-container">
+    <div id="book">
+      <!-- Обложка -->
+      <div class="page">
+        <div class="fantasy-ornament">✦</div>
+        <div class="cover-title">{{ book_title }}</div>
+        <div class="cover-subtitle">{{ book_subtitle }}</div>
+      </div>
+      <!-- Оглавление -->
+      <div class="page">
+        <div class="toc-title">{{ toc_title }}</div>
+        <ul style="list-style:none; padding:0;">
+          {% for page in pages %}
+          <li style="margin-bottom:0.7em; color:#5c6e91; font-size:1.1em;">Глава {{ loop.index }}: {{ page.title }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <!-- Главы -->
+      {% for page in pages %}
+      <div class="page">
+        {% if page.type == 'text' %}
+          <div class="chapter-title">Глава {{ loop.index // 2 + 1 }}: {{ page.title }}</div>
+          <div class="chapter-body">{{ page.text|safe }}</div>
+        {% elif page.type == 'image' %}
+          {% if page.image %}<img src="{{ page.image }}" style="max-width:90%;border-radius:12px;margin:1em 0;" />{% endif %}
+          {% if page.caption %}<div style="color:#6a4caf;font-style:italic;margin-top:0.5em;">{{ page.caption }}</div>{% endif %}
+        {% endif %}
+        <div class="page-number">{{ loop.index + 2 }}</div>
+        <div class="footer-ornament">✦</div>
+      </div>
+      {% endfor %}
+      <!-- Благодарности -->
+      <div class="page">
+        <div class="chapter-title">{{ gratitude_title }}</div>
+        <div class="chapter-body" style="text-align:center;">Спасибо за участие в этой саге!<br>С уважением, Mythic</div>
+        <div class="page-number">{{ pages|length + 3 }}</div>
+        <div class="footer-ornament">✦</div>
+      </div>
+    </div>
+  </div>
+  <script src="https://unpkg.com/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script>
+    function initializeBook() {
+      const book = document.getElementById('book');
+      if (!book) return;
+      if (typeof StPageFlip === 'undefined') { setTimeout(initializeBook, 100); return; }
+      const pageFlip = new StPageFlip.PageFlip(book, {
+        width: 480,
+        height: 600,
+        showCover: true,
+        mobileScrollSupport: true,
+        flippingTime: 900,
+        usePortrait: true
+      });
+      pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeBook);
+    } else {
+      initializeBook();
+    }
+  </script>
+</body>
+</html> 

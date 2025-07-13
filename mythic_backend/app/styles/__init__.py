@@ -26,16 +26,20 @@ async def build_book(style: str, run_id: str, images: list, comments: list, book
     # Для flipbook отдельная логика, не зависящая от стиля
     if book_format == 'flipbook':
         try:
-            # Обновленные импорты для нового пайплайна
             from app.services.flipbook_builder import generate_flipbook_data, build_flipbook_html
             
             # 1. Асинхронно получаем структурированные данные от LLM
             flipbook_data = await generate_flipbook_data(run_id, images)
 
+            # Читаем стиль из файла (гарантированно актуальный)
+            from pathlib import Path
+            style_file = Path('data') / run_id / 'style.txt'
+            style_from_file = style_file.read_text(encoding='utf-8').strip() if style_file.exists() else style
+
             # 2. Если данные получены, собираем HTML
             if flipbook_data:
-                build_flipbook_html(run_id, flipbook_data)
-                print(f"✅ Flipbook для стиля '{style}' успешно сгенерирован.")
+                build_flipbook_html(run_id, flipbook_data, style_from_file)
+                print(f"✅ Flipbook для стиля '{style_from_file}' успешно сгенерирован.")
             else:
                 print("❌ Не удалось сгенерировать данные для flipbook, сборка HTML пропущена.")
 

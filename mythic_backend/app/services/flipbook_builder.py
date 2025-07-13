@@ -162,7 +162,8 @@ async def generate_flipbook_data(run_id: str, image_paths: list[str]) -> dict:
 def build_flipbook_html(run_id: str, data: dict, style: str = 'romantic'):
     """
     Рендерит HTML-флипбук на основе готовых данных (пролог и страницы).
-    Теперь поддерживает динамические заголовки и подзаголовки по стилю книги.
+    Теперь поддерживает динамические шаблоны по стилю книги.
+    Для каждой главы делаем две страницы: текст отдельно, фото отдельно (как было раньше).
     """
     if not data or "pages" not in data:
         print("️️⚠️ Нет данных для сборки HTML флипбука.")
@@ -175,26 +176,56 @@ def build_flipbook_html(run_id: str, data: dict, style: str = 'romantic'):
         toc_title = "Путеводитель"
         intro_title = "Вступление"
         gratitude_title = "Благодарности"
+        tpl_name = 'flipbook_fantasy.html'
     elif style == 'humor':
         book_title = "Весёлая История"
         book_subtitle = "Создано с улыбкой"
         toc_title = "Оглавление"
         intro_title = "Вступление"
         gratitude_title = "Благодарности"
-    else:
+        tpl_name = 'flipbook_humor.html'
+    elif style == 'romantic':
         book_title = "Романтическая История"
         book_subtitle = "Создано с любовью"
         toc_title = "Содержание"
         intro_title = "Введение"
         gratitude_title = "Благодарности"
+        tpl_name = 'flipbook_romantic.html'
+    else:
+        # fallback — старый шаблон
+        book_title = "История"
+        book_subtitle = "Книга в стиле flipbook"
+        toc_title = "Содержание"
+        intro_title = "Введение"
+        gratitude_title = "Благодарности"
+        tpl_name = 'flipbook_template.html'
 
-    tpl = env.get_template('flipbook_template.html')
-    
-    # Прокидываем данные в шаблон
+    # --- ВОТ ГЛАВНОЕ: преобразуем pages ---
+    orig_pages = data.get("pages", [])
+    split_pages = []
+    for page in orig_pages:
+        # 1. Страница только с текстом
+        split_pages.append({
+            "title": page.get("title", ""),
+            "text": page.get("text", ""),
+            "image": None,
+            "caption": None,
+            "type": "text"
+        })
+        # 2. Страница только с фото и подписью
+        split_pages.append({
+            "title": page.get("title", ""),
+            "text": None,
+            "image": page.get("image", None),
+            "caption": page.get("caption", None),
+            "type": "image"
+        })
+
+    tpl = env.get_template(tpl_name)
     html = tpl.render(
         run_id=run_id,
         prologue=data.get("prologue", ""),
-        pages=data.get("pages", []),
+        pages=split_pages,
         book_title=book_title,
         book_subtitle=book_subtitle,
         toc_title=toc_title,
@@ -202,7 +233,6 @@ def build_flipbook_html(run_id: str, data: dict, style: str = 'romantic'):
         gratitude_title=gratitude_title,
         style=style
     )
-    
     out = Path('data') / run_id / 'book.html'
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding='utf-8')
