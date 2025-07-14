@@ -1,0 +1,17 @@
+{
+  "nav_home": "Home",
+  "nav_generate": "Create Book",
+  "nav_library": "My Books",
+  "nav_help": "Help",
+  "nav_faq": "FAQ",
+  "nav_support": "Support",
+  "nav_follow": "Follow Us",
+
+  "hero_title": "Turn Your Digital Memories Into <1>Timeless Stories</1>",
+  "hero_subtitle": "Mythic AI analyzes your Instagram profile to generate a unique, beautifully-crafted book based on your photos and experiences.",
+  "hero_cta": "Start Creating",
+  
+  "lang_switcher_en": "English",
+  "lang_switcher_ru": "Russian",
+  "lang_switcher_kz": "Kazakh"
+} 
