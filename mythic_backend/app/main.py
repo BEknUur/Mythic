@@ -50,7 +50,7 @@ app = FastAPI(title="Романтическая Летопись Любви", de
 app.add_middleware(NormalizePathMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "http://localhost:5173"],
+    allow_origins=["*", "http://localhost:5173","https://mythicai.me","https://www.mythicai.me"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
