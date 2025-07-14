@@ -1539,23 +1539,31 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 </div>
 
 <!-- Chapter Pages -->
-{"".join([f'''
-<div id="chapter-{config['key']}" class="book-page chapter-page">
-    <h3 class="chapter-subtitle">Chapter {i+1}</h3>
-    <h2 class="chapter-main-title">{config['title']}</h2>
-    
-    {(f"""
-    <div class="chapter-image-container">
-        <img src="{selected_photo_data[i]['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
-        <p class="chapter-image-caption">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
-    </div>
-    """) if i < len(selected_photo_data) else ""}
-
-    <div class="chapter-body">
-        {chapters.get(config['key'], '<p>Эта глава скоро наполнится словами восхищения...</p>')}
-    </div>
-</div>
-''' for i, config in enumerate(chapter_configs)])}
+chapter_html_list = []
+for i, config in enumerate(chapter_configs):
+    if i < len(selected_photo_data):
+        image_block = (
+            f'<div class="chapter-image-container">'
+            f'<img src="{selected_photo_data[i]["image"]}" alt="Photo for Chapter {i+1}" class="chapter-image">'
+            f'<p class="chapter-image-caption">'
+            f'{selected_photo_data[i]["analysis"][:80] + "..." if len(selected_photo_data[i]["analysis"]) > 80 else selected_photo_data[i]["analysis"]}'
+            f'</p></div>'
+        )
+    else:
+        image_block = ""
+    chapter_html_list.append(
+        f'''
+        <div id="chapter-{config['key']}" class="book-page chapter-page">
+            <h3 class="chapter-subtitle">Chapter {i+1}</h3>
+            <h2 class="chapter-main-title">{config['title']}</h2>
+            {image_block}
+            <div class="chapter-body">
+                {chapters.get(config['key'], '<p>Эта глава скоро наполнится словами восхищения...</p>')}
+            </div>
+        </div>
+        '''
+    )
+chapters_html = "".join(chapter_html_list)
 
 <!-- Final Page -->
 <div class="book-page final-page">
@@ -2347,21 +2355,7 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
     </ul>
 </div>
 <!-- Chapter Pages -->
-{"".join([f'''
-<div id="chapter-{config['key']}" class="book-page chapter-page">
-    <h3 class="chapter-subtitle">Глава {i+1}</h3>
-    <h2 class="chapter-main-title">{config['title']}</h2>
-    {(f"""
-    <div class=\"chapter-image-container\">
-        <img src=\"{selected_photo_data[i]['image']}\" alt=\"Photo for Chapter {i+1}\" class=\"chapter-image\">
-        <p class=\"chapter-image-caption\">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
-    </div>
-    """ if i < len(selected_photo_data) else "")}
-    <div class="chapter-body">
-        {chapters.get(config['key'], f'<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>')}
-    </div>
-</div>
-''' for i, config in enumerate(chapter_configs)])}
+{chapters_html}
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
