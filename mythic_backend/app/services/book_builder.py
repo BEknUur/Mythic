@@ -2119,7 +2119,7 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
         chapters = {c['key']: '' for c in chapter_configs}
         final_page_content = "Пусть твоя сага будет вечной, а имя — вписано в Книгу Героев!"
         book_title = f"Хроники {full_name}"
-    html = f"""<!DOCTYPE html>
+    html = """<!DOCTYPE html>
 <html lang=\"ru\">
 <head>
     <meta charset=\"UTF-8\">
