@@ -1239,7 +1239,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     book_title = random.choice(book_titles)
     
     # HTML в стиле личного подарка
-    html = f"""<!DOCTYPE html>
+    html = """<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
