@@ -2858,7 +2858,7 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
     </ul>
 </div>
 <!-- Chapter Pages -->
-{''.join(['''
+{''.join([f'''
 <div id="chapter-{config['key']}" class="book-page chapter-page">
     <h3 class="chapter-subtitle">{config['title']}</h3>
     <h2 class="chapter-main-title">{config['title']}</h2>
