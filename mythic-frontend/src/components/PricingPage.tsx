@@ -9,9 +9,10 @@ const tiers = [
     name: 'Бесплатно',
     price: '$0',
     frequency: 'навсегда',
-    description: 'Попробуйте магию Mythic AI и создайте свою первую книгу абсолютно бесплатно.',
+    description: 'Две бесплатные генерации: одна Classic и одна Flipbook. Дальнейшие генерации — платные.',
     features: [
-      '1 бесплатная генерация книги',
+      '1 бесплатная генерация Classic',
+      '1 бесплатная генерация Flipbook',
       'Веб-версия книги',
       'Возможность скачать PDF',
       'Стандартная поддержка',
@@ -57,6 +58,12 @@ export function PricingPage() {
           </div>
 
           <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Инфоблок теперь первый элемент сетки */}
+            <div className="col-span-1 lg:col-span-2 flex justify-center mb-4">
+              <div className="bg-purple-50 border border-purple-200 rounded-xl px-6 py-4 text-center max-w-xl w-full text-purple-900 text-base font-medium">
+                После бесплатных генераций каждая новая генерация книги (Classic или Flipbook) стоит <span className="font-bold">$0.99</span>.
+              </div>
+            </div>
             {tiers.map((tier) => (
               <div
                 key={tier.name}
