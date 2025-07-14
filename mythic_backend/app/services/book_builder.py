@@ -2875,13 +2875,13 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
-        <p>Спасибо, что дочитали до конца! Не забывайте улыбаться и делиться хорошим настроением с окружающими. 😄</p>
+        <p>{final_page_content.replace('\\n', '<br>')}</p>
     </div>
     <div class="final-ornament">
         ✦
     </div>
     <div class="final-signature">
-        <p>Создано с улыбкой в Mythic</p>
+        <p>Пусть твоя история вдохновляет других.</p>
     </div>
 </div>
 </body>
