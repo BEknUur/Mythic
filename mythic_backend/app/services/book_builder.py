@@ -1554,27 +1554,28 @@ for i, config in enumerate(chapter_configs):
     chapter_html_list.append(
         f'''
         <div id="chapter-{config['key']}" class="book-page chapter-page">
-            <h3 class="chapter-subtitle">Chapter {i+1}</h3>
+            <h3 class="chapter-subtitle">{config['title']}</h3>
             <h2 class="chapter-main-title">{config['title']}</h2>
             {image_block}
             <div class="chapter-body">
-                {chapters.get(config['key'], '<p>Эта глава скоро наполнится словами восхищения...</p>')}
+                {chapters.get(config['key'], f'<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>')}
             </div>
         </div>
         '''
     )
 chapters_html = "".join(chapter_html_list)
+final_page_content_html = final_page_content.replace('\n', '<br>')
 
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
-        <p>{final_page_content.replace('\\n', '<br>')}</p>
+        <p>{final_page_content_html}</p>
     </div>
     <div class="final-ornament">
-        ❦
+        ✦
     </div>
     <div class="final-signature">
-        <p>Помни, что каждый человек достоин любви.</p>
+        <p>Пусть твоя история вдохновляет других.</p>
     </div>
 </div>
 
@@ -2359,7 +2360,7 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
-        <p>{final_page_content.replace('\\n', '<br>')}</p>
+        <p>{final_page_content_html}</p>
     </div>
     <div class="final-ornament">
         ✦
@@ -2861,7 +2862,7 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
 <div id="chapter-{config['key']}" class="book-page chapter-page">
     <h3 class="chapter-subtitle">{config['title']}</h3>
     <h2 class="chapter-main-title">{config['title']}</h2>
-    {(f"""
+    {("""
     <div class=\"chapter-image-container\">
         <img src=\"{selected_photo_data[i]['image']}\" alt=\"Photo for Chapter {i+1}\" class=\"chapter-image\">
         <p class=\"chapter-image-caption\">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
@@ -2875,7 +2876,7 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
-        <p>{final_page_content.replace('\\n', '<br>')}</p>
+         <p>Спасибо, что дочитали до конца! Не забывайте улыбаться и делиться хорошим настроением с окружающими. 😄</p>
     </div>
     <div class="final-ornament">
         ✦
