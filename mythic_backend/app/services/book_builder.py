@@ -2853,7 +2853,7 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
                 <span class="leader"></span>
                 <a href="#chapter-{config['key']}" class="page-ref"></a>
             </li>
-        ''' for config in chapter_configs])}
+        ''' for i, config in enumerate(chapter_configs)])}
     </ul>
 </div>
 <!-- Chapter Pages -->
