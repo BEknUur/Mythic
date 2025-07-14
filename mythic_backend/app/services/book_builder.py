@@ -2862,17 +2862,22 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
 <div id="chapter-{config['key']}" class="book-page chapter-page">
     <h3 class="chapter-subtitle">{config['title']}</h3>
     <h2 class="chapter-main-title">{config['title']}</h2>
-    {("""
-    <div class=\"chapter-image-container\">
-        <img src=\"{selected_photo_data[i]['image']}\" alt=\"Photo for Chapter {i+1}\" class=\"chapter-image\">
-        <p class=\"chapter-image-caption\">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
-    </div>
-    """ if i < len(selected_photo_data) else "")}
+    {(
+        f"""
+        <div class="chapter-image-container">
+            <img src="{selected_photo_data[i]['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
+            <p class="chapter-image-caption">
+                {selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}
+            </p>
+        </div>
+        """ if i < len(selected_photo_data) else ""
+    )}
     <div class="chapter-body">
-        {chapters.get(config['key'], f'<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>')}
+        {chapters.get(config['key'], f"<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>")}
     </div>
 </div>
 ''' for i, config in enumerate(chapter_configs)])}
+
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
@@ -2886,7 +2891,8 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
     </div>
 </div>
 </body>
-</html>"""
+</html>
+"""
     return html
 
 
