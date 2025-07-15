@@ -2366,6 +2366,10 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
 
     # Генерируем главы отдельно, чтобы избежать проблем с вложенными f-строками
     for i, config in enumerate(chapter_configs):
+        # Получаем данные безопасно
+        chapter_key = config['key']
+        chapter_title = config['title']
+        
         # Генерируем HTML для изображения
         image_html = ""
         if i < len(selected_photo_data):
@@ -2374,23 +2378,25 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
             if len(analysis_text) > 80:
                 analysis_text = analysis_text[:80] + '...'
             
-            image_html = f'''
+            image_html = f"""
     <div class="chapter-image-container">
         <img src="{photo_data['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
         <p class="chapter-image-caption">{analysis_text}</p>
-    </div>'''
+    </div>"""
+
+        # Получаем контент главы
+        chapter_content = chapters.get(chapter_key, f'<p>{chapter_title} о {full_name} — это всегда повод для улыбки!</p>')
 
         # Добавляем главу к HTML
-        html += f'''
-<div id="chapter-{config['key']}" class="book-page chapter-page">
+        html += f"""
+<div id="chapter-{chapter_key}" class="book-page chapter-page">
     <h3 class="chapter-subtitle">Глава {i+1}</h3>
-    <h2 class="chapter-main-title">{config['title']}</h2>
+    <h2 class="chapter-main-title">{chapter_title}</h2>
     {image_html}
     <div class="chapter-body">
-        {chapters.get(config['key'], f'<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>')}
+        {chapter_content}
     </div>
-</div>'''
-
+</div>"""
     # Добавляем финальную страницу
     html += f'''
 <!-- Final Page -->
