@@ -2124,15 +2124,18 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
         chapters = {c['key']: '' for c in chapter_configs}
         final_page_content = "Пусть твоя сага будет вечной, а имя — вписано в Книгу Героев!"
         book_title = f"Хроники {full_name}"
+   # ЗАМЕНИТЕ ВСЮ ЧАСТЬ ГЕНЕРАЦИИ HTML НА ЭТУ:
+
+    # HTML в стиле фэнтези
     html = f"""<!DOCTYPE html>
-<html lang=\"ru\">
+<html lang="ru">
 <head>
-    <meta charset=\"UTF-8\">
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{book_title}</title>
-    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">
-    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>
-    <link href=\"https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap\" rel=\"stylesheet\">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
     :root {{
         --accent-color: #222;
@@ -2359,26 +2362,41 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
         ''' for i, config in enumerate(chapter_configs)])}
     </ul>
 </div>
-<!-- Chapter Pages -->
-{"".join([f'''
+<!-- Chapter Pages -->"""
+
+    # Генерируем главы отдельно, чтобы избежать проблем с вложенными f-строками
+    for i, config in enumerate(chapter_configs):
+        # Генерируем HTML для изображения
+        image_html = ""
+        if i < len(selected_photo_data):
+            photo_data = selected_photo_data[i]
+            analysis_text = photo_data['analysis']
+            if len(analysis_text) > 80:
+                analysis_text = analysis_text[:80] + '...'
+            
+            image_html = f'''
+    <div class="chapter-image-container">
+        <img src="{photo_data['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
+        <p class="chapter-image-caption">{analysis_text}</p>
+    </div>'''
+
+        # Добавляем главу к HTML
+        html += f'''
 <div id="chapter-{config['key']}" class="book-page chapter-page">
     <h3 class="chapter-subtitle">Глава {i+1}</h3>
     <h2 class="chapter-main-title">{config['title']}</h2>
-    {(f"""
-    <div class=\"chapter-image-container\">
-        <img src=\"{selected_photo_data[i]['image']}\" alt=\"Photo for Chapter {i+1}\" class=\"chapter-image\">
-        <p class=\"chapter-image-caption\">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
-    </div>
-    """ if i < len(selected_photo_data) else "")}
+    {image_html}
     <div class="chapter-body">
         {chapters.get(config['key'], f'<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>')}
     </div>
-</div>
-''' for i, config in enumerate(chapter_configs)])}
+</div>'''
+
+    # Добавляем финальную страницу
+    html += f'''
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
-        <p>{final_page_content.replace('\\n', '<br>')}</p>
+        <p>{final_page_content.replace(chr(10), '<br>')}</p>
     </div>
     <div class="final-ornament">
         ✦
@@ -2388,7 +2406,8 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
     </div>
 </div>
 </body>
-</html>"""
+</html>'''
+    
     return html
 
 def build_humor_book(run_id: str, images: list[Path], texts: str, book_format: str = "classic", user_id: str = None):
