@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+console.log('API будет идти на:', BASE_URL); 
 
 
 
