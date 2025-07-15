@@ -6,6 +6,7 @@
     WORKDIR /app
     
     COPY package*.json ./
+    COPY .env.production . 
     RUN npm ci
     
     COPY . .
