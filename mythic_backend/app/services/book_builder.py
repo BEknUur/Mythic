@@ -1542,15 +1542,24 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 chapter_html_list = []
 for i, config in enumerate(chapter_configs):
     if i < len(selected_photo_data):
+        # Извлекаем данные фото в отдельные переменные
+        photo_image = selected_photo_data[i]["image"]
+        photo_analysis = selected_photo_data[i]["analysis"]
+        truncated_analysis = photo_analysis[:80] + "..." if len(photo_analysis) > 80 else photo_analysis
+        
         image_block = (
             f'<div class="chapter-image-container">'
-            f'<img src="{selected_photo_data[i]["image"]}" alt="Photo for Chapter {i+1}" class="chapter-image">'
+            f'<img src="{photo_image}" alt="Photo for Chapter {i+1}" class="chapter-image">'
             f'<p class="chapter-image-caption">'
-            f'{selected_photo_data[i]["analysis"][:80] + "..." if len(selected_photo_data[i]["analysis"]) > 80 else selected_photo_data[i]["analysis"]}'
+            f'{truncated_analysis}'
             f'</p></div>'
         )
     else:
         image_block = ""
+    
+    # Подготавливаем fallback текст для главы
+    fallback_text = f'<p>{config["title"]} о {full_name} — это всегда повод для улыбки!</p>'
+    
     chapter_html_list.append(
         f'''
         <div id="chapter-{config['key']}" class="book-page chapter-page">
@@ -1558,7 +1567,7 @@ for i, config in enumerate(chapter_configs):
             <h2 class="chapter-main-title">{config['title']}</h2>
             {image_block}
             <div class="chapter-body">
-                {chapters.get(config['key'], f'<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>')}
+                {chapters.get(config['key'], fallback_text)}
             </div>
         </div>
         '''
@@ -2656,16 +2665,24 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
     for i, config in enumerate(chapter_configs):
         if i < len(selected_photo_data):
             photo = selected_photo_data[i]
+            # Извлекаем данные фото в отдельные переменные
+            photo_image = photo['image']
+            photo_analysis = photo['analysis']
+            truncated_analysis = photo_analysis[:80] + '...' if len(photo_analysis) > 80 else photo_analysis
+            
             image_block = f"""
             <div class="chapter-image-container">
-                <img src="{photo['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
+                <img src="{photo_image}" alt="Photo for Chapter {i+1}" class="chapter-image">
                 <p class="chapter-image-caption">
-                    {photo['analysis'][:80] + '...' if len(photo['analysis']) > 80 else photo['analysis']}
+                    {truncated_analysis}
                 </p>
             </div>
             """
         else:
             image_block = ""
+
+        # Подготавливаем fallback текст для главы
+        fallback_text = f"<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>"
 
         chapter_html = f"""
         <div id="chapter-{config['key']}" class="book-page chapter-page">
@@ -2673,7 +2690,7 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
             <h2 class="chapter-main-title">{config['title']}</h2>
             {image_block}
             <div class="chapter-body">
-                {chapters.get(config['key'], f"<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>")}
+                {chapters.get(config['key'], fallback_text)}
             </div>
         </div>
         """
