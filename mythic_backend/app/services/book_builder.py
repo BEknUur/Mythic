@@ -1239,6 +1239,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     book_title = random.choice(book_titles)
     
     # HTML в стиле личного подарка
+  # HTML в стиле личного подарка
     html = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1544,12 +1545,12 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     <h3 class="chapter-subtitle">Chapter {i+1}</h3>
     <h2 class="chapter-main-title">{config['title']}</h2>
     
-    {(f"""
+    {f"""
     <div class="chapter-image-container">
         <img src="{selected_photo_data[i]['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
         <p class="chapter-image-caption">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
     </div>
-    """) if i < len(selected_photo_data) else ""}
+    """ if i < len(selected_photo_data) else ""}
 
     <div class="chapter-body">
         {chapters.get(config['key'], '<p>Эта глава скоро наполнится словами восхищения...</p>')}
@@ -1560,7 +1561,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
-        <p>{final_page_content.replace('\\n', '<br>')}</p>
+        <p>{final_page_content.replace(chr(10), '<br>')}</p>
     </div>
     <div class="final-ornament">
         ❦
