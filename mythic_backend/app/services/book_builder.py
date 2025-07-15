@@ -1239,7 +1239,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     book_title = random.choice(book_titles)
     
     # HTML в стиле личного подарка
-    html = """<!DOCTYPE html>
+    html = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -1539,52 +1539,34 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 </div>
 
 <!-- Chapter Pages -->
-chapter_html_list = []
-for i, config in enumerate(chapter_configs):
-    if i < len(selected_photo_data):
-        # Извлекаем данные фото в отдельные переменные
-        photo_image = selected_photo_data[i]["image"]
-        photo_analysis = selected_photo_data[i]["analysis"]
-        truncated_analysis = photo_analysis[:80] + "..." if len(photo_analysis) > 80 else photo_analysis
-        
-        image_block = (
-            f'<div class="chapter-image-container">'
-            f'<img src="{photo_image}" alt="Photo for Chapter {i+1}" class="chapter-image">'
-            f'<p class="chapter-image-caption">'
-            f'{truncated_analysis}'
-            f'</p></div>'
-        )
-    else:
-        image_block = ""
+{"".join([f'''
+<div id="chapter-{config['key']}" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Chapter {i+1}</h3>
+    <h2 class="chapter-main-title">{config['title']}</h2>
     
-    # Подготавливаем fallback текст для главы
-    fallback_text = f'<p>{config["title"]} о {full_name} — это всегда повод для улыбки!</p>'
-    
-    chapter_html_list.append(
-        f'''
-        <div id="chapter-{config['key']}" class="book-page chapter-page">
-            <h3 class="chapter-subtitle">{config['title']}</h3>
-            <h2 class="chapter-main-title">{config['title']}</h2>
-            {image_block}
-            <div class="chapter-body">
-                {chapters.get(config['key'], fallback_text)}
-            </div>
-        </div>
-        '''
-    )
-chapters_html = "".join(chapter_html_list)
-final_page_content_html = final_page_content.replace('\n', '<br>')
+    {(f"""
+    <div class="chapter-image-container">
+        <img src="{selected_photo_data[i]['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
+        <p class="chapter-image-caption">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
+    </div>
+    """) if i < len(selected_photo_data) else ""}
+
+    <div class="chapter-body">
+        {chapters.get(config['key'], '<p>Эта глава скоро наполнится словами восхищения...</p>')}
+    </div>
+</div>
+''' for i, config in enumerate(chapter_configs)])}
 
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
-        <p>{final_page_content_html}</p>
+        <p>{final_page_content.replace('\\n', '<br>')}</p>
     </div>
     <div class="final-ornament">
-        ✦
+        ❦
     </div>
     <div class="final-signature">
-        <p>Пусть твоя история вдохновляет других.</p>
+        <p>Помни, что каждый человек достоин любви.</p>
     </div>
 </div>
 
@@ -2129,7 +2111,7 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
         chapters = {c['key']: '' for c in chapter_configs}
         final_page_content = "Пусть твоя сага будет вечной, а имя — вписано в Книгу Героев!"
         book_title = f"Хроники {full_name}"
-    html = """<!DOCTYPE html>
+    html = f"""<!DOCTYPE html>
 <html lang=\"ru\">
 <head>
     <meta charset=\"UTF-8\">
@@ -2365,11 +2347,25 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
     </ul>
 </div>
 <!-- Chapter Pages -->
-{chapters_html}
+{"".join([f'''
+<div id="chapter-{config['key']}" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">Глава {i+1}</h3>
+    <h2 class="chapter-main-title">{config['title']}</h2>
+    {(f"""
+    <div class=\"chapter-image-container\">
+        <img src=\"{selected_photo_data[i]['image']}\" alt=\"Photo for Chapter {i+1}\" class=\"chapter-image\">
+        <p class=\"chapter-image-caption\">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
+    </div>
+    """ if i < len(selected_photo_data) else "")}
+    <div class="chapter-body">
+        {chapters.get(config['key'], f'<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>')}
+    </div>
+</div>
+''' for i, config in enumerate(chapter_configs)])}
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
-        <p>{final_page_content_html}</p>
+        <p>{final_page_content.replace('\\n', '<br>')}</p>
     </div>
     <div class="final-ornament">
         ✦
@@ -2538,12 +2534,10 @@ def build_humor_book(run_id: str, images: list[Path], texts: str, book_format: s
         except Exception as final_error:
             print(f"Критическая ошибка: {final_error}")
 
-def create_classic_humor_book_html(content: dict, analysis: dict, images: list) -> str:
+def create_classic_humor_book_html(content: dict, analysis: dict, images: list[Path]) -> str:
     """Создает HTML классической юмористической книги с 10 главами и эпилогом"""
     import random
-    from pathlib import Path
     from app.services.llm_client import generate_memoir_chapter, strip_cliches
-
     full_name = analysis.get('full_name', analysis.get('username', 'герой комедии'))
     username = analysis.get('username', 'comedian')
     followers = analysis.get('followers', 0)
@@ -2552,11 +2546,9 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
     post_details = analysis.get('post_details', [])
     real_captions = [p.get('caption', '') for p in post_details[:5] if p.get('caption')]
     locations = [p.get('location', '') for p in post_details[:3] if p.get('location')]
-
     processed_images = []
     selected_photo_data = []
     detected_gender = "unknown"
-
     if images:
         total_images = len(images)
         if total_images >= 10:
@@ -2572,15 +2564,13 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
             for _ in range(10):
                 random_idx = random.randint(0, total_images - 1)
                 selected_indices.append(random_idx)
-
         for i, idx in enumerate(selected_indices):
             img_path = images[idx]
-            if isinstance(img_path, Path) and img_path.exists():
+            if img_path.exists():
                 try:
                     from PIL import Image, ImageEnhance
                     from io import BytesIO
                     import base64
-
                     with Image.open(img_path) as img:
                         if img.mode != 'RGB':
                             img = img.convert('RGB')
@@ -2593,9 +2583,7 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
                         buffer = BytesIO()
                         img.save(buffer, format='JPEG', quality=90)
                         img_str = base64.b64encode(buffer.getvalue()).decode()
-
                         processed_images.append(f"data:image/jpeg;base64,{img_str}")
-
                         fallback_descriptions = [
                             "На этом фото ты выглядишь как победитель конкурса на самую смешную улыбку!",
                             "Взгляд, который может рассмешить даже будильник.",
@@ -2608,7 +2596,6 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
                             "В кадре — генератор хорошего настроения.",
                             "Тот самый момент, когда все смеются!"
                         ]
-
                         selected_photo_data.append({
                             'index': idx + 1,
                             'analysis': fallback_descriptions[i % len(fallback_descriptions)],
@@ -2616,18 +2603,15 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
                         })
                 except Exception as e:
                     print(f"❌ Ошибка обработки изображения {img_path}: {e}")
-
     def get_safe_photo_analysis(index: int, fallback_text: str) -> str:
         if not selected_photo_data:
             return fallback_text
         safe_index = index % len(selected_photo_data)
         return selected_photo_data[safe_index]['analysis']
-
     context_data = {
         'full_name': full_name,
         'username': username
     }
-
     chapter_configs = [
         {'key': 'meeting', 'title': 'Пролог: Первая встреча', 'prompt': f"""Ты стендап-комик. Выходишь на сцену и начинаешь разгон про {full_name}. Начни дерзко: 'Знаете, есть такие люди, которые...' Добавь абсурдные сравнения, неожиданные панчи, обращайся к залу. Не упоминай, что это книга. Пиши как будто ты на сцене и рвёшь зал. Используй дерзкий стиль, неожиданные повороты, панчи на панчах. НИКОГДА не пиши романтично!"""},
         {'key': 'first_impression', 'title': 'Глава первая: Первое впечатление', 'prompt': f"""Пошути про первое знакомство с {full_name}. Дерзко, с панчами. Придумай абсурдные сравнения типа 'она выглядела как...', добавь неожиданные повороты, разгони тему как настоящий комик. Пиши как будто ты на сцене и рвёшь зал. Не бойся абсурда и дерзости. НИКОГДА не пиши романтично!"""},
@@ -2641,7 +2625,6 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
         {'key': 'funny_final', 'title': 'Глава девятая: Финальный аккорд', 'prompt': f"""Финальный аккорд: пошути, что если бы {full_name} был(а) супергероем, его/её сила — заставлять людей смеяться даже в пробке. Заверши монологом с дерзкими панчами. НИКОГДА не пиши романтично!"""},
         {'key': 'gratitude_wishes', 'title': 'Эпилог: Благодарность и пожелания', 'prompt': f"""Поблагодари зал дерзко, пошути напоследок, пожелай всем хорошего настроения. Не упоминай, что это книга — только сцена, только смех! Заверши как настоящий стендап-номер. НИКОГДА не пиши романтично!"""},
     ]
-
     chapters = {}
     for i, config in enumerate(chapter_configs):
         try:
@@ -2657,56 +2640,203 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
         except Exception as e:
             print(f"❌ Ошибка генерации главы '{config['title']}': {e}")
             chapters[config['key']] = f"{config['title']} о {full_name} — это всегда повод для улыбки!"
-
     book_title = f"Весёлые истории о {full_name}"
-
-    # Создаём HTML для глав (исправленный блок!)
-    chapter_pages_html = ""
-    for i, config in enumerate(chapter_configs):
-        if i < len(selected_photo_data):
-            photo = selected_photo_data[i]
-            # Извлекаем данные фото в отдельные переменные
-            photo_image = photo['image']
-            photo_analysis = photo['analysis']
-            truncated_analysis = photo_analysis[:80] + '...' if len(photo_analysis) > 80 else photo_analysis
-            
-            image_block = f"""
-            <div class="chapter-image-container">
-                <img src="{photo_image}" alt="Photo for Chapter {i+1}" class="chapter-image">
-                <p class="chapter-image-caption">
-                    {truncated_analysis}
-                </p>
-            </div>
-            """
-        else:
-            image_block = ""
-
-        # Подготавливаем fallback текст для главы
-        fallback_text = f"<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>"
-
-        chapter_html = f"""
-        <div id="chapter-{config['key']}" class="book-page chapter-page">
-            <h3 class="chapter-subtitle">{config['title']}</h3>
-            <h2 class="chapter-main-title">{config['title']}</h2>
-            {image_block}
-            <div class="chapter-body">
-                {chapters.get(config['key'], fallback_text)}
-            </div>
-        </div>
-        """
-        chapter_pages_html += chapter_html
-
     html = f"""<!DOCTYPE html>
-<html lang="ru">
+<html lang=\"ru\">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
     <title>{book_title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">
+    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>
+    <link href=\"https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap\" rel=\"stylesheet\">
     <style>
-        /* твои стили — оставлены без изменений для краткости */
+    :root {{
+        --accent-color: #222;
+        --background-color: #fff;
+        --text-color: #222;
+        --font-body: 'Playfair Display', serif;
+        --font-caption: 'Open Sans', sans-serif;
+    }}
+    body {{
+        font-family: var(--font-body);
+        background-color: var(--background-color) !important;
+        color: var(--text-color);
+        line-height: 1.6;
+        font-size: 20pt;
+        margin: 0;
+    }}
+    .book-page {{
+        page-break-after: always;
+        position: relative;
+        overflow: hidden;
+        background-color: var(--background-color) !important;
+        box-shadow: none;
+    }}
+    .book-page:last-of-type {{
+        page-break-after: auto;
+    }}
+    .cover-page {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+    }}
+    .cover-title {{
+        font-family: 'Playfair Display', serif;
+        font-size: 48pt;
+        font-weight: 700;
+        margin: 0;
+    }}
+    .cover-subtitle {{
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 24pt;
+        margin: 1rem 0 3rem 0;
+    }}
+    .cover-content {{
+        border: 2px solid #222;
+        padding: 2rem 3rem;
+    }}
+    .cover-separator {{
+        width: 80px;
+        height: 1px;
+        background: #222;
+        margin: 0 auto 1.5rem;
+    }}
+    .cover-dedication {{
+        font-family: 'Open Sans', sans-serif;
+        font-style: italic;
+        font-size: 14pt;
+    }}
+    .toc-title {{
+        font-size: 36pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-align: center;
+        margin-top: 1cm;
+        margin-bottom: 2cm;
+        color: var(--accent-color);
+    }}
+    .toc-list {{
+        list-style: none;
+        padding: 0;
+        font-size: 20pt;
+        font-family: 'Playfair Display', serif;
+    }}
+    .toc-item {{
+        display: flex;
+        margin-bottom: 0.5rem;
+        align-items: baseline;
+    }}
+    .toc-item .chapter-name {{
+        order: 1;
+        text-decoration: none;
+        color: var(--text-color);
+    }}
+    .toc-item .leader {{
+        flex-grow: 0;
+        border-bottom: none;
+        margin: 0;
+        position: static;
+    }}
+    .toc-item .page-ref {{
+        order: 3;
+        text-decoration: none;
+        color: var(--text-color);
+    }}
+    .chapter-page {{
+        padding: 0;
+    }}
+    .chapter-main-title {{
+        font-family: var(--font-body);
+        font-weight: bold;
+        font-size: 24pt;
+        text-align: center;
+        text-transform: uppercase;
+        color: var(--accent-color);
+        margin: 1cm 0;
+        line-height: 1.2;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }}
+    .chapter-subtitle {{
+        font-family: var(--font-body);
+        font-style: italic;
+        font-size: 14pt;
+        text-align: left;
+        margin: 0 0 1rem 0;
+    }}
+    .chapter-image-container {{
+        text-align: center;
+        margin: 1cm 0;
+        page-break-inside: avoid;
+    }}
+    .chapter-image {{
+        max-width: 90%;
+        border: 1px solid #ddd;
+        padding: 0.5cm;
+    }}
+    .chapter-image-caption {{
+        font-family: var(--font-caption);
+        font-style: italic;
+        font-size: 14pt;
+        margin-top: 0.5rem;
+        color: var(--accent-color);
+    }}
+    .chapter-body p {{
+        font-size: 20pt;
+        line-height: 1.6;
+        margin-bottom: 1em;
+    }}
+    .chapter-body p:first-of-type::first-letter {{
+        initial-letter: 2;
+        font-weight: bold;
+        padding-right: 0.2em;
+        color: #555;
+    }}
+    .final-page {{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }}
+    .final-content {{
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        font-size: 20pt;
+        line-height: 1.7;
+        max-width: 80%;
+    }}
+    .final-ornament {{
+        font-size: 28pt;
+        color: var(--accent-color);
+        margin: 2rem 0;
+        font-family: serif;
+    }}
+    .final-signature {{
+        margin-top: 1rem;
+        font-size: 14pt;
+        font-style: normal;
+    }}
+    @media screen {{
+        body {{ font-size: 12px; }}
+        .book-page {{ width: 148mm; min-height: 210mm; margin: 2rem auto; padding: 2.5cm; box-sizing: border-box; height: auto; }}
+        .cover-page {{ height: 210mm; position: relative; }}
+        .chapter-body p {{ font-size: 12pt; }}
+        .chapter-body p:first-of-type::first-letter {{ font-size: 28pt; }}
+        .cover-title {{ font-size: 24pt; }}
+        .cover-subtitle {{ font-size: 14pt; }}
+        .toc-title {{ font-size: 18pt; }}
+        .toc-list {{ font-size: 12pt; }}
+        .chapter-main-title {{ font-size: 16pt; }}
+        .chapter-subtitle {{ font-size: 10pt; }}
+        .final-content {{ font-size: 12pt; }}
+        .final-signature {{ font-size: 10pt; }}
+    }}
     </style>
 </head>
 <body>
@@ -2724,31 +2854,42 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list) 
     <h2 class="toc-title">Содержание</h2>
     <ul class="toc-list">
         {''.join([f'''
-        <li class="toc-item">
-            <a href="#chapter-{config['key']}" class="chapter-name">{config['title']}</a>
-            <span class="leader"></span>
-            <a href="#chapter-{config['key']}" class="page-ref"></a>
-        </li>
+            <li class="toc-item">
+                <a href="#chapter-{config['key']}" class="chapter-name">{config['title']}</a>
+                <span class="leader"></span>
+                <a href="#chapter-{config['key']}" class="page-ref"></a>
+            </li>
         ''' for config in chapter_configs])}
     </ul>
 </div>
-
-{chapter_pages_html}
-
+<!-- Chapter Pages -->
+{''.join([f'''
+<div id="chapter-{config['key']}" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">{config['title']}</h3>
+    <h2 class="chapter-main-title">{config['title']}</h2>
+    {(f"""
+    <div class=\"chapter-image-container\">
+        <img src=\"{selected_photo_data[i]['image']}\" alt=\"Photo for Chapter {i+1}\" class=\"chapter-image\">
+        <p class=\"chapter-image-caption\">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
+    </div>
+    """ if i < len(selected_photo_data) else "")}
+    <div class="chapter-body">
+        {chapters.get(config['key'], f'<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>')}
+    </div>
+</div>
+''' for i, config in enumerate(chapter_configs)])}
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
-         <p>Спасибо, что дочитали до конца! Не забывайте улыбаться и делиться хорошим настроением с окружающими. 😄</p>
+        <p>Спасибо, что дочитали до конца! Не забывайте улыбаться и делиться хорошим настроением с окружающими. 😄</p>
     </div>
     <div class="final-ornament">
         ✦
     </div>
     <div class="final-signature">
-        <p>Пусть твоя история вдохновляет других.</p>
+        <p>Создано с улыбкой в Mythic</p>
     </div>
 </div>
 </body>
-</html>
-"""
-
+</html>"""
     return html
