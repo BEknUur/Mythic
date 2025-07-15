@@ -2679,15 +2679,131 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
             print(f"❌ Ошибка генерации главы '{config['title']}': {e}")
             chapters[config['key']] = f"{config['title']} о {full_name} — это всегда повод для улыбки!"
     book_title = f"Весёлые истории о {full_name}"
+  def create_classic_humor_book_html(content: dict, analysis: dict, images: list[Path]) -> str:
+    """Создает HTML классической юмористической книги с 10 главами и эпилогом"""
+    import random
+    from app.services.llm_client import generate_memoir_chapter, strip_cliches
+    full_name = analysis.get('full_name', analysis.get('username', 'герой комедии'))
+    username = analysis.get('username', 'comedian')
+    followers = analysis.get('followers', 0)
+    posts_count = analysis.get('posts_count', 0)
+    bio = analysis.get('bio', '')
+    post_details = analysis.get('post_details', [])
+    real_captions = [p.get('caption', '') for p in post_details[:5] if p.get('caption')]
+    locations = [p.get('location', '') for p in post_details[:3] if p.get('location')]
+    processed_images = []
+    selected_photo_data = []
+    detected_gender = "unknown"
+    
+    if images:
+        total_images = len(images)
+        if total_images >= 10:
+            selected_indices = random.sample(range(total_images), 10)
+            selected_indices.sort()
+        elif total_images >= 5:
+            selected_indices = list(range(total_images))
+            while len(selected_indices) < 10:
+                random_idx = random.randint(0, total_images - 1)
+                selected_indices.append(random_idx)
+        else:
+            selected_indices = []
+            for _ in range(10):
+                random_idx = random.randint(0, total_images - 1)
+                selected_indices.append(random_idx)
+        
+        for i, idx in enumerate(selected_indices):
+            img_path = images[idx]
+            if img_path.exists():
+                try:
+                    from PIL import Image, ImageEnhance
+                    from io import BytesIO
+                    import base64
+                    with Image.open(img_path) as img:
+                        if img.mode != 'RGB':
+                            img = img.convert('RGB')
+                        max_size = (700, 500)
+                        img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                        enhancer = ImageEnhance.Contrast(img)
+                        img = enhancer.enhance(1.05)
+                        enhancer = ImageEnhance.Color(img)
+                        img = enhancer.enhance(1.1)
+                        buffer = BytesIO()
+                        img.save(buffer, format='JPEG', quality=90)
+                        img_str = base64.b64encode(buffer.getvalue()).decode()
+                        processed_images.append(f"data:image/jpeg;base64,{img_str}")
+                        fallback_descriptions = [
+                            "На этом фото ты выглядишь как победитель конкурса на самую смешную улыбку!",
+                            "Взгляд, который может рассмешить даже будильник.",
+                            "Настроение: пятница после обеда!",
+                            "Герой комедии в обычной жизни.",
+                            "Смех сквозь объектив.",
+                            "Когда шутка удалась!",
+                            "Позитив на максимум.",
+                            "Секретное оружие — улыбка!",
+                            "В кадре — генератор хорошего настроения.",
+                            "Тот самый момент, когда все смеются!"
+                        ]
+                        selected_photo_data.append({
+                            'index': idx + 1,
+                            'analysis': fallback_descriptions[i % len(fallback_descriptions)],
+                            'image': f"data:image/jpeg;base64,{img_str}"
+                        })
+                except Exception as e:
+                    print(f"❌ Ошибка обработки изображения {img_path}: {e}")
+    
+    def get_safe_photo_analysis(index: int, fallback_text: str) -> str:
+        if not selected_photo_data:
+            return fallback_text
+        safe_index = index % len(selected_photo_data)
+        return selected_photo_data[safe_index]['analysis']
+    
+    context_data = {
+        'full_name': full_name,
+        'username': username
+    }
+    
+    chapter_configs = [
+        {'key': 'meeting', 'title': 'Пролог: Первая встреча', 'prompt': f"""Ты стендап-комик. Выходишь на сцену и начинаешь разгон про {full_name}. Начни дерзко: 'Знаете, есть такие люди, которые...' Добавь абсурдные сравнения, неожиданные панчи, обращайся к залу. Не упоминай, что это книга. Пиши как будто ты на сцене и рвёшь зал. Используй дерзкий стиль, неожиданные повороты, панчи на панчах. НИКОГДА не пиши романтично!"""},
+        {'key': 'first_impression', 'title': 'Глава первая: Первое впечатление', 'prompt': f"""Пошути про первое знакомство с {full_name}. Дерзко, с панчами. Придумай абсурдные сравнения типа 'она выглядела как...', добавь неожиданные повороты, разгони тему как настоящий комик. Пиши как будто ты на сцене и рвёшь зал. Не бойся абсурда и дерзости. НИКОГДА не пиши романтично!"""},
+        {'key': 'world_view', 'title': 'Глава вторая: Мир глазами комика', 'prompt': f"""Разгони тему: как {full_name} видит мир. Придумай абсурдные ситуации, неожиданные наблюдения. Например: 'Она думает, что дождь — это просто небо чихает'. Добавь панчи, обращайся к залу дерзко. Пиши как будто ты на сцене и рвёшь зал. НИКОГДА не пиши романтично!"""},
+        {'key': 'memorable_moments', 'title': 'Глава третья: Самые смешные моменты', 'prompt': f"""Сделай roast на {full_name}. Расскажи о самых нелепых моментах дерзко, с панчами. Не бойся абсурда, добавь шутки про повседневность, придумай неожиданные сравнения. Пиши как будто ты делаешь roast-номер и рвёшь зал. НИКОГДА не пиши романтично!"""},
+        {'key': 'energy', 'title': 'Глава четвертая: Энергия и харизма', 'prompt': f"""Пошути про харизму {full_name}. Придумай абсурдные сравнения: 'Её энергия как...', 'Она может...'. Используй гиперболу, мемы, неожиданные панчи. Пиши дерзко, как будто ты на сцене и рвёшь зал. НИКОГДА не пиши романтично!"""},
+        {'key': 'beauty_style', 'title': 'Глава пятая: Стиль и мода', 'prompt': f"""Разгони тему: стиль и мода {full_name}. Пошути про гардероб, аксессуары, нелепые тренды дерзко. Придумай абсурдные ситуации типа 'Она носит... как будто...'. Добавь панчи, обращайся к залу. НИКОГДА не пиши романтично!"""},
+        {'key': 'mystery', 'title': 'Глава шестая: Загадка личности', 'prompt': f"""Придумай шуточные тайны про {full_name}. Например: 'Почему она всегда опаздывает? Может, она секретный агент смеха?' Добавь абсурдные теории заговора, дерзкие панчи. НИКОГДА не пиши романтично!"""},
+        {'key': 'influence_on_me', 'title': 'Глава седьмая: Влияние на друзей', 'prompt': f"""Пошути, как {full_name} влияет на друзей. Придумай абсурдные примеры: 'После общения с ней все начинают...'. Добавь неожиданные панчи, дерзкие наблюдения. НИКОГДА не пиши романтично!"""},
+        {'key': 'observations', 'title': 'Глава восьмая: Наблюдения за жизнью', 'prompt': f"""Разгони тему: наблюдения за жизнью {full_name}. Придумай абсурдные ситуации, неожиданные советы в стиле 'лайфхак от комика'. Пиши как будто рассказываешь залу анекдоты и рвёшь их. НИКОГДА не пиши романтично!"""},
+        {'key': 'funny_final', 'title': 'Глава девятая: Финальный аккорд', 'prompt': f"""Финальный аккорд: пошути, что если бы {full_name} был(а) супергероем, его/её сила — заставлять людей смеяться даже в пробке. Заверши монологом с дерзкими панчами. НИКОГДА не пиши романтично!"""},
+        {'key': 'gratitude_wishes', 'title': 'Эпилог: Благодарность и пожелания', 'prompt': f"""Поблагодари зал дерзко, пошути напоследок, пожелай всем хорошего настроения. Не упоминай, что это книга — только сцена, только смех! Заверши как настоящий стендап-номер. НИКОГДА не пиши романтично!"""},
+    ]
+    
+    chapters = {}
+    for i, config in enumerate(chapter_configs):
+        try:
+            generated_content = generate_memoir_chapter("humor_chapter", {
+                'prompt': config['prompt'],
+                'style': 'standup_comedy'
+            })
+            if not generated_content or len(generated_content.strip()) < 100:
+                chapters[config['key']] = f"{config['title']} о {full_name} — это всегда повод для улыбки!"
+            else:
+                clean_content = strip_cliches(generated_content)
+                chapters[config['key']] = clean_content
+        except Exception as e:
+            print(f"❌ Ошибка генерации главы '{config['title']}': {e}")
+            chapters[config['key']] = f"{config['title']} о {full_name} — это всегда повод для улыбки!"
+    
+    book_title = f"Весёлые истории о {full_name}"
+    
+    # HTML в стиле юмористической книги
     html = f"""<!DOCTYPE html>
-<html lang=\"ru\">
+<html lang="ru">
 <head>
-    <meta charset=\"UTF-8\">
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{book_title}</title>
-    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">
-    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>
-    <link href=\"https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap\" rel=\"stylesheet\">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
     :root {{
         --accent-color: #222;
@@ -2890,32 +3006,60 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
 <!-- Table of Contents -->
 <div class="book-page toc-page">
     <h2 class="toc-title">Содержание</h2>
-    <ul class="toc-list">
-        {''.join([f'''
-            <li class="toc-item">
-                <a href="#chapter-{config['key']}" class="chapter-name">{config['title']}</a>
-                <span class="leader"></span>
-                <a href="#chapter-{config['key']}" class="page-ref"></a>
-            </li>
-        ''' for config in chapter_configs])}
+    <ul class="toc-list">"""
+
+    # Генерируем оглавление
+    for config in chapter_configs:
+        chapter_key = config['key']
+        chapter_title = config['title']
+        html += f"""
+        <li class="toc-item">
+            <a href="#chapter-{chapter_key}" class="chapter-name">{chapter_title}</a>
+            <span class="leader"></span>
+            <a href="#chapter-{chapter_key}" class="page-ref"></a>
+        </li>"""
+
+    html += """
     </ul>
 </div>
-<!-- Chapter Pages -->
-{''.join([f'''
-<div id="chapter-{config['key']}" class="book-page chapter-page">
-    <h3 class="chapter-subtitle">{config['title']}</h3>
-    <h2 class="chapter-main-title">{config['title']}</h2>
-    {(f"""
-    <div class=\"chapter-image-container\">
-        <img src=\"{selected_photo_data[i]['image']}\" alt=\"Photo for Chapter {i+1}\" class=\"chapter-image\">
-        <p class=\"chapter-image-caption\">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
-    </div>
-    """ if i < len(selected_photo_data) else "")}
+<!-- Chapter Pages -->"""
+
+    # Генерируем главы отдельно для юмористической книги
+    for i, config in enumerate(chapter_configs):
+        # Получаем данные безопасно
+        chapter_key = config['key']
+        chapter_title = config['title']
+        
+        # Генерируем HTML для изображения
+        image_html = ""
+        if i < len(selected_photo_data):
+            photo_data = selected_photo_data[i]
+            analysis_text = photo_data['analysis']
+            if len(analysis_text) > 80:
+                analysis_text = analysis_text[:80] + '...'
+            
+            image_html = f"""
+    <div class="chapter-image-container">
+        <img src="{photo_data['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
+        <p class="chapter-image-caption">{analysis_text}</p>
+    </div>"""
+
+        # Получаем контент главы
+        chapter_content = chapters.get(chapter_key, f'<p>{chapter_title} о {full_name} — это всегда повод для улыбки!</p>')
+
+        # Добавляем главу к HTML
+        html += f"""
+<div id="chapter-{chapter_key}" class="book-page chapter-page">
+    <h3 class="chapter-subtitle">{chapter_title}</h3>
+    <h2 class="chapter-main-title">{chapter_title}</h2>
+    {image_html}
     <div class="chapter-body">
-        {chapters.get(config['key'], f'<p>{config['title']} о {full_name} — это всегда повод для улыбки!</p>')}
+        {chapter_content}
     </div>
-</div>
-''' for i, config in enumerate(chapter_configs)])}
+</div>"""
+
+    # Добавляем финальную страницу
+    html += f"""
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
@@ -2930,4 +3074,5 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
 </div>
 </body>
 </html>"""
+    
     return html
