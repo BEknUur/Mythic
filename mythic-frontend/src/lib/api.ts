@@ -5,7 +5,7 @@ console.log('API будет идти на:', BASE_URL);
 
 
 
-/* ──────────── VALIDATION SCHEMAS─────────── */
+/* ──────────── VALIDATIO SCHEMAS─────────── */
 const StartScrapeResponseSchema = z.object({
   runId: z.string(),
   message: z.string(),
