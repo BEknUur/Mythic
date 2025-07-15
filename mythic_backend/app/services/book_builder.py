@@ -1240,6 +1240,7 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     
     # HTML в стиле личного подарка
   # HTML в стиле личного подарка
+  # HTML в стиле личного подарка
     html = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1539,25 +1540,37 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
     </ul>
 </div>
 
-<!-- Chapter Pages -->
-{"".join([f'''
+<!-- Chapter Pages -->"""
+
+    # Генерируем главы отдельно, чтобы избежать проблем с вложенными f-строками
+    for i, config in enumerate(chapter_configs):
+        # Генерируем HTML для изображения
+        image_html = ""
+        if i < len(selected_photo_data):
+            photo_data = selected_photo_data[i]
+            analysis = photo_data['analysis']
+            if len(analysis) > 80:
+                analysis = analysis[:80] + '...'
+            
+            image_html = f"""
+    <div class="chapter-image-container">
+        <img src="{photo_data['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
+        <p class="chapter-image-caption">{analysis}</p>
+    </div>"""
+
+        # Добавляем главу к HTML
+        html += f"""
 <div id="chapter-{config['key']}" class="book-page chapter-page">
     <h3 class="chapter-subtitle">Chapter {i+1}</h3>
     <h2 class="chapter-main-title">{config['title']}</h2>
-    
-    {f'''
-    <div class="chapter-image-container">
-        <img src="{selected_photo_data[i]['image']}" alt="Photo for Chapter {i+1}" class="chapter-image">
-        <p class="chapter-image-caption">{selected_photo_data[i]['analysis'][:80] + '...' if len(selected_photo_data[i]['analysis']) > 80 else selected_photo_data[i]['analysis']}</p>
-    </div>
-    ''' if i < len(selected_photo_data) else ""}
-
+    {image_html}
     <div class="chapter-body">
         {chapters.get(config['key'], '<p>Эта глава скоро наполнится словами восхищения...</p>')}
     </div>
-</div>
-''' for i, config in enumerate(chapter_configs)])}
+</div>"""
 
+    # Добавляем финальную страницу
+    html += f"""
 <!-- Final Page -->
 <div class="book-page final-page">
     <div class="final-content">
@@ -1575,7 +1588,6 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
 </html>"""
     
     return html
-
 
 def create_pdf_with_weasyprint(output_path: Path, html_content: str):
     """Генерирует красивый PDF из HTML используя WeasyPrint."""
