@@ -11,7 +11,7 @@
     
     COPY . .
     
-    # пробрасываем внутрь процесса Vite только Clerk-ключ
+    # пробрасываем внутрь процесса Viteтолько Clerk-ключ
     ENV  VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
     
     RUN npm run build        # vite build
