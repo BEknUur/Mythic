@@ -1,8 +1,7 @@
-// components/PhoneMockup.tsx
 import React, { useRef, useState, useEffect } from 'react';
 
 interface PhoneMockupProps {
-  src: string;      // '/photo.png'
+  src: string;
   alt?: string;
   className?: string;
 }
@@ -17,6 +16,7 @@ export function PhoneMockup({
 
   useEffect(() => {
     if (!ref.current) return;
+    
     const obs = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) {
@@ -26,6 +26,7 @@ export function PhoneMockup({
       },
       { rootMargin: '200px' }
     );
+    
     obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
@@ -33,7 +34,7 @@ export function PhoneMockup({
   return (
     <div
       ref={ref}
-      className={`overflow-hidden rounded-2xl shadow-lg ${className}`}
+      className={`relative overflow-hidden ${className}`}
     >
       {inView && (
         <img
@@ -42,6 +43,11 @@ export function PhoneMockup({
           loading="lazy"
           decoding="async"
           className="w-full h-auto object-cover"
+          style={{
+            // Обрезаем серые края - оптимальные значения по твоей картинке
+            clipPath: 'inset(15% 20% 15% 20%)', // top right bottom left
+            objectPosition: 'center',
+          }}
         />
       )}
     </div>
