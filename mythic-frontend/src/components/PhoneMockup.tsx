@@ -47,6 +47,10 @@ export function PhoneMockup({
             // Обрезаем серые края - оптимальные значения по твоей картинке
             clipPath: 'inset(15% 20% 15% 20%)', // top right bottom left
             objectPosition: 'center',
+            // Добавляем легкую рамку
+            border: '1px solid rgba(0, 0, 0, 0.1)',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
           }}
         />
       )}
