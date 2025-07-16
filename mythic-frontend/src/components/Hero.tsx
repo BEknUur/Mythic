@@ -1,9 +1,25 @@
+// src/components/Hero.tsx
+
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus, Lock, MoveRight, Sparkles, Camera, Bot, BookHeart, ChevronDown } from 'lucide-react';
+import {
+  UserButton,
+  useUser,
+  SignInButton,
+  SignUpButton,
+} from '@clerk/clerk-react';
+import {
+  Lock,
+  MoveRight,
+  Sparkles,
+  Camera,
+  Bot,
+  BookHeart,
+  ChevronDown,
+} from 'lucide-react';
 import { PhoneMockup } from './PhoneMockup';
-import { useUser, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 import { TOUR_STEP_IDS } from './ui/tour';
 import { ThemeToggle } from './theme-toggle';
 
@@ -29,7 +45,10 @@ export function Hero() {
               </Button>
             </SignUpButton>
             <SignInButton mode="modal">
-              <Button size="sm" className="bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-200">
+              <Button
+                size="sm"
+                className="bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-200"
+              >
                 Войти
               </Button>
             </SignInButton>
@@ -41,7 +60,10 @@ export function Hero() {
       <div className="relative max-w-7xl mx-auto px-4 md:px-12 py-24 md:py-32 flex flex-col md:flex-row items-center justify-between gap-16 md:gap-24">
         {/* Left: Content */}
         <div className="w-full md:w-1/2 text-left animate-fade-in-up">
-          <Badge variant="outline" className="mb-6 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 inline-flex items-center">
+          <Badge
+            variant="outline"
+            className="mb-6 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 inline-flex items-center"
+          >
             <Sparkles className="h-3 w-3 mr-2 text-purple-500" />
             Создано с любовью и AI
           </Badge>
@@ -103,10 +125,11 @@ export function Hero() {
           )}
         </div>
 
-        {/* Right: Mock-up */}
+        {/* Right: Phone Mock‑up */}
         <div className="w-full md:w-1/2 flex justify-center md:justify-end animate-slide-in-right">
           <div className="relative transform translate-x-8 md:translate-x-0 hover:translate-x-0 transition-transform duration-300">
-            <PhoneMockup src="photo.png" />
+            {/* Замените путь src на фактический путь вашего изображения в папке public */}
+            <PhoneMockup src="/static/images/photo.png" alt="Mockup screenshot" />
           </div>
         </div>
       </div>
@@ -120,4 +143,4 @@ export function Hero() {
       </a>
     </section>
   );
-} 
+}

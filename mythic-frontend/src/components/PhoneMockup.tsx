@@ -1,32 +1,65 @@
-import React from 'react';
+// components/PhoneMockup.tsx
+import React, { useRef, useState, useEffect } from 'react'
 
 interface PhoneMockupProps {
-  src: string;
-  alt?: string;
-  variant?: 'frame' | 'plain';
-  className?: string;
+  /** Путь к картинке, например '/static/images/photo.png' */
+  src: string
+  alt?: string
+  width?: number
+  height?: number
+  className?: string
 }
 
-// Fallback placeholder image
+export function PhoneMockup({
+  src,
+  alt = 'Mockup image',
+  width = 375,
+  height = 812,
+  className = '',
+}: PhoneMockupProps) {
+  const [inView, setInView] = useState(false)
+  const imgRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    if (!imgRef.current) return
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          obs.disconnect()
+        }
+      },
+      { rootMargin: '200px' }
+    )
+    obs.observe(imgRef.current)
+    return () => obs.disconnect()
+  }, [])
 
-export function PhoneMockup({ src, alt = 'Book preview', variant = 'frame', className = '' }: PhoneMockupProps) {
-  if (variant === 'plain') {
-    return (
-      <img
-        src={src}
-        alt={alt}
-        className={`w-[300px] h-auto object-cover ${className}`.trim()}
-      />
-    );
-  }
+  // Автоматически переключаем .png/.jpg → .webp
+  const webpSrc = src.replace(/\.(png|jpe?g)$/, '.webp')
 
   return (
     <div
-      className={`relative w-[238px] h-[490px] rounded-[40px] overflow-hidden shadow-xl ring-1 ring-black/5 bg-gradient-to-br from-white via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-900 ${className}`.trim()}
+      ref={imgRef}
+      className={`overflow-hidden rounded-2xl shadow-lg ${className}`}
+      style={{ width, height }}
     >
-      {/* Screen */}
-      <img src={src} alt={alt} className="w-full h-full object-cover" />
+      {inView && (
+        <picture>
+          {/* WebP-версия, если есть */}
+          <source type="image/webp" srcSet={webpSrc} />
+          {/* Фолбэк на исходное расширение */}
+          <img
+            src={src}
+            alt={alt}
+            width={width}
+            height={height}
+            loading="lazy"
+            decoding="async"
+            style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+          />
+        </picture>
+      )}
     </div>
-  );
-} 
+  )
+}
