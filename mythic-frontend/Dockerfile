@@ -3,6 +3,7 @@
 
     # оставляем ТОЛЬКО ключ Clerk
     ARG  VITE_CLERK_PUBLISHABLE_KEY
+    
     WORKDIR /app
     
     COPY package*.json ./

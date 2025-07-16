@@ -15,12 +15,12 @@ if (!clerkPubKey) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ClerkProvider 
-      publishableKey={clerkPubKey}
-      localization={ruRU}
-      afterSignInUrl="/generate"
-      afterSignUpUrl="/generate"
-    >
+   <ClerkProvider
+  publishableKey={clerkPubKey}
+  localization={ruRU}
+  signInForceRedirectUrl="/generate"
+  signUpForceRedirectUrl="/generate"
+>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <BrowserRouter>
     <App />
