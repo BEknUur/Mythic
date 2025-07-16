@@ -1,25 +1,9 @@
-// src/components/Hero.tsx
-
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  UserButton,
-  useUser,
-  SignInButton,
-  SignUpButton,
-} from '@clerk/clerk-react';
-import {
-  Lock,
-  MoveRight,
-  Sparkles,
-  Camera,
-  Bot,
-  BookHeart,
-  ChevronDown,
-} from 'lucide-react';
+import { LogIn, UserPlus, Lock, MoveRight, Sparkles, Camera, Bot, BookHeart, ChevronDown } from 'lucide-react';
 import { PhoneMockup } from './PhoneMockup';
+import { useUser, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 import { TOUR_STEP_IDS } from './ui/tour';
 import { ThemeToggle } from './theme-toggle';
 
@@ -83,7 +67,10 @@ export function Hero() {
 
           <div className="flex items-center gap-4 mb-10">
             <Link to="/generate" id={TOUR_STEP_IDS.START_CREATING_BUTTON}>
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg px-8 py-6 text-lg group">
+              <Button
+                size="lg"
+                className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg px-8 py-6 text-lg group"
+              >
                 Начать создание
                 <MoveRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
@@ -125,12 +112,12 @@ export function Hero() {
           )}
         </div>
 
-        {/* Right: Phone Mock‑up */}
+        {/* Right: Mock-up */}
         <div className="w-full md:w-1/2 flex justify-center md:justify-end animate-slide-in-right">
-          <div className="relative transform translate-x-8 md:translate-x-0 hover:translate-x-0 transition-transform duration-300">
-            {/* Замените путь src на фактический путь вашего изображения в папке public */}
-            <PhoneMockup src="/static/images/photo.png" alt="Mockup screenshot" />
-          </div>
+          <PhoneMockup
+            src="/photo.png"                // <-- абсолютный путь из public/
+            className="w-64 md:w-80 lg:w-96" // <-- задаём размер через Tailwind
+          />
         </div>
       </div>
 
