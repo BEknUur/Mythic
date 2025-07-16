@@ -1,21 +1,26 @@
 # ---------- build ----------
     FROM node:18-alpine AS build
 
-    # оставляем ТОЛЬКО ключ Clerk
-    ARG  VITE_CLERK_PUBLISHABLE_KEY
+    # 1) Объявляем build‑аргументы
+    ARG VITE_CLERK_PUBLISHABLE_KEY
+    ARG VITE_PUBLIC_CLERK_FRONTEND_API
+    
+    # 2) Пробрасываем их в ENV перед сборкой
+    ENV VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
+    ENV VITE_PUBLIC_CLERK_FRONTEND_API=${VITE_PUBLIC_CLERK_FRONTEND_API}
     
     WORKDIR /app
     
-    COPY package*.json ./
-    COPY .env.production . 
-    RUN npm ci
+    # 3) Копируем только .env.production (в нём уже наши VITE_*)
+    COPY .env.production .
     
+    # 4) Устанавливаем зависимости и копируем весь код
+    COPY package*.json ./
+    RUN npm ci
     COPY . .
     
-    # пробрасываем внутрь процесса Viteтолько Clerk-ключ
-    ENV  VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
-    
-    RUN npm run build        # vite build
+    # 5) Собираем фронт
+    RUN npm run build
     
     # ---------- runtime ----------
     FROM nginx:alpine
