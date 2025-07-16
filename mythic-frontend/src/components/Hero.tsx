@@ -1,26 +1,9 @@
-// src/components/Hero.tsx
-
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  LogIn,
-  UserPlus,
-  Lock,
-  MoveRight,
-  Sparkles,
-  Camera,
-  Bot,
-  BookHeart,
-  ChevronDown,
-} from 'lucide-react';
+import { LogIn, UserPlus, Lock, MoveRight, Sparkles, Camera, Bot, BookHeart, ChevronDown } from 'lucide-react';
 import { PhoneMockup } from './PhoneMockup';
-import {
-  useUser,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from '@clerk/clerk-react';
+import { useUser, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 import { TOUR_STEP_IDS } from './ui/tour';
 import { ThemeToggle } from './theme-toggle';
 
@@ -78,8 +61,8 @@ export function Hero() {
           </h1>
 
           <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-xl">
-            Сохраните вашу цифровую историю любви в уникальной книге, созданной
-            искусственным интеллектом. Идеальный подарок для вашего партнера.
+            Сохраните вашу цифровую историю любви в уникальной книге, созданной искусственным интеллектом.
+            Идеальный подарок для вашего партнера.
           </p>
 
           <div className="flex items-center gap-4 mb-10">
@@ -132,11 +115,8 @@ export function Hero() {
         {/* Right: Mock-up */}
         <div className="w-full md:w-1/2 flex justify-center md:justify-end animate-slide-in-right">
           <PhoneMockup
-            src="/photo.png"             // берём файл из public/photo.png
-            width={300}                  // ширина видимой области
-            height={600}                 // высота видимой области
-            containerClassName="mx-auto"
-            imgClassName="absolute top-[-10%] left-[-5%] w-[120%] h-auto"
+            src="/photo.png"                // <-- абсолютный путь из public/
+            className="w-64 md:w-80 lg:w-96" // <-- задаём размер через Tailwind
           />
         </div>
       </div>
@@ -149,5 +129,5 @@ export function Hero() {
         <ChevronDown className="h-6 w-6" />
       </a>
     </section>
-);
+  );
 }

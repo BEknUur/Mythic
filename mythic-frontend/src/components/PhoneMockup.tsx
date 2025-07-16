@@ -1,63 +1,49 @@
 // components/PhoneMockup.tsx
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect } from 'react';
 
 interface PhoneMockupProps {
-  src: string
-  alt?: string
-  width?: number
-  height?: number
-  // новые пропсы
-  containerClassName?: string
-  imgClassName?: string
+  src: string;      // '/photo.png'
+  alt?: string;
+  className?: string;
 }
 
 export function PhoneMockup({
   src,
-  alt = 'Mockup image',
-  width = 375,
-  height = 812,
-  containerClassName = '',
-  imgClassName = '',
+  alt = 'Mockup screenshot',
+  className = '',
 }: PhoneMockupProps) {
-  const [inView, setInView] = useState(false)
-  const imgRef = useRef<HTMLDivElement>(null)
+  const [inView, setInView] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!imgRef.current) return
+    if (!ref.current) return;
     const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true)
-          obs.disconnect()
+      ([e]) => {
+        if (e.isIntersecting) {
+          setInView(true);
+          obs.disconnect();
         }
       },
       { rootMargin: '200px' }
-    )
-    obs.observe(imgRef.current)
-    return () => obs.disconnect()
-  }, [])
-
-  // Пусть остаётся WebP-источник и ленивый лайзинг как раньше
-  const webpSrc = src.replace(/\.(png|jpe?g)$/, '.webp')
+    );
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
 
   return (
     <div
-      ref={imgRef}
-      className={`relative overflow-hidden rounded-2xl shadow-lg ${containerClassName}`}
-      style={{ width, height }}
+      ref={ref}
+      className={`overflow-hidden rounded-2xl shadow-lg ${className}`}
     >
       {inView && (
-        <picture>
-          <source type="image/webp" srcSet={webpSrc} />
-          <img
-            src={src}
-            alt={alt}
-            loading="lazy"
-            decoding="async"
-            className={`absolute ${imgClassName}`}
-          />
-        </picture>
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className="w-full h-auto object-cover"
+        />
       )}
     </div>
-  )
+  );
 }
