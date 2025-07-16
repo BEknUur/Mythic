@@ -47,12 +47,20 @@ export function PhoneMockup({
             // Обрезаем серые края - оптимальные значения по твоей картинке
             clipPath: 'inset(15% 20% 15% 20%)', // top right bottom left
             objectPosition: 'center',
-            // Красивая рамка для книги
-            border: '2px solid #e5e7eb',
-            borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)',
-            // Добавляем внутреннюю тень для глубины
-            filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))'
+            // Красивая рамка для книги с крутой тенью
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            borderRadius: '16px',
+            // Многослойная тень для реалистичного эффекта
+            boxShadow: `
+              0 25px 50px -12px rgba(0, 0, 0, 0.25),
+              0 8px 16px -8px rgba(0, 0, 0, 0.1),
+              0 0 0 1px rgba(255, 255, 255, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1)
+            `,
+            // Дополнительный фильтр для глубины
+            filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12))',
+            // Легкое свечение
+            backdropFilter: 'blur(1px)'
           }}
         />
       )}
