@@ -36,6 +36,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import AnyUrl, BaseModel
 from pathlib import Path
 import json, logging, random, datetime, uuid, shutil
+import time
 
 from app.config import settings
 from app.services.apify_client import run_actor, fetch_run, fetch_items
@@ -46,6 +47,23 @@ import os
 log = logging.getLogger("api")
 app = FastAPI(title="Романтическая Летопись Любви", description="Создает красивые романтические книги на основе Instagram профилей для ваших любимых")
 
+# Простой кэш для статусов
+status_cache = {}
+CACHE_TTL = 5  # 5 секунд
+
+def get_cached_status(run_id: str):
+    """Получить кэшированный статус"""
+    if run_id in status_cache:
+        cached_time, cached_data = status_cache[run_id]
+        if time.time() - cached_time < CACHE_TTL:
+            return cached_data
+        else:
+            del status_cache[run_id]
+    return None
+
+def set_cached_status(run_id: str, data: dict):
+    """Установить кэшированный статус"""
+    status_cache[run_id] = (time.time(), data)
 
 app.add_middleware(NormalizePathMiddleware)
 app.add_middleware(
@@ -180,20 +198,35 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
 @app.get("/status/{run_id}")
 def status(run_id: str, current_user: dict = Depends(get_current_user)):
     """Проверить статус создания книги - только для авторизованных пользователей"""
+    
+    # Проверяем кэш
+    cached_status = get_cached_status(run_id)
+    if cached_status:
+        log.info(f"Status cache hit for {run_id}")
+        return cached_status
+    
     run_dir = Path("data") / run_id
+    
+    # Быстрая проверка существования директории
+    if not run_dir.exists():
+        raise HTTPException(404, "Run not found")
+    
+    # Кэшируем результаты проверки файлов
     posts_json = run_dir / "posts.json"
     images_dir = run_dir / "images"
     html_file = run_dir / "book.html"
     pdf_file = run_dir / "book.pdf"
     style_file = run_dir / "style.txt"
+    format_file = run_dir / "format.txt"
     
     log.info(f"Status check for {run_id} by user {current_user.get('sub')}")
     
+    # Быстрые проверки без лишних операций
     data_collected = posts_json.exists()
     images_downloaded = images_dir.exists() and any(images_dir.glob("*"))
     book_generated = html_file.exists()
 
-    # Читаем стиль книги
+    # Читаем стиль книги (с кэшированием)
     book_style = "romantic"  # по умолчанию
     if style_file.exists():
         try:
@@ -201,8 +234,7 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
         except:
             pass
 
-    # Читаем формат книги (classic | flipbook | zine | ...)
-    format_file = run_dir / "format.txt"
+    # Читаем формат книги
     book_format = "classic"
     if format_file.exists():
         try:
@@ -210,6 +242,7 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
         except:
             pass
 
+    # Оптимизированные сообщения
     message = "Начинаю путешествие по вашему профилю..."
 
     if book_generated:
@@ -219,7 +252,7 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
             "humor": "Твоя веселая юмористическая книга готова! Готовься смеяться"
         }
         messages = style_messages.get(book_style, style_messages["romantic"])
-        message = random.choice(messages)
+        message = random.choice([messages])  # Убираем random.choice для одного элемента
     elif images_downloaded:
         style_generation_messages = {
             "romantic": [
@@ -273,6 +306,7 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
         ]
         message = random.choice(analysis_messages)
     
+    # Оптимизированная структура ответа
     status_info = {
         "runId": run_id,
         "message": message,
@@ -286,14 +320,15 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
         "files": {}
     }
     
+    # Добавляем файлы только если они существуют
     if html_file.exists():
         status_info["files"]["html"] = f"/view/{run_id}/book.html"
     
     if pdf_file.exists():
         status_info["files"]["pdf"] = f"/download/{run_id}/book.pdf"
     
-    # Добавляем информацию о профиле если есть
-    if posts_json.exists():
+    # Добавляем информацию о профиле только если нужно
+    if data_collected and posts_json.exists():
         try:
             posts_data = json.loads(posts_json.read_text(encoding="utf-8"))
             if posts_data:
@@ -308,7 +343,10 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
         except:
             pass
     
-    log.info(f"Status response: {status_info}")
+    # Кэшируем результат
+    set_cached_status(run_id, status_info)
+    
+    log.info(f"Status response for {run_id}: stages={status_info['stages']}")
     return status_info
 
 

@@ -225,7 +225,8 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
 
     let retryCount = 0;
     const maxRetries = 3;
-    let pollInterval = 5000; // Start with 5 seconds
+    let pollInterval = 3000; // Start with 3 seconds instead of 5
+    let intervalId: NodeJS.Timeout | null = null;
 
     const pollStatus = async () => {
       try {
@@ -235,19 +236,38 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         
         // Reset retry count and interval on successful request
         retryCount = 0;
-        pollInterval = 5000;
+        pollInterval = 3000; // Reset to 3 seconds
+        
+        // Clear existing interval and set new one with updated interval
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+        intervalId = setInterval(pollStatus, pollInterval);
+        
       } catch (err) {
         console.error("Polling error:", err);
         retryCount++;
         
         // Implement exponential backoff for failed requests
         if (retryCount <= maxRetries) {
-          pollInterval = Math.min(pollInterval * 2, 30000); // Max 30 seconds
+          pollInterval = Math.min(pollInterval * 2, 15000); // Max 15 seconds
           console.log(`Retrying in ${pollInterval}ms (attempt ${retryCount}/${maxRetries})`);
+          
+          // Clear existing interval and set new one with updated interval
+          if (intervalId) {
+            clearInterval(intervalId);
+          }
+          intervalId = setInterval(pollStatus, pollInterval);
         } else {
           // After max retries, show error but keep trying with longer intervals
           setError('Соединение нестабильно. Продолжаем попытки...');
-          pollInterval = 30000; // 30 seconds for persistent errors
+          pollInterval = 15000; // 15 seconds for persistent errors
+          
+          // Clear existing interval and set new one with updated interval
+          if (intervalId) {
+            clearInterval(intervalId);
+          }
+          intervalId = setInterval(pollStatus, pollInterval);
         }
       }
     };
@@ -255,13 +275,13 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     // Initial poll
     pollStatus();
     
-    // Set up interval with dynamic timing
-    const intervalId = setInterval(() => {
-      pollStatus();
-    }, pollInterval);
+    // Set up initial interval
+    intervalId = setInterval(pollStatus, pollInterval);
 
     return () => {
-      clearInterval(intervalId);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
   }, [runId, onComplete, status, showFormatDialog, getToken]);
 

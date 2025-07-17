@@ -131,7 +131,7 @@ export const api = {
 
   async getStatus(runId: string, token?: string): Promise<StatusResponse> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
     
     try {
       const res = await fetch(`${BASE_URL}/status/${runId}`, {
