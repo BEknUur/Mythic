@@ -7,6 +7,7 @@ import random
 from openai import AzureOpenAI, AsyncAzureOpenAI
 import json
 import markdown
+from app.services.cache_service import cache_service
 
 # Инициализация синхронного клиента
 client = AzureOpenAI(
@@ -159,6 +160,82 @@ async def generate_flipbook_json(image_paths: list[str]) -> dict:
         logger.error(f"❌ Ошибка при вызове LLM с function calling: {e}")
         # В случае ошибки, можно вернуть пустую структуру, чтобы приложение не падало
         return {"prologue": "Что-то пошло не так...", "pages": []}
+
+async def generate_text_async(prompt: str,
+                  system_prompt: str | None = None,
+                  model: str = "gpt-4.1-mini",
+                  max_tokens: int = 1500,
+                  temperature: float = 0.8,
+                  image_data: Optional[str] = None) -> str:
+    """Асинхронная версия generate_text с кэшированием"""
+    
+    # Создаем ключ кэша на основе параметров
+    cache_key_parts = [
+        prompt[:100],  # Первые 100 символов промпта
+        system_prompt[:50] if system_prompt else "",
+        str(max_tokens),
+        str(temperature),
+        "image" if image_data else "text"
+    ]
+    cache_key = "ai_response:" + hash("".join(cache_key_parts))
+    
+    # Пытаемся получить из кэша
+    cached_response = await cache_service.get_ai_response(cache_key)
+    if cached_response:
+        logger.info(f"📦 Кэш HIT для AI ответа")
+        return cached_response
+    
+    try:
+        deployment = settings.AZURE_OPENAI_GPT4_DEPLOYMENT
+        # Нейтральная система по умолчанию
+        fast_system_message = system_prompt or "Ты — современный рассказчик. Пиши ясно, интересно, без клише."
+        if image_data:
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_data,
+                                "detail": "low"
+                            }
+                        }
+                    ]
+                }
+            ]
+            response = await async_client.chat.completions.create(
+                model=deployment,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+        else:
+            response = await async_client.chat.completions.create(
+                model=deployment,
+                messages=[
+                    {"role": "system", "content": fast_system_message},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=max_tokens,
+                temperature=temperature,
+                presence_penalty=0.3,
+                frequency_penalty=0.2
+            )
+        result = response.choices[0].message.content
+        if not result:
+            return ""
+        
+        final_result = strip_cliches(result.strip())
+        
+        # Кэшируем результат на 1 час
+        await cache_service.cache_ai_response(cache_key, final_result, 3600)
+        
+        return final_result
+    except Exception as e:
+        logger.error(f"Ошибка в generate_text_async: {e}")
+        return f"Этот момент наполнен особой красотой и теплом. Каждая деталь говорит о твоей уникальности."
 
 def generate_text(prompt: str,
                   system_prompt: str | None = None,   # <-- add system_prompt param

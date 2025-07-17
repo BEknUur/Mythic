@@ -12,6 +12,9 @@ load_dotenv()  # Загружаем переменные из .env файла
 
 from app.routers import auth
 from app.routers import user_router
+from app.services.redis_service import redis_service
+from app.services.cache_service import cache_service
+from app.middleware import CacheMiddleware, RateLimitMiddleware
 
 class NormalizePathMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -48,6 +51,8 @@ app = FastAPI(title="Романтическая Летопись Любви", de
 
 
 app.add_middleware(NormalizePathMiddleware)
+app.add_middleware(CacheMiddleware)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[ "http://localhost:5173","https://mythicai.me","https://www.mythicai.me"],
@@ -69,6 +74,51 @@ app.mount("/runs", StaticFiles(directory=str(DATA_DIR), html=False), name="runs"
 def health_check():
     """Простая проверка работы API"""
     return {"status": "ok", "message": "API работает! 💕"}
+
+@app.get("/health/redis")
+async def redis_health_check():
+    """Проверка состояния Redis"""
+    try:
+        await redis_service.connect()
+        await redis_service.redis.ping()
+        return {
+            "status": "ok", 
+            "message": "Redis подключен и работает! 🔥",
+            "redis_status": "connected"
+        }
+    except Exception as e:
+        return {
+            "status": "error", 
+            "message": f"Redis недоступен: {str(e)}",
+            "redis_status": "disconnected"
+        }
+
+@app.get("/cache/stats")
+async def cache_stats():
+    """Статистика кэша (только для администраторов)"""
+    try:
+        await redis_service.connect()
+        info = await redis_service.redis.info()
+        
+        # Получаем статистику ключей
+        keys_info = await redis_service.redis.info("keyspace")
+        
+        return {
+            "status": "ok",
+            "redis_info": {
+                "used_memory_human": info.get("used_memory_human"),
+                "connected_clients": info.get("connected_clients"),
+                "total_commands_processed": info.get("total_commands_processed"),
+                "keyspace_hits": info.get("keyspace_hits"),
+                "keyspace_misses": info.get("keyspace_misses"),
+            },
+            "cache_hit_rate": info.get("keyspace_hits", 0) / max(info.get("keyspace_misses", 1), 1) * 100
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Ошибка получения статистики: {str(e)}"
+        }
 
 # ───────────── /start-scrape ────────────────────────────────
 @app.get("/start-scrape")
@@ -161,8 +211,15 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
 
 
 @app.get("/status/{run_id}")
-def status(run_id: str, current_user: dict = Depends(get_current_user)):
+async def status(run_id: str, current_user: dict = Depends(get_current_user)):
     """Проверить статус создания книги - только для авторизованных пользователей"""
+    
+    # Пытаемся получить статус из кэша
+    cached_status = await cache_service.get_processing_status(run_id)
+    if cached_status:
+        log.info(f"📦 Кэш HIT для статуса {run_id}")
+        return cached_status
+    
     run_dir = Path("data") / run_id
     posts_json = run_dir / "posts.json"
     images_dir = run_dir / "images"
@@ -290,6 +347,9 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
                 }
         except:
             pass
+    
+    # Кэшируем статус на 30 секунд для частых запросов
+    await cache_service.cache_processing_status(run_id, status_info, 30)
     
     log.info(f"Status response: {status_info}")
     return status_info
@@ -1643,6 +1703,9 @@ async def save_book_to_library(
     if not book:
         raise HTTPException(500, "Ошибка сохранения книги")
     
+    # Инвалидируем кэш книг пользователя
+    await cache_service.invalidate_user_books(clerk_user_id)
+    
     log.info(f"Книга {run_id} сохранена в библиотеке пользователя {clerk_user_id}")
     return {"success": True, "message": "Книга сохранена в вашей библиотеке", "book_id": str(book.id)}
 
@@ -1653,6 +1716,13 @@ async def get_my_books(
 ):
     """Получить список книг пользователя"""
     clerk_user_id = current_user.get("sub")
+    
+    # Пытаемся получить из кэша
+    cached_books = await cache_service.get_user_books(clerk_user_id)
+    if cached_books:
+        log.info(f"📦 Кэш HIT для книг пользователя {clerk_user_id}")
+        return UserBooksResponse(**cached_books)
+    
     books = await BookService.get_user_books(db, clerk_user_id)
     
     # Преобразуем в модели ответа
@@ -1669,7 +1739,12 @@ async def get_my_books(
             has_html=book.has_html
         ))
     
-    return UserBooksResponse(books=book_responses, total=len(book_responses))
+    result = UserBooksResponse(books=book_responses, total=len(book_responses))
+    
+    # Кэшируем результат на 30 минут
+    await cache_service.cache_user_books(clerk_user_id, result.dict(), 1800)
+    
+    return result
 
 @app.delete("/books/{book_id}")
 async def delete_book(
@@ -1684,6 +1759,9 @@ async def delete_book(
     
     if not success:
         raise HTTPException(404, "Книга не найдена")
+    
+    # Инвалидируем кэш книг пользователя
+    await cache_service.invalidate_user_books(clerk_user_id)
     
     log.info(f"Книга {book_id} удалена из библиотеки пользователя {clerk_user_id}")
     return {"success": True, "message": "Книга удалена из библиотеки"}

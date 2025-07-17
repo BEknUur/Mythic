@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     # Database configuration
     DATABASE_URL:str
     ASYNC_DATABASE_URL: Optional[str]=None
+    
+    # Redis configuration
+    REDIS_URL: str = "redis://redis:6379"
+    REDIS_CACHE_TTL: int = 3600  # 1 час по умолчанию
+    REDIS_SESSION_TTL: int = 86400  # 24 часа для сессий
 
     class Config:
         env_file = ".env"
