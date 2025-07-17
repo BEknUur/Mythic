@@ -68,7 +68,24 @@ app.mount("/runs", StaticFiles(directory=str(DATA_DIR), html=False), name="runs"
 @app.get("/health")
 def health_check():
     """Простая проверка работы API"""
-    return {"status": "ok", "message": "API работает! 💕"}
+    import psutil
+    import os
+    
+    # Get system info
+    memory = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
+    
+    return {
+        "status": "ok", 
+        "message": "API работает! 💕",
+        "timestamp": datetime.datetime.now().isoformat(),
+        "system": {
+            "memory_percent": memory.percent,
+            "disk_percent": disk.percent,
+            "cpu_percent": psutil.cpu_percent(interval=1),
+        },
+        "version": "1.0.0"
+    }
 
 # ───────────── /start-scrape ────────────────────────────────
 @app.get("/start-scrape")

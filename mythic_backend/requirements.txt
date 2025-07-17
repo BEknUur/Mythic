@@ -25,3 +25,4 @@ numpy
 aiofiles
 PyJWT>=2.8.0
 jinja2
+psutil>=5.9.0

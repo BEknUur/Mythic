@@ -130,12 +130,36 @@ export const api = {
   },
 
   async getStatus(runId: string, token?: string): Promise<StatusResponse> {
-    const res = await fetch(`${BASE_URL}/status/${runId}`, {
-      headers: headersWithAuth(token),
-    })
-    if (!res.ok)
-      throw new ApiError(await res.text(), res.status)
-    return StatusResponseSchema.parse(await res.json())
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      const res = await fetch(`${BASE_URL}/status/${runId}`, {
+        headers: headersWithAuth(token),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new ApiError(errorText, res.status);
+      }
+      
+      return StatusResponseSchema.parse(await res.json());
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      
+      if (error.name === 'AbortError') {
+        throw new ApiError('Request timeout - server is taking too long to respond', 408);
+      }
+      
+      throw new ApiError(`Network error: ${error.message}`, 0);
+    }
   },
 
   /* ---------- runtime URLs (view / download) ---------- */

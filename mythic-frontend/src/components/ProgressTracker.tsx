@@ -223,19 +223,42 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         return;
     }
 
+    let retryCount = 0;
+    const maxRetries = 3;
+    let pollInterval = 5000; // Start with 5 seconds
+
     const pollStatus = async () => {
       try {
         const token = await getToken();
         const currentStatus = await api.getStatus(runId, token || undefined);
         handleStatusUpdate(currentStatus);
+        
+        // Reset retry count and interval on successful request
+        retryCount = 0;
+        pollInterval = 5000;
       } catch (err) {
         console.error("Polling error:", err);
-        setError('Не удалось обновить статус. Обновите страницу через несколько минут.');
+        retryCount++;
+        
+        // Implement exponential backoff for failed requests
+        if (retryCount <= maxRetries) {
+          pollInterval = Math.min(pollInterval * 2, 30000); // Max 30 seconds
+          console.log(`Retrying in ${pollInterval}ms (attempt ${retryCount}/${maxRetries})`);
+        } else {
+          // After max retries, show error but keep trying with longer intervals
+          setError('Соединение нестабильно. Продолжаем попытки...');
+          pollInterval = 30000; // 30 seconds for persistent errors
+        }
       }
     };
 
+    // Initial poll
     pollStatus();
-    const intervalId = setInterval(pollStatus, 5000);
+    
+    // Set up interval with dynamic timing
+    const intervalId = setInterval(() => {
+      pollStatus();
+    }, pollInterval);
 
     return () => {
       clearInterval(intervalId);
