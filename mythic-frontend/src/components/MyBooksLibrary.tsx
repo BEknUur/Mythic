@@ -99,26 +99,26 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
   };
 
   const handleDeleteBook = async (book: UserBook) => {
-    if (!confirm(`Удалить книгу "${book.title}"?`)) {
+    if (!confirm('Вы уверены, что хотите удалить эту книгу?')) {
       return;
     }
-    
+
     try {
       const token = await getToken();
       if (!token) {
         toast({
           title: "Ошибка",
-          description: "Нужно войти в аккаунт", 
+          description: "Нужно войти в аккаунт",
           variant: "destructive",
         });
         return;
       }
-      
+
       await api.deleteBook(book.id, token);
-      setBooks(books.filter(b => b.id !== book.id));
+      setBooks(prev => prev.filter(b => b.id !== book.id));
       toast({
-        title: "Удалено",
-        description: "Книга удалена из библиотеки",
+        title: "Готово",
+        description: "Книга удалена",
       });
     } catch (err) {
       toast({
@@ -130,107 +130,92 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString('ru-RU', {
+      year: 'numeric',
       month: 'long',
-      year: 'numeric'
+      day: 'numeric'
     });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-4 mb-8">
-            <Button
-              variant="ghost"
-              onClick={onBack}
-              className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад
-            </Button>
-          </div>
-          
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-600 dark:text-gray-400" />
-              <p className="text-gray-600 dark:text-gray-400">Загружаем ваши книги...</p>
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center mobile-padding">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-600 dark:text-gray-400" />
+          <p className="text-gray-600 dark:text-gray-400">Загружаем ваши книги...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="responsive-container py-6 sm:py-8">
+        {/* Заголовок */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4 mb-4">
             <Button
-              variant="ghost" 
+              variant="ghost"
+              size="icon"
               onClick={onBack}
-              className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="shrink-0 touch-target"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="sr-only">Назад</span>
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-black dark:text-white">Мои книги</h1>
-              <p className="text-gray-600 dark:text-gray-400">Все ваши созданные книги</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-black dark:text-white">Мои книги</h1>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Все ваши созданные книги</p>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Карточки статистики */}
+        <div className="mobile-friendly-grid mb-6 sm:mb-8">
           <Card className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                  <Book className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                  <Book className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700 dark:text-gray-300" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-black dark:text-white">{books.length}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">книг</p>
+                  <p className="text-xl sm:text-2xl font-bold text-black dark:text-white">{books.length}</p>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">книг</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
           <Card className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                  <Download className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                  <Download className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700 dark:text-gray-300" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-black dark:text-white">{books.filter(b => b.has_pdf).length}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">PDF файлов</p>
+                  <p className="text-xl sm:text-2xl font-bold text-black dark:text-white">{books.filter(b => b.has_pdf).length}</p>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">PDF файлов</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
           <Card className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                  <FileText className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700 dark:text-gray-300" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-black dark:text-white">{books.filter(b => b.has_html).length}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">веб-версий</p>
+                  <p className="text-xl sm:text-2xl font-bold text-black dark:text-white">{books.filter(b => b.has_html).length}</p>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">веб-версий</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Error State */}
+        {/* Состояние ошибки */}
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-900/20">
             <AlertDescription className="text-red-800 dark:text-red-300">
@@ -239,20 +224,20 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
           </Alert>
         )}
 
-        {/* Empty State */}
+        {/* Пустое состояние */}
         {!loading && books.length === 0 && (
           <Card className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
-            <CardContent className="p-12 text-center">
+            <CardContent className="p-8 sm:p-12 text-center">
               <div className="mb-4">
-                <Book className="h-16 w-16 mx-auto text-gray-400" />
+                <Book className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-black dark:text-white mb-2">Пока нет книг</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
+              <h3 className="text-base sm:text-lg font-medium text-black dark:text-white mb-2">Пока нет книг</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
                 Создайте свою первую книгу, чтобы она появилась здесь
               </p>
               <Button 
                 onClick={onBack}
-                className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
+                className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 touch-target"
               >
                 Создать книгу
               </Button>
@@ -260,71 +245,87 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
           </Card>
         )}
 
-        {/* Books List */}
-        <div className="space-y-6">
-            {books.map((book) => (
+        {/* Список книг */}
+        <div className="space-y-4 sm:space-y-6">
+          {books.map((book) => (
             <Card key={book.id} className="border-gray-200 dark:border-gray-800 dark:bg-gray-950">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row gap-6">
-                  {/* Book Info */}
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col gap-4">
+                  {/* Информация о книге */}
                   <div className="flex-grow">
-                    <h2 className="text-xl font-bold text-black dark:text-white mb-2">{book.title}</h2>
-                    <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <h2 className="text-lg sm:text-xl font-bold text-black dark:text-white mb-2">{book.title}</h2>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
                       <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
+                        <User className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span>{book.profile_full_name ?? book.profile_username ?? '—'}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span>{formatDate(book.created_at)}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {book.has_html && <Badge variant="outline" className="border-blue-300 text-blue-600 dark:border-blue-700 dark:text-blue-400">Веб-версия</Badge>}
-                      {book.has_pdf && <Badge variant="outline" className="border-green-300 text-green-600 dark:border-green-700 dark:text-green-400">PDF</Badge>}
+                    <div className="flex items-center gap-2 mb-4">
+                      {book.has_html && (
+                        <Badge variant="outline" className="border-blue-300 text-blue-600 dark:border-blue-700 dark:text-blue-400 text-xs">
+                          Веб-версия
+                        </Badge>
+                      )}
+                      {book.has_pdf && (
+                        <Badge variant="outline" className="border-green-300 text-green-600 dark:border-green-700 dark:text-green-400 text-xs">
+                          PDF
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   
-                  {/* Action Buttons */}
-                  <div className="flex-shrink-0 flex items-center gap-2">
+                  {/* Кнопки действий */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <div className="flex gap-2 flex-1">
                       <Button
                         variant="outline"
                         onClick={() => handleViewBook(book)}
-                      className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex-1 sm:flex-none touch-target"
+                        size="sm"
                       >
-                      <Eye className="h-4 w-4 mr-2" />
-                        Читать
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Читать</span>
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => handleFlipBook(book)}
-                        className="border-gray-300 dark:border-gray-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                        className="border-gray-300 dark:border-gray-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 flex-1 sm:flex-none touch-target"
+                        size="sm"
                       >
-                        Flipbook
+                        <span className="text-xs sm:text-sm">Flipbook</span>
                       </Button>
+                    </div>
+                    <div className="flex gap-2">
                       <Button
                         variant="outline"
                         onClick={() => handleDownloadBook(book)}
-                      className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      disabled={!book.has_pdf}
+                        className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex-1 sm:flex-none touch-target"
+                        disabled={!book.has_pdf}
+                        size="sm"
                       >
-                      <Download className="h-4 w-4 mr-2" />
-                        PDF
+                        <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">PDF</span>
                       </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteBook(book)}
-                      className="text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteBook(book)}
+                        className="text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 touch-target"
+                      >
+                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="sr-only">Удалить</span>
+                      </Button>
+                    </div>
                   </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -65,25 +65,77 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    /* Улучшенная прокрутка для мобильных */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
   body {
     @apply bg-background text-foreground;
     font-family: 'Manrope', sans-serif;
+    /* Предотвращение зума при фокусе на input на iOS */
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Улучшенная прокрутка */
+    overflow-x: hidden;
   }
+  
   .font-heading {
     font-family: 'Playfair Display', serif;
   }
   
-  /* Add this to remove the blue outline on focus for buttons and inputs, as we'll use custom focus styles */
-  button:focus, input:focus, select:focus {
+  /* Touch-friendly кнопки и элементы */
+  button, 
+  [role="button"], 
+  .touch-target {
+    min-height: 44px; /* Apple рекомендует минимум 44px для touch targets */
+    min-width: 44px;
+    touch-action: manipulation; /* Предотвращает задержку клика */
+  }
+  
+  /* Улучшенные фокус стили для accessibility */
+  button:focus-visible, 
+  input:focus-visible, 
+  select:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  
+  button:focus:not(:focus-visible), 
+  input:focus:not(:focus-visible), 
+  select:focus:not(:focus-visible) {
     outline: none;
+  }
+  
+  /* Улучшения для input полей на мобильных */
+  input, textarea, select {
+    font-size: 16px; /* Предотвращает зум на iOS */
+  }
+  
+  @media (max-width: 768px) {
+    input, textarea, select {
+      font-size: 16px !important; /* Принудительно для всех input на мобильных */
+    }
   }
 }
 
-/* Custom styles for inline book viewer */
+/* Улучшенные стили для книжного контента с мобильной адаптацией */
 .book-content {
   font-family: 'Inter', sans-serif;
   line-height: 1.7;
   color: #1f2937;
+  padding: 1rem; /* Добавляем padding для мобильных */
+}
+
+@media (min-width: 768px) {
+  .book-content {
+    padding: 2rem;
+  }
 }
 
 .book-content h1,
@@ -95,27 +147,49 @@
   margin-bottom: 1rem;
   margin-top: 1.5rem;
   color: #111827;
+  line-height: 1.3; /* Лучше для заголовков на мобильных */
 }
 
 .book-content h1 {
-  font-size: 2.25rem;
+  font-size: 1.75rem; /* Меньше на мобильных */
   text-align: center;
   margin-bottom: 2rem;
 }
 
+@media (min-width: 768px) {
+  .book-content h1 {
+    font-size: 2.25rem;
+  }
+}
+
 .book-content h2 {
-  font-size: 1.875rem;
+  font-size: 1.5rem;
   border-bottom: 2px solid #e5e7eb;
   padding-bottom: 0.5rem;
 }
 
+@media (min-width: 768px) {
+  .book-content h2 {
+    font-size: 1.875rem;
+  }
+}
+
 .book-content h3 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .book-content h3 {
+    font-size: 1.5rem;
+  }
 }
 
 .book-content p {
   margin-bottom: 1.25rem;
   text-align: justify;
+  /* Лучшая читаемость на мобильных */
+  word-wrap: break-word;
+  hyphens: auto;
 }
 
 .book-content img {
@@ -135,6 +209,8 @@
   background-color: #fef3c7;
   padding: 1rem;
   border-radius: 4px;
+  /* Лучшая адаптация для мобильных */
+  word-wrap: break-word;
 }
 
 .book-content ul,
@@ -159,39 +235,102 @@
   border-top: 1px solid #e5e7eb;
 }
 
-/* Animations */
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in-down {
+/* Улучшенные анимации с учетом предпочтений пользователя */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes fade-in-up {
     from {
-        opacity: 0;
-        transform: translateY(-20px);
+      opacity: 0;
+      transform: translateY(20px);
     }
     to {
-        opacity: 1;
-        transform: translateY(0);
+      opacity: 1;
+      transform: translateY(0);
     }
+  }
+
+  @keyframes fade-in-down {
+      from {
+          opacity: 0;
+          transform: translateY(-20px);
+      }
+      to {
+          opacity: 1;
+          transform: translateY(0);
+      }
+  }
+
+  .animate-fade-in-up {
+      animation: fade-in-up 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  .animate-fade-in-down {
+      animation: fade-in-down 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
 }
 
-.animate-fade-in-up {
-    animation: fade-in-up 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
-.animate-fade-in-down {
-    animation: fade-in-down 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+/* Для пользователей, предпочитающих отключенные анимации */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-fade-in-down {
+    animation: none;
+  }
 }
 
 .book-container .page {
   background-color: white;
   border: 1px solid #c9c9c9;
   overflow: hidden;
+}
+
+/* Улучшения для скроллбара на всех устройствах */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground));
+}
+
+/* Утилитарные классы для мобильной адаптивности */
+.mobile-padding {
+  @apply px-4 sm:px-6 lg:px-8;
+}
+
+.mobile-text {
+  @apply text-sm sm:text-base;
+}
+
+.mobile-card {
+  @apply mx-4 sm:mx-6 lg:mx-auto;
+}
+
+/* Скрытие элементов для screen readers, но оставление для навигации */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Клас для лучшего отображения контента на разных экранах */
+.responsive-container {
+  @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.mobile-friendly-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6;
 }
