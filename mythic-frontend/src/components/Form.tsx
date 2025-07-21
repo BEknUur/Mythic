@@ -43,23 +43,56 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
   const { toast } = useToast();
   const { getToken } = useAuth();
 
-  const validateInstagramUrl = (url: string): boolean => {
-    const pattern = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/;
-    return pattern.test(url);
+  // Функция для нормализации входа пользователя
+  const normalizeInstagramInput = (input: string): string => {
+    const trimmed = input.trim();
+    
+    // Если это уже полный URL, возвращаем как есть
+    if (trimmed.match(/^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/)) {
+      return trimmed;
+    }
+    
+    // Убираем @ если есть в начале
+    const cleanUsername = trimmed.replace(/^@/, '');
+    
+    // Проверяем, что username состоит только из допустимых символов
+    if (cleanUsername.match(/^[a-zA-Z0-9_.]+$/)) {
+      return `https://instagram.com/${cleanUsername}`;
+    }
+    
+    return trimmed; // Возвращаем как есть для показа ошибки валидации
+  };
+
+  const validateInstagramInput = (input: string): boolean => {
+    const trimmed = input.trim();
+    
+    // Проверяем полный URL
+    const urlPattern = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/;
+    if (urlPattern.test(trimmed)) {
+      return true;
+    }
+    
+    // Проверяем username (с или без @)
+    const cleanUsername = trimmed.replace(/^@/, '');
+    const usernamePattern = /^[a-zA-Z0-9_.]+$/;
+    return usernamePattern.test(cleanUsername) && cleanUsername.length > 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateInstagramUrl(url)) {
-      setError('Пожалуйста, введите корректную ссылку на Instagram профиль.');
+    
+    if (!validateInstagramInput(url)) {
+      setError('Пожалуйста, введите корректный Instagram профиль (например: ualikhaanuly или @ualikhaanuly).');
       return;
     }
+    
     setError('');
     setIsLoading(true);
 
     try {
       const token = await getToken();
-      const result = await api.startScrape(url, style, token || undefined);
+      const normalizedUrl = normalizeInstagramInput(url);
+      const result = await api.startScrape(normalizedUrl, style, token || undefined);
       toast({ title: "Отлично!", description: `Книга в стиле "${style}" отправлена в обработку.` });
       onStartScrape(result.runId);
     } catch (err) {
@@ -83,49 +116,52 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
         </div>
         <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">Заполните детали</h3>
         <p className="text-gray-500 dark:text-gray-400">Остался последний шаг до создания вашей книги.</p>
-              </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-          <Label htmlFor="instagram-url" className="text-gray-600 dark:text-gray-400">Ссылка на Instagram профиль</Label>
-                <div className="relative">
+        <div className="space-y-2">
+          <Label htmlFor="instagram-url" className="text-gray-600 dark:text-gray-400">Instagram профиль</Label>
+          <div className="relative">
             <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input
+            <Input
               id={TOUR_STEP_IDS.INSTAGRAM_INPUT}
-                    type="url"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://instagram.com/yourprofile"
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="ualikhaanuly"
               className="pl-10"
               required
               disabled={isLoading}
-                  />
-                </div>
-              </div>
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Просто введите username (например: ualikhaanuly) или полную ссылку
+          </p>
+        </div>
 
-              <div className="space-y-2">
+        <div className="space-y-2">
           <Label>Выберите стиль книги</Label>
-                <StylePicker value={style} onChange={setStyle} />
-              </div>
+          <StylePicker value={style} onChange={setStyle} />
+        </div>
 
-              {error && (
+        {error && (
           <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+          </Alert>
+        )}
 
         <Button type="submit" disabled={isLoading || !url.trim()} className="w-full h-12 text-base bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-200">
-                {isLoading ? (
-                  <>
+          {isLoading ? (
+            <>
               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               Создаем...
-                  </>
-                ) : (
-                  'Создать книгу'
-                )}
-              </Button>
-            </form>
+            </>
+          ) : (
+            'Создать книгу'
+          )}
+        </Button>
+      </form>
     </motion.div>
   );
 };

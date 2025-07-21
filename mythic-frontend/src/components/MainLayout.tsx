@@ -19,13 +19,7 @@ export function MainLayout() {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // На десктопе автоматически открываем сайдбар
-      if (!mobile) {
-        setIsSidebarOpen(true);
-      } else {
-        // На мобильных закрываем сайдбар при изменении размера
-        setIsSidebarOpen(false);
-      }
+      // Сайдбар остается закрытым по умолчанию на всех устройствах
     };
 
     checkMobile();
