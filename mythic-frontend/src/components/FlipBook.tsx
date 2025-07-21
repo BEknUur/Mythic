@@ -255,6 +255,9 @@ export function FlipBook({ pages }: FlipBookProps) {
         clickEventForward={false}
         drawShadow={true}
         startPage={0}
+        startZIndex={0}
+        autoSize={false}
+        disableFlipByClick={false}
         style={{ margin: '0 auto' }}
         onFlip={(e) => console.log('Page flipped:', e)}
         onChangeOrientation={() => console.log('Orientation changed')}
