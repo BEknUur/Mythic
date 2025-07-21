@@ -102,9 +102,7 @@ export function MainLayout() {
       />
       
       {/* Основной контент */}
-      <main className={`flex-1 transition-all duration-300 overflow-x-hidden ${
-        isMobile ? 'ml-0' : isSidebarOpen ? 'ml-80' : 'ml-0'
-      }`}>
+      <main className={`flex-1 transition-all duration-300 overflow-x-hidden`}>
         <div className="min-h-screen w-full">
           <Outlet />
         </div>

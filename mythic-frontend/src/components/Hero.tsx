@@ -11,7 +11,7 @@ export function Hero() {
   const { isSignedIn, user } = useUser();
 
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-br from-gray-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-purple-950">
+    <section className="relative w-full min-h-screen overflow-hidden bg-gradient-to-br from-gray-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-purple-950">
       {/* Кнопки авторизации */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center gap-2 sm:gap-4 animate-fade-in-down z-10">
         {isSignedIn ? (
@@ -41,7 +41,7 @@ export function Hero() {
         <ThemeToggle />
       </div>
 
-      <div className="relative max-w-7xl mx-auto mobile-padding py-16 sm:py-24 md:py-32 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 md:py-32 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-16 min-h-screen">
         {/* Левая часть: Контент */}
         <div className="w-full lg:w-1/2 text-center lg:text-left animate-fade-in-up">
           <Badge

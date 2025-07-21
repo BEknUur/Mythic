@@ -61,10 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
       {/* Сайдбар */}
       <aside className={cn(
         "fixed left-0 top-0 z-50 h-full w-80 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 transition-transform duration-300 ease-in-out sidebar-container",
-        isOpen ? "translate-x-0" : "-translate-x-full",
-        !isMobile && "md:relative",
-        !isMobile && isOpen && "md:translate-x-0",
-        !isMobile && !isOpen && "md:-translate-x-full"
+        isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         {/* Хедер сайдбара */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
