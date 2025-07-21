@@ -485,7 +485,7 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
     // Add improved CSS animations and mobile styles to the document head
     const style = document.createElement('style');
     style.textContent = `
-      /* Улучшенные анимации с мобильной поддержкой */
+      /* Базовые анимации */
       @keyframes sparkle {
         0%, 100% { 
           opacity: 0.3; 
@@ -525,89 +525,56 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
         animation: sparkle 4s ease-in-out infinite;
       }
 
-      /* Мобильная адаптация для FlipBook */
-      .stf__parent {
-        width: 100% !important;
-        height: auto !important;
-        min-height: 400px !important;
+      /* Улучшения для touch устройств */
+      .touch-target {
+        min-height: 44px;
+        min-width: 44px;
+        touch-action: manipulation;
+      }
+
+      /* Мобильная адаптация */
+      .mobile-padding {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      
+      .mobile-text {
+        font-size: 1rem;
+        line-height: 1.5;
       }
 
       @media (max-width: 768px) {
-        .stf__parent {
-          min-height: 300px !important;
+        .mobile-padding {
+          padding-left: 0.75rem;
+          padding-right: 0.75rem;
         }
         
-        .stf__block {
-          width: 100% !important;
-          max-width: 350px !important;
-          margin: 0 auto !important;
-        }
-        
-        .stf__item {
-          font-size: 14px !important;
-          line-height: 1.5 !important;
-          padding: 0.75rem !important;
+        .mobile-text {
+          font-size: 0.9rem;
         }
       }
 
       @media (max-width: 480px) {
-        .stf__parent {
-          min-height: 250px !important;
+        .mobile-padding {
+          padding-left: 0.5rem;
+          padding-right: 0.5rem;
         }
         
-        .stf__block {
-          max-width: 280px !important;
+        .mobile-text {
+          font-size: 0.85rem;
         }
-        
-        .stf__item {
-          font-size: 13px !important;
-          padding: 0.5rem !important;
-        }
-      }
-
-      /* Улучшенная читаемость на мобильных */
-      .stf__item h1, .stf__item h2, .stf__item h3 {
-        font-family: 'Playfair Display', serif !important;
-        line-height: 1.2 !important;
-        margin-bottom: 0.75rem !important;
-        word-wrap: break-word !important;
-      }
-
-      .stf__item p {
-        font-family: 'Inter', sans-serif !important;
-        line-height: 1.6 !important;
-        margin-bottom: 0.75rem !important;
-        text-align: justify !important;
-        word-wrap: break-word !important;
-        hyphens: auto !important;
-      }
-
-      .stf__item img {
-        max-width: 100% !important;
-        height: auto !important;
-        border-radius: 8px !important;
-        margin: 0.75rem auto !important;
-        display: block !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-      }
-
-      /* Улучшенные элементы управления для touch устройств */
-      .stf__navigation button {
-        min-height: 44px !important;
-        min-width: 44px !important;
-        touch-action: manipulation !important;
       }
 
       /* Безопасные области для мобильных устройств */
       @supports (padding: max(0px)) {
         .flip-book-header {
-          padding-left: max(1rem, env(safe-area-inset-left)) !important;
-          padding-right: max(1rem, env(safe-area-inset-right)) !important;
+          padding-left: max(1rem, env(safe-area-inset-left));
+          padding-right: max(1rem, env(safe-area-inset-right));
         }
         
         .flip-book-content {
-          padding-left: max(2rem, env(safe-area-inset-left)) !important;
-          padding-right: max(2rem, env(safe-area-inset-right)) !important;
+          padding-left: max(2rem, env(safe-area-inset-left));
+          padding-right: max(2rem, env(safe-area-inset-right));
         }
       }
 `;
