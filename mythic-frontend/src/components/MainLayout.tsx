@@ -1,19 +1,29 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useState, useEffect } from 'react';
 
 export function MainLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const location = useLocation();
+
+  // Закрываем сайдбар при смене роута на мобильных
+  useEffect(() => {
+    if (isMobile && isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
 
   // Проверяем размер экрана
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
       // На десктопе автоматически открываем сайдбар
-      if (window.innerWidth >= 768) {
+      if (!mobile) {
         setIsSidebarOpen(true);
       } else {
+        // На мобильных закрываем сайдбар при изменении размера
         setIsSidebarOpen(false);
       }
     };
@@ -28,13 +38,59 @@ export function MainLayout() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
+  // Закрываем сайдбар при нажатии Escape на мобильных
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobile && isSidebarOpen) {
+        closeSidebar();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMobile, isSidebarOpen]);
+
+  // Предотвращаем скролл body когда сайдбар открыт на мобильных
+  useEffect(() => {
+    if (isMobile && isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobile, isSidebarOpen]);
+
+  // Обработчик клика по оверлею с множественными способами закрытия
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeSidebar();
+  };
+
+  const handleOverlayTouch = (e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeSidebar();
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Оверлей для мобильных устройств */}
+      {/* Улучшенный оверлей для мобильных устройств */}
       {isMobile && isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
+          className="sidebar-overlay"
+          onClick={handleOverlayClick}
+          onTouchStart={handleOverlayTouch}
+          onTouchEnd={handleOverlayTouch}
+          onMouseDown={handleOverlayClick}
+          aria-label="Закрыть меню"
         />
       )}
       

@@ -79,140 +79,183 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
     }
   };
 
-  // Адаптируем HTML для мобильных устройств
+  // Улучшенная функция для обработки HTML на мобильных
   const processMobileHTML = (html: string) => {
-    // Делаем все изображения адаптивными
-    html = html.replace(/<img([^>]*?)>/gi, (match, attributes) => {
-      // Добавляем классы для адаптивности если их нет
-      if (!attributes.includes('class=')) {
-        return `<img${attributes} class="mobile-responsive-image">`;
-      } else {
-        return match.replace(/class="([^"]*)"/, 'class="$1 mobile-responsive-image"');
-      }
-    });
+    // Добавляем мобильно-дружественные классы к элементам
+    let processedHtml = html
+      .replace(/<p([^>]*)>/g, '<p$1 class="mobile-text leading-relaxed mb-4">')
+      .replace(/<h1([^>]*)>/g, '<h1$1 class="text-2xl sm:text-3xl lg:text-4xl font-heading mb-6 text-center">')
+      .replace(/<h2([^>]*)>/g, '<h2$1 class="text-xl sm:text-2xl lg:text-3xl font-heading mb-4 mt-8">')
+      .replace(/<h3([^>]*)>/g, '<h3$1 class="text-lg sm:text-xl lg:text-2xl font-heading mb-3 mt-6">')
+      .replace(/<img([^>]*)>/g, '<img$1 class="w-full max-w-md mx-auto rounded-lg shadow-md my-6">');
 
-    // Оборачиваем контент в мобильно-дружественный контейнер
-    return `<div class="mobile-book-container">${html}</div>`;
+    return processedHtml;
   };
 
-  // Адаптируем CSS для мобильных устройств
+  // Улучшенная функция для адаптации CSS на мобильных
   const adaptCSSForMobile = (css: string) => {
     return css + `
-      /* Мобильные улучшения */
-      .mobile-book-container {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+      /* Мобильная адаптация для книжного контента */
+      .book-content {
+        font-size: 16px !important;
         line-height: 1.6 !important;
+        padding: 1rem !important;
         word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
         hyphens: auto !important;
       }
-
-      .mobile-responsive-image {
+      
+      @media (min-width: 640px) {
+        .book-content {
+          font-size: 18px !important;
+          padding: 1.5rem !important;
+        }
+      }
+      
+      @media (min-width: 768px) {
+        .book-content {
+          padding: 2rem !important;
+        }
+      }
+      
+      .book-content h1, .book-content h2, .book-content h3, .book-content h4 {
+        font-family: 'Playfair Display', serif !important;
+        line-height: 1.2 !important;
+        margin-top: 1.5rem !important;
+        margin-bottom: 1rem !important;
+        word-wrap: break-word !important;
+      }
+      
+      .book-content h1 {
+        font-size: 1.75rem !important;
+        text-align: center !important;
+        margin-bottom: 2rem !important;
+      }
+      
+      @media (min-width: 640px) {
+        .book-content h1 {
+          font-size: 2rem !important;
+        }
+      }
+      
+      @media (min-width: 768px) {
+        .book-content h1 {
+          font-size: 2.5rem !important;
+        }
+      }
+      
+      .book-content h2 {
+        font-size: 1.5rem !important;
+      }
+      
+      @media (min-width: 640px) {
+        .book-content h2 {
+          font-size: 1.75rem !important;
+        }
+      }
+      
+      @media (min-width: 768px) {
+        .book-content h2 {
+          font-size: 2rem !important;
+        }
+      }
+      
+      .book-content h3 {
+        font-size: 1.25rem !important;
+      }
+      
+      @media (min-width: 640px) {
+        .book-content h3 {
+          font-size: 1.5rem !important;
+        }
+      }
+      
+      .book-content p {
+        margin-bottom: 1.25rem !important;
+        text-align: justify !important;
+        word-wrap: break-word !important;
+        hyphens: auto !important;
+      }
+      
+      .book-content img {
         max-width: 100% !important;
         height: auto !important;
-        display: block !important;
-        margin: 1rem auto !important;
         border-radius: 8px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-      }
-
-      /* Адаптивная типографика */
-      @media (max-width: 768px) {
-        .mobile-book-container {
-          font-size: 16px !important;
-          line-height: 1.7 !important;
-        }
-        
-        .mobile-book-container h1 {
-          font-size: 1.75rem !important;
-          line-height: 1.3 !important;
-          margin-bottom: 1.5rem !important;
-          text-align: center !important;
-        }
-        
-        .mobile-book-container h2 {
-          font-size: 1.5rem !important;
-          line-height: 1.4 !important;
-          margin: 1.5rem 0 1rem 0 !important;
-        }
-        
-        .mobile-book-container h3 {
-          font-size: 1.25rem !important;
-          line-height: 1.4 !important;
-          margin: 1.25rem 0 0.75rem 0 !important;
-        }
-        
-        .mobile-book-container p {
-          margin-bottom: 1rem !important;
-          text-align: justify !important;
-          word-spacing: 0.1em !important;
-        }
-        
-        .mobile-book-container blockquote {
-          margin: 1rem 0 !important;
-          padding: 0.75rem !important;
-          font-style: italic !important;
-          border-left: 3px solid #f59e0b !important;
-          background-color: #fef3c7 !important;
-          border-radius: 4px !important;
-        }
-      }
-
-      /* Улучшения для очень маленьких экранов */
-      @media (max-width: 480px) {
-        .mobile-book-container {
-          font-size: 15px !important;
-        }
-        
-        .mobile-book-container h1 {
-          font-size: 1.5rem !important;
-        }
-        
-        .mobile-book-container h2 {
-          font-size: 1.25rem !important;
-        }
-        
-        .mobile-book-container h3 {
-          font-size: 1.125rem !important;
-        }
-      }
-
-      /* Исправляем возможные конфликты стилей */
-      .mobile-book-container * {
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-      }
-
-      .mobile-book-container table {
-        width: 100% !important;
-        overflow-x: auto !important;
+        margin: 1.5rem auto !important;
         display: block !important;
-        white-space: nowrap !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
       }
-
-      .mobile-book-container pre {
-        white-space: pre-wrap !important;
-        word-break: break-all !important;
+      
+      .book-content blockquote {
+        border-left: 4px solid #f59e0b !important;
+        padding: 1rem !important;
+        margin: 1.5rem 0 !important;
+        background-color: #fef3c7 !important;
+        border-radius: 4px !important;
+        font-style: italic !important;
+        word-wrap: break-word !important;
+      }
+      
+      .book-content ul, .book-content ol {
+        margin-bottom: 1.25rem !important;
+        padding-left: 1.5rem !important;
+      }
+      
+      .book-content li {
+        margin-bottom: 0.5rem !important;
+        word-wrap: break-word !important;
+      }
+      
+      /* Улучшенная типографика для мобильных */
+      @media (max-width: 767px) {
+        .book-content {
+          font-size: 16px !important;
+          line-height: 1.6 !important;
+        }
+        
+        .book-content h1 {
+          font-size: 1.75rem !important;
+          line-height: 1.2 !important;
+        }
+        
+        .book-content h2 {
+          font-size: 1.5rem !important;
+          line-height: 1.3 !important;
+        }
+        
+        .book-content h3 {
+          font-size: 1.25rem !important;
+          line-height: 1.3 !important;
+        }
+      }
+      
+      /* Безопасные области для мобильных устройств */
+      @supports (padding: max(0px)) {
+        .book-content {
+          padding-left: max(1rem, env(safe-area-inset-left)) !important;
+          padding-right: max(1rem, env(safe-area-inset-right)) !important;
+          padding-top: max(1rem, env(safe-area-inset-top)) !important;
+          padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+        }
       }
     `;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center mobile-padding">
-        <div className="text-center">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="text-center space-y-4 mobile-padding">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-600 dark:text-gray-400" />
-          <p className="text-gray-600 dark:text-gray-400">Загружаем вашу книгу...</p>
+          <p className="text-gray-600 dark:text-gray-400 mobile-text">Загружаем вашу книгу...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      {/* Мобильно-дружественная шапка */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 safe-area-top">
-        <div className="mobile-padding py-3 sm:py-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 flex flex-col">
+      {/* Улучшенная мобильно-дружественная шапка */}
+      <div className="sticky top-0 z-10 bg-white/95 dark:bg-gray-950/95 border-b border-gray-200 dark:border-gray-800 backdrop-blur-sm">
+        <div className="responsive-container py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
@@ -221,26 +264,48 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
               size="sm"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Назад</span>
+              <span className="hidden sm:inline">Назад к библиотеке</span>
+              <span className="sm:hidden">Назад</span>
             </Button>
+            
+            {/* Индикатор прогресса чтения на мобильных */}
+            <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+              <span className="hidden sm:inline">Ваша книга</span>
+              <span className="sm:hidden">📖</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Контент книги */}
-      <div className="flex-1 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-900 dark:to-gray-800">
+      {/* Улучшенный контент книги */}
+      <div className="flex-1">
         <div className="responsive-container py-4 sm:py-6 lg:py-8">
           <div className="mx-auto max-w-4xl">
-            {/* Мобильно-адаптированный контейнер книги */}
+            {/* Улучшенный мобильно-адаптированный контейнер книги */}
             <div className="bg-white dark:bg-gray-950 rounded-lg shadow-lg overflow-hidden">
               <div 
-                className="book-content mobile-padding py-6 sm:py-8 lg:py-12"
+                className="book-content mobile-padding py-6 sm:py-8 lg:py-12 prose prose-lg max-w-none dark:prose-invert"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
+                style={{
+                  fontSize: '16px',
+                  lineHeight: '1.6',
+                  color: '#1f2937',
+                  fontFamily: 'Inter, sans-serif'
+                }}
               />
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Плавающая кнопка "Наверх" для длинных книг */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="fixed bottom-6 right-6 bg-amber-500 hover:bg-amber-600 text-white p-3 rounded-full shadow-lg transition-all duration-300 opacity-75 hover:opacity-100 touch-target z-10"
+        aria-label="Наверх"
+      >
+        <ArrowLeft className="h-5 w-5 rotate-90" />
+      </button>
     </div>
   );
 }

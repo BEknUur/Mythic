@@ -482,78 +482,135 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Add CSS animations to the document head
+    // Add improved CSS animations and mobile styles to the document head
     const style = document.createElement('style');
     style.textContent = `
-      @keyframes neonFlow {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-      }
-      
-      @keyframes pulse {
-        0%, 100% { opacity: 0.4; }
-        50% { opacity: 0.7; }
-      }
-      
+      /* Улучшенные анимации с мобильной поддержкой */
       @keyframes sparkle {
-        from { transform: translateY(0px); }
-        to { transform: translateY(-100px); }
+        0%, 100% { 
+          opacity: 0.3; 
+          transform: scale(0.8); 
+        }
+        50% { 
+          opacity: 0.8; 
+          transform: scale(1.2); 
+        }
       }
-      
-      @keyframes emojiBounce {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-5px); }
+
+      @keyframes float {
+        0%, 100% { 
+          transform: translateY(0px) rotate(0deg); 
+        }
+        33% { 
+          transform: translateY(-10px) rotate(1deg); 
+        }
+        66% { 
+          transform: translateY(5px) rotate(-1deg); 
+        }
       }
-      
-      @keyframes heartBeat {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-      }
-      
-      @keyframes swordSwing {
-        0%, 100% { transform: rotate(0deg); }
-        50% { transform: rotate(10deg); }
-      }
-      
-      .neon-border {
-        animation: neonFlow 8s ease infinite;
-      }
-      
-      .inner-glow {
-        animation: pulse 4s ease-in-out infinite;
-      }
-      
+
       .sparkle-bg {
-        animation: sparkle 30s linear infinite;
+        animation: float 6s ease-in-out infinite;
       }
-      
-      /* Анимации для юмористического стиля */
-      .humor-page .emoji-border {
-        animation: neonFlow 6s ease infinite;
+
+      .sparkle-bg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 25% 25%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 75% 75%, rgba(255, 192, 203, 0.1) 0%, transparent 50%);
+        animation: sparkle 4s ease-in-out infinite;
       }
-      
-      .humor-page .inner-glow {
-        animation: pulse 3s ease-in-out infinite;
+
+      /* Мобильная адаптация для FlipBook */
+      .stf__parent {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 400px !important;
       }
-      
-      /* Анимации для романтического стиля */
-      .romantic-page .romantic-border {
-        animation: neonFlow 10s ease infinite;
+
+      @media (max-width: 768px) {
+        .stf__parent {
+          min-height: 300px !important;
+        }
+        
+        .stf__block {
+          width: 100% !important;
+          max-width: 350px !important;
+          margin: 0 auto !important;
+        }
+        
+        .stf__item {
+          font-size: 14px !important;
+          line-height: 1.5 !important;
+          padding: 0.75rem !important;
+        }
       }
-      
-      .romantic-page .inner-glow {
-        animation: heartBeat 4s ease-in-out infinite;
+
+      @media (max-width: 480px) {
+        .stf__parent {
+          min-height: 250px !important;
+        }
+        
+        .stf__block {
+          max-width: 280px !important;
+        }
+        
+        .stf__item {
+          font-size: 13px !important;
+          padding: 0.5rem !important;
+        }
       }
-      
-      /* Анимации для фэнтезийного стиля */
-      .fantasy-page .fantasy-border {
-        animation: neonFlow 12s ease infinite;
+
+      /* Улучшенная читаемость на мобильных */
+      .stf__item h1, .stf__item h2, .stf__item h3 {
+        font-family: 'Playfair Display', serif !important;
+        line-height: 1.2 !important;
+        margin-bottom: 0.75rem !important;
+        word-wrap: break-word !important;
       }
-      
-      .fantasy-page .inner-glow {
-        animation: swordSwing 6s ease-in-out infinite;
+
+      .stf__item p {
+        font-family: 'Inter', sans-serif !important;
+        line-height: 1.6 !important;
+        margin-bottom: 0.75rem !important;
+        text-align: justify !important;
+        word-wrap: break-word !important;
+        hyphens: auto !important;
       }
-    `;
+
+      .stf__item img {
+        max-width: 100% !important;
+        height: auto !important;
+        border-radius: 8px !important;
+        margin: 0.75rem auto !important;
+        display: block !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+      }
+
+      /* Улучшенные элементы управления для touch устройств */
+      .stf__navigation button {
+        min-height: 44px !important;
+        min-width: 44px !important;
+        touch-action: manipulation !important;
+      }
+
+      /* Безопасные области для мобильных устройств */
+      @supports (padding: max(0px)) {
+        .flip-book-header {
+          padding-left: max(1rem, env(safe-area-inset-left)) !important;
+          padding-right: max(1rem, env(safe-area-inset-right)) !important;
+        }
+        
+        .flip-book-content {
+          padding-left: max(2rem, env(safe-area-inset-left)) !important;
+          padding-right: max(2rem, env(safe-area-inset-right)) !important;
+        }
+      }
+`;
     document.head.appendChild(style);
 
     return () => {
@@ -601,11 +658,14 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center" style={{
-        background: 'linear-gradient(135deg, #f5f2e8 0%, #ede7d3 50%, #e5dcc6 100%)'
+      <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-900 dark:to-gray-800" style={{
+        minHeight: '100vh'
       }}>
-        <Loader2 className="h-12 w-12 animate-spin" style={{ color: '#b8a082' }} />
-        <p className="mt-4 text-lg" style={{ color: '#4a453f' }}>Загружаем вашу волшебную книгу...</p>
+        <div className="text-center space-y-4 mobile-padding">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto" style={{ color: '#b8a082' }} />
+          <p className="text-lg mobile-text" style={{ color: '#4a453f' }}>Загружаем вашу волшебную книгу...</p>
+          <p className="text-sm text-gray-500">Подготавливаем страницы для лучшего чтения</p>
+        </div>
       </div>
     );
   }
@@ -615,8 +675,16 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
       const token = await getToken();
       if (runId) await api.downloadFile(runId, 'book.pdf', token || undefined);
       else if (bookId) await api.downloadSavedBook(bookId, 'book.pdf', token || undefined);
+      toast({ 
+        title: 'Готово', 
+        description: 'PDF файл скачан на ваше устройство',
+      });
     } catch (error) {
-      toast({ title: 'Ошибка', description: 'Не удалось скачать PDF', variant: 'destructive' });
+      toast({ 
+        title: 'Ошибка', 
+        description: 'Не удалось скачать PDF. Попробуйте позже.',
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -654,13 +722,13 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
   return (
     <div 
       key={runId || bookId} 
-      className="flex-1 flex flex-col"
+      className="flex-1 flex flex-col min-h-screen"
       style={{
         background: 'linear-gradient(135deg, #f5f2e8 0%, #ede7d3 50%, #e5dcc6 100%)',
         position: 'relative',
       }}
     >
-      {/* Subtle animated background */}
+      {/* Улучшенный анимированный фон */}
       <div 
         className="fixed inset-0 pointer-events-none z-0 sparkle-bg"
         style={{
@@ -676,12 +744,13 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
         }}
       />
       
-      <header className="flex items-center justify-between p-4 border-b relative z-10" style={{
+      {/* Улучшенная мобильно-дружественная шапка */}
+      <header className="flex items-center justify-between flip-book-header py-3 sm:py-4 border-b relative z-10" style={{
         background: 'rgba(240, 235, 220, 0.95)',
         borderColor: 'rgba(200, 180, 140, 0.3)',
         backdropFilter: 'blur(10px)',
       }}>
-        <div style={{ minWidth: 0 }}>
+        <div className="flex items-center min-w-0">
           <Button 
             variant="ghost" 
             onClick={onBack}
@@ -689,35 +758,62 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
               color: '#6b5b4a',
               borderColor: 'rgba(180, 160, 130, 0.4)',
             }}
-            className="hover:bg-orange-100/50"
+            className="hover:bg-orange-100/50 touch-target"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> В библиотеку
+            <ArrowLeft className="mr-2 h-4 w-4" /> 
+            <span className="hidden sm:inline">В библиотеку</span>
+            <span className="sm:hidden">Назад</span>
           </Button>
         </div>
-        <div className="flex-1 text-center">
-          <h2 className="text-xl font-semibold" style={{ color: '#4a453f', margin: 0 }}>Ваша Книга</h2>
+        
+        <div className="flex-1 text-center px-4">
+          <h2 className="text-lg sm:text-xl font-semibold mobile-text" style={{ color: '#4a453f', margin: 0 }}>
+            Ваша Книга
+          </h2>
         </div>
-        <div style={{ minWidth: 0 }} />
+        
+        <div className="flex items-center min-w-0">
+          <Button
+            variant="ghost"
+            onClick={handleDownloadPdf}
+            className="hover:bg-orange-100/50 touch-target"
+            style={{ color: '#6b5b4a' }}
+            size="sm"
+          >
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">PDF</span>
+          </Button>
+        </div>
       </header>
       
+      {/* Улучшенный контент с мобильной адаптацией */}
       {!loading && pages.length > 0 && (
-        <div className="flex-1 flex items-center justify-center p-6 relative z-10" style={{
-          // Убираем лишние паддинги/маргины, только центрируем
+        <div className="flex-1 flex items-center justify-center flip-book-content py-4 sm:py-6 relative z-10" style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '2rem 0', // равные отступы сверху и снизу
+          padding: '1rem',
           margin: 0,
+          minHeight: 'calc(100vh - 120px)', // Учитываем высоту header
         }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+          <div className="w-full max-w-6xl flex justify-center items-center">
             <FlipBook key={runId || bookId} pages={pageComponents} />
           </div>
         </div>
       )}
 
       {!loading && pages.length === 0 && (
-        <div className="flex-1 flex items-center justify-center">
-          <p style={{ color: '#4a453f' }}>Не удалось загрузить страницы книги.</p>
+        <div className="flex-1 flex items-center justify-center mobile-padding">
+          <div className="text-center space-y-4">
+            <p style={{ color: '#4a453f' }} className="mobile-text">Не удалось загрузить страницы книги.</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline"
+              className="touch-target"
+            >
+              Попробовать снова
+            </Button>
+          </div>
         </div>
       )}
     </div>

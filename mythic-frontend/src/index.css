@@ -95,6 +95,38 @@
     min-height: 44px; /* Apple рекомендует минимум 44px для touch targets */
     min-width: 44px;
     touch-action: manipulation; /* Предотвращает задержку клика */
+    -webkit-tap-highlight-color: transparent; /* Убираем синюю подсветку на iOS */
+    -webkit-touch-callout: none; /* Убираем контекстное меню на iOS */
+    -webkit-user-select: none; /* Предотвращаем выделение текста */
+    user-select: none;
+  }
+
+  /* Улучшенные ссылки для мобильных */
+  a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Специальные стили для overlay и сайдбара */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: auto;
+  }
+
+  /* Улучшенная обработка touch событий для сайдбара */
+  .sidebar-container {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
   }
   
   /* Улучшенные фокус стили для accessibility */
@@ -333,4 +365,173 @@
 
 .mobile-friendly-grid {
   @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6;
+}
+
+/* Улучшенные стили для FlipBook компонента */
+.flip-page {
+  background-color: white;
+  border: 1px solid #c9c9c9;
+  overflow: hidden;
+  position: relative;
+  padding: 1rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+}
+
+.flip-page-content {
+  flex: 1;
+  overflow: hidden;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.flip-page-number {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  color: #666;
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.demo-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+.demo-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #1f2937;
+}
+
+.demo-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #4b5563;
+  margin-bottom: 1rem;
+  text-align: justify;
+}
+
+/* Мобильная адаптация для FlipBook */
+@media (max-width: 768px) {
+  .flip-page {
+    padding: 0.75rem;
+  }
+  
+  .demo-title {
+    font-size: 1.25rem;
+  }
+  
+  .demo-text {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  
+  .flip-page-number {
+    bottom: 0.75rem;
+    right: 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .flip-book-wrapper {
+    padding: 0.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .flip-page {
+    padding: 0.5rem;
+  }
+  
+  .demo-title {
+    font-size: 1.125rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .demo-text {
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .flip-book-wrapper {
+    padding: 0.25rem !important;
+  }
+}
+
+/* Улучшение производительности на мобильных */
+@media (max-width: 768px) {
+  .book-container {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  }
+}
+
+/* Дополнительные улучшения для touch устройств */
+.book-container .stf__parent {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 400px !important;
+}
+
+@media (max-width: 768px) {
+  .book-container .stf__parent {
+    min-height: 300px !important;
+  }
+  
+  .book-container .stf__block {
+    width: 100% !important;
+    max-width: 350px !important;
+    margin: 0 auto !important;
+  }
+  
+  .book-container .stf__item {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    padding: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-container .stf__parent {
+    min-height: 250px !important;
+  }
+  
+  .book-container .stf__block {
+    max-width: 280px !important;
+  }
+  
+  .book-container .stf__item {
+    font-size: 13px !important;
+    padding: 0.5rem !important;
+  }
+}
+
+/* Безопасные области для мобильных устройств с поддержкой notch */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
 }

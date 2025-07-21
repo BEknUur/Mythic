@@ -1,50 +1,46 @@
 import React from 'react';
-import HTMLFlipBookLib from 'react-pageflip';
+import HTMLFlipBook from 'react-pageflip';
 
-// The typings shipped with `react-pageflip` are not fully compatible with strict TypeScript
-// settings used in this project (several props are marked as required while they are actually
-// optional). To avoid tedious prop drilling we cast the component to `any`.
-const HTMLFlipBook = HTMLFlipBookLib as unknown as React.ComponentType<any>;
-
-export interface FlipBookProps {
-  /**
-   * Optional array of elements that will be rendered as individual pages inside the book.
-   * If omitted, placeholder pages will be generated automatically.
-   */
+interface FlipBookProps {
   pages?: React.ReactNode[];
 }
 
-/**
- * A single page to be rendered inside the FlipBook component.
- * The ref is forwarded because react-pageflip requires direct access to the DOM node.
- */
-const Page = React.forwardRef<HTMLDivElement, { number: number; children?: React.ReactNode }>(
-  ({ number, children }, ref) => {
+interface PageProps {
+  children?: React.ReactNode;
+  number: number;
+}
+
+// Улучшенный компонент страницы с мобильной адаптацией
+const Page = React.forwardRef<HTMLDivElement, PageProps>(
+  function Page({ children, number }, ref) {
     return (
-      <div
-        ref={ref}
-        className="w-full h-full border shadow-xl flex items-center justify-center text-2xl font-serif p-8 select-none"
-        style={{
-          background: children ? 'transparent' : 'linear-gradient(135deg, #f8f6f0 0%, #f0ede5 30%, #e8e3d3 100%)',
-          color: children ? 'inherit' : '#4a453f',
-          fontFamily: children ? 'inherit' : "'Cormorant Garamond', serif",
-          borderColor: children ? 'rgba(200, 180, 140, 0.3)' : 'rgba(180, 160, 130, 0.4)',
-          boxShadow: children ? 'inherit' : '0 4px 20px rgba(160, 140, 100, 0.2)',
-        }}
-      >
-        {children ?? `Page ${number}`}
+      <div className="flip-page" ref={ref}>
+        <div className="flip-page-content">
+          {children || (
+            <div className="demo-content">
+              <h2 className="demo-title">Страница {number}</h2>
+              <p className="demo-text">
+                Здесь будет содержимое вашей книги. Этот текст является демонстрационным 
+                и показывает, как будет выглядеть ваша готовая книга.
+              </p>
+              <p className="demo-text">
+                Книги, созданные с помощью Mythic AI, имеют прекрасное оформление и 
+                удобную навигацию на всех устройствах.
+              </p>
+            </div>
+          )}
+        </div>
+        <div className="flip-page-number">{number}</div>
       </div>
     );
   }
 );
-Page.displayName = 'Page';
 
 /**
- * FlipBook – a ready-to-use wrapper around HTMLFlipBook from the `react-pageflip` package.
- * You can supply arbitrary pages via the `pages` prop, otherwise it will show demo pages.
+ * FlipBook – улучшенная версия с мобильной поддержкой
  */
 export function FlipBook({ pages }: FlipBookProps) {
-  // Prepare placeholder pages when the caller didn't provide anything.
+  // Подготавливаем страницы-заглушки
   const placeholderPages = Array.from({ length: 6 }).map((_, idx) => (
     <Page key={idx} number={idx + 1} />
   ));
@@ -57,31 +53,83 @@ export function FlipBook({ pages }: FlipBookProps) {
       ))
     : placeholderPages;
 
+  // Определяем размеры в зависимости от размера экрана
+  const [dimensions, setDimensions] = React.useState({
+    width: 900,
+    height: 700,
+    minWidth: 700,
+    maxWidth: 1600,
+    minHeight: 500,
+    maxHeight: 1200
+  });
+
+  React.useEffect(() => {
+    const updateDimensions = () => {
+      const isMobile = window.innerWidth < 768;
+      const isSmallMobile = window.innerWidth < 480;
+      
+      if (isSmallMobile) {
+        setDimensions({
+          width: Math.min(window.innerWidth - 40, 300),
+          height: Math.min(window.innerHeight - 200, 400),
+          minWidth: 280,
+          maxWidth: 350,
+          minHeight: 350,
+          maxHeight: 450
+        });
+      } else if (isMobile) {
+        setDimensions({
+          width: Math.min(window.innerWidth - 60, 400),
+          height: Math.min(window.innerHeight - 180, 500),
+          minWidth: 350,
+          maxWidth: 450,
+          minHeight: 400,
+          maxHeight: 550
+        });
+      } else {
+        setDimensions({
+          width: 900,
+          height: 700,
+          minWidth: 700,
+          maxWidth: 1600,
+          minHeight: 500,
+          maxHeight: 1200
+        });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
   return (
-    <div className="flex-1 w-full h-full flex items-center justify-center p-4">
+    <div className="flip-book-wrapper w-full h-full flex items-center justify-center p-4">
       <HTMLFlipBook
-        width={900}
-        height={700}
-        size="fixed"
-        minWidth={700}
-        maxWidth={1600}
-        minHeight={500}
-        maxHeight={1200}
+        width={dimensions.width}
+        height={dimensions.height}
+        size="stretch"
+        minWidth={dimensions.minWidth}
+        maxWidth={dimensions.maxWidth}
+        minHeight={dimensions.minHeight}
+        maxHeight={dimensions.maxHeight}
         maxShadowOpacity={0.18}
         showCover={false}
-        className="shadow-2xl book-container"
-        mobileScrollSupport
+        className="shadow-2xl book-container rounded-lg overflow-hidden"
+        mobileScrollSupport={true}
         showPageCorners={true}
-        useMouseEvents
+        useMouseEvents={true}
         flippingTime={800}
-        usePortrait={false}
-        swipeDistance={50}
+        usePortrait={window.innerWidth < 768}
+        swipeDistance={30}
         clickEventForward={false}
         drawShadow={true}
-        autoSize={false}
+        autoSize={true}
         startPage={0}
         startZIndex={0}
         useBook={true}
+        disableFlipByClick={false}
         style={{ margin: '0 auto' }}
       >
         {preparedPages}
