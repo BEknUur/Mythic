@@ -1,5 +1,8 @@
 import React from 'react';
-import HTMLFlipBook from 'react-pageflip';
+import HTMLFlipBookLib from 'react-pageflip';
+
+// Type assertion для решения проблем с типизацией react-pageflip
+const HTMLFlipBook = HTMLFlipBookLib as any;
 
 interface FlipBookProps {
   pages?: React.ReactNode[];
@@ -125,11 +128,7 @@ export function FlipBook({ pages }: FlipBookProps) {
         swipeDistance={30}
         clickEventForward={false}
         drawShadow={true}
-        autoSize={true}
         startPage={0}
-        startZIndex={0}
-        useBook={true}
-        disableFlipByClick={false}
         style={{ margin: '0 auto' }}
       >
         {preparedPages}
