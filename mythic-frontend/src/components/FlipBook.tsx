@@ -60,11 +60,11 @@ export function FlipBook({ pages }: FlipBookProps) {
   // Определяем размеры в зависимости от размера экрана
   const [dimensions, setDimensions] = useState({
     width: 800,
-    height: 650,
+    height: 800,
     minWidth: 600,
     maxWidth: 1400,
-    minHeight: 450,
-    maxHeight: 800
+    minHeight: 600,
+    maxHeight: 1000
   });
 
   useEffect(() => {
@@ -77,29 +77,29 @@ export function FlipBook({ pages }: FlipBookProps) {
       if (isSmallMobile) {
         setDimensions({
           width: Math.min(containerWidth - 40, 320),
-          height: Math.min(containerHeight - 200, 480),
+          height: Math.min(containerHeight - 150, 600),
           minWidth: 300,
           maxWidth: 350,
-          minHeight: 420,
-          maxHeight: 550
+          minHeight: 500,
+          maxHeight: 700
         });
       } else if (isMobile) {
         setDimensions({
           width: Math.min(containerWidth - 60, 450),
-          height: Math.min(containerHeight - 180, 600),
+          height: Math.min(containerHeight - 120, 750),
           minWidth: 400,
           maxWidth: 500,
-          minHeight: 500,
-          maxHeight: 650
+          minHeight: 600,
+          maxHeight: 800
         });
       } else {
         setDimensions({
           width: Math.min(containerWidth - 100, 800),
-          height: Math.min(containerHeight - 200, 650),
+          height: Math.min(containerHeight - 150, 800),
           minWidth: 600,
           maxWidth: 1400,
-          minHeight: 450,
-          maxHeight: 800
+          minHeight: 600,
+          maxHeight: 1000
         });
       }
     };
@@ -171,6 +171,27 @@ export function FlipBook({ pages }: FlipBookProps) {
           overflow-y: auto;
           font-family: 'Inter', sans-serif;
           line-height: 1.6;
+          /* Плавная прокрутка для длинного контента */
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
+        }
+        
+        /* Красивый скроллбар для WebKit браузеров */
+        .flip-page-content::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .flip-page-content::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .flip-page-content::-webkit-scrollbar-thumb {
+          background-color: #cbd5e1;
+          border-radius: 3px;
+        }
+        
+        .flip-page-content::-webkit-scrollbar-thumb:hover {
+          background-color: #94a3b8;
         }
         
         .flip-page-number {

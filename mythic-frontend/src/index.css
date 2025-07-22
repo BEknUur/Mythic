@@ -481,12 +481,35 @@
 .book-container .stf__parent {
   width: 100% !important;
   height: auto !important;
-  min-height: 450px !important;
+  min-height: 600px !important;
+}
+
+/* Переопределение стилей библиотеки react-pageflip */
+.book-container .stf__item {
+  height: 600px !important;
+  min-height: 600px !important;
+}
+
+.book-container .flip-page {
+  height: 100% !important;
+  min-height: 600px !important;
 }
 
 @media (max-width: 768px) {
   .book-container .stf__parent {
-    min-height: 350px !important;
+    min-height: 500px !important;
+  }
+  
+  .book-container .stf__item {
+    height: 500px !important;
+    min-height: 500px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    padding: 0.75rem !important;
+  }
+  
+  .book-container .flip-page {
+    min-height: 500px !important;
   }
   
   .book-container .stf__block {
@@ -494,26 +517,26 @@
     max-width: 350px !important;
     margin: 0 auto !important;
   }
-  
-  .book-container .stf__item {
-    font-size: 14px !important;
-    line-height: 1.5 !important;
-    padding: 0.75rem !important;
-  }
 }
 
 @media (max-width: 480px) {
   .book-container .stf__parent {
-    min-height: 300px !important;
+    min-height: 450px !important;
+  }
+  
+  .book-container .stf__item {
+    height: 450px !important;
+    min-height: 450px !important;
+    font-size: 13px !important;
+    padding: 0.5rem !important;
+  }
+  
+  .book-container .flip-page {
+    min-height: 450px !important;
   }
   
   .book-container .stf__block {
     max-width: 280px !important;
-  }
-  
-  .book-container .stf__item {
-    font-size: 13px !important;
-    padding: 0.5rem !important;
   }
 }
 
