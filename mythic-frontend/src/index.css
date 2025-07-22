@@ -538,6 +538,37 @@
   }
 }
 
+/* СКРЫТИЕ TABLE OF CONTENTS НА МОБИЛЬНЫХ УСТРОЙСТВАХ */
+@media (max-width: 768px) {
+  .toc-page,
+  .book-page.toc-page,
+  .table-of-contents,
+  .book-content .toc,
+  .book-content .table-of-contents,
+  .toc-list,
+  .toc-title,
+  .toc-item {
+    display: none !important;
+  }
+  
+  /* Скрываем любые div с id или классом содержащим "toc" */
+  [id*="toc"],
+  [class*="toc"] {
+    display: none !important;
+  }
+}
+
+/* На больших экранах показываем оглавление как обычно */
+@media (min-width: 769px) {
+  .toc-page,
+  .book-page.toc-page,
+  .table-of-contents,
+  .book-content .toc,
+  .book-content .table-of-contents {
+    display: block !important;
+  }
+}
+
 /* Специальные стили для touch устройств */
 .touch-optimized {
   -webkit-tap-highlight-color: transparent;

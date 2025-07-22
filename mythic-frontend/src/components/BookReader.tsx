@@ -89,6 +89,25 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
       .replace(/<h3([^>]*)>/g, '<h3$1 class="text-lg sm:text-xl lg:text-2xl font-heading mb-3 mt-6">')
       .replace(/<img([^>]*)>/g, '<img$1 class="w-full max-w-md mx-auto rounded-lg shadow-md my-6">');
 
+    // На мобильных устройствах удаляем Table of Contents
+    if (window.innerWidth <= 768) {
+      // Удаляем div с классами toc
+      processedHtml = processedHtml.replace(/<div[^>]*class="[^"]*toc[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+      
+      // Удаляем div с классами table-of-contents
+      processedHtml = processedHtml.replace(/<div[^>]*class="[^"]*table-of-contents[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+      
+      // Удаляем элементы с "Table of Contents" в тексте
+      processedHtml = processedHtml.replace(/<h[1-6][^>]*>[^<]*(?:Table of Contents|Contents|Содержание)[^<]*<\/h[1-6]>/gi, '');
+      
+      // Удаляем списки с классом toc-list
+      processedHtml = processedHtml.replace(/<[uo]l[^>]*class="[^"]*toc-list[^"]*"[^>]*>[\s\S]*?<\/[uo]l>/gi, '');
+      
+      // Удаляем элементы с классами toc-title и toc-item
+      processedHtml = processedHtml.replace(/<[^>]*class="[^"]*toc-title[^"]*"[^>]*>[\s\S]*?<\/[^>]*>/gi, '');
+      processedHtml = processedHtml.replace(/<[^>]*class="[^"]*toc-item[^"]*"[^>]*>[\s\S]*?<\/[^>]*>/gi, '');
+    }
+
     return processedHtml;
   };
 
@@ -135,6 +154,28 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         
         .book-content p {
           margin-bottom: 1.75rem !important;
+        }
+        
+        /* СКРЫВАЕМ TABLE OF CONTENTS НА МОБИЛЬНЫХ */
+        .toc-page,
+        .book-page.toc-page,
+        .table-of-contents,
+        .book-content .toc,
+        .book-content .table-of-contents {
+          display: none !important;
+        }
+        
+        /* Скрываем списки оглавления */
+        ul.toc-list,
+        ol.toc-list,
+        .toc-list {
+          display: none !important;
+        }
+        
+        /* Скрываем элементы с классами toc */
+        .toc-title,
+        .toc-item {
+          display: none !important;
         }
       }
       
@@ -360,54 +401,49 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         }
       }
       
-      /* Дополнительные стили для Table of Contents */
-      .book-content .toc,
-      .book-content .table-of-contents {
-        padding: 1.5rem !important;
-        background-color: #f9fafb !important;
-        border-radius: 8px !important;
-        margin: 2rem 0 !important;
-      }
-      
-      @media (max-width: 640px) {
+      /* Дополнительные стили для Table of Contents - СКРЫВАЕМ НА МОБИЛЬНЫХ */
+      @media (max-width: 768px) {
         .book-content .toc,
-        .book-content .table-of-contents {
-          padding: 1rem !important;
-          margin: 1.5rem 0 !important;
+        .book-content .table-of-contents,
+        .toc-page,
+        .book-page.toc-page {
+          display: none !important;
         }
       }
       
-      .book-content .toc h1,
-      .book-content .toc h2,
-      .book-content .table-of-contents h1,
-      .book-content .table-of-contents h2 {
-        text-align: center !important;
-        margin-bottom: 1.5rem !important;
-        color: #1f2937 !important;
-      }
-      
-      .book-content .toc ul,
-      .book-content .table-of-contents ul {
-        list-style: none !important;
-        padding-left: 0 !important;
-      }
-      
-      .book-content .toc li,
-      .book-content .table-of-contents li {
-        padding: 0.5rem 0 !important;
-        border-bottom: 1px solid #e5e7eb !important;
-        font-size: 1rem !important;
-        line-height: 1.5 !important;
-        hyphens: none !important;
-        -webkit-hyphens: none !important;
-        -moz-hyphens: none !important;
-      }
-      
-      @media (max-width: 640px) {
+      @media (min-width: 769px) {
+        .book-content .toc,
+        .book-content .table-of-contents {
+          padding: 1.5rem !important;
+          background-color: #f9fafb !important;
+          border-radius: 8px !important;
+          margin: 2rem 0 !important;
+        }
+        
+        .book-content .toc h1,
+        .book-content .toc h2,
+        .book-content .table-of-contents h1,
+        .book-content .table-of-contents h2 {
+          text-align: center !important;
+          margin-bottom: 1.5rem !important;
+          color: #1f2937 !important;
+        }
+        
+        .book-content .toc ul,
+        .book-content .table-of-contents ul {
+          list-style: none !important;
+          padding-left: 0 !important;
+        }
+        
         .book-content .toc li,
         .book-content .table-of-contents li {
-          font-size: 0.95rem !important;
-          padding: 0.4rem 0 !important;
+          padding: 0.5rem 0 !important;
+          border-bottom: 1px solid #e5e7eb !important;
+          font-size: 1rem !important;
+          line-height: 1.5 !important;
+          hyphens: none !important;
+          -webkit-hyphens: none !important;
+          -moz-hyphens: none !important;
         }
       }
       
