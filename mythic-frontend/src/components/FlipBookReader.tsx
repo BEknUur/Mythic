@@ -664,13 +664,38 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
     // Извлекаем данные страницы
     const titleEl = temp.querySelector('h1, h2, h3');
     const textEl = temp.querySelector('p');
-    const imageEl = temp.querySelector('img');
+    
+    // Находим все изображения и выбираем самое большое
+    const imageEls = temp.querySelectorAll('img');
+    let selectedImage: HTMLImageElement | null = null;
+    let maxSize = 0;
+    
+    imageEls.forEach((img) => {
+      // Пытаемся определить размер изображения по атрибутам или стилям
+      const width = parseInt(img.getAttribute('width') || img.style.width || '0');
+      const height = parseInt(img.getAttribute('height') || img.style.height || '0');
+      const size = width * height;
+      
+      // Если размеры не указаны, выбираем последнее изображение (обычно оно большое)
+      if (size === 0) {
+        selectedImage = img;
+      } else if (size > maxSize) {
+        maxSize = size;
+        selectedImage = img;
+      }
+    });
+    
+    // Если не нашли по размерам, берем последнее изображение
+    if (!selectedImage && imageEls.length > 0) {
+      selectedImage = imageEls[imageEls.length - 1];
+    }
+    
     const captionEl = temp.querySelector('.image-caption, .chapter-image-caption');
     
     const pageData: PageData = {
       title: titleEl?.textContent || undefined,
       text: textEl?.textContent || html,
-      image: imageEl?.getAttribute('src') || undefined,
+      image: selectedImage?.getAttribute('src') || undefined,
       caption: captionEl?.textContent || undefined,
     };
 
