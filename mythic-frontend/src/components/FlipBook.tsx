@@ -59,12 +59,12 @@ export function FlipBook({ pages }: FlipBookProps) {
 
   // Определяем размеры в зависимости от размера экрана
   const [dimensions, setDimensions] = useState({
-    width: 800,
-    height: 800,
-    minWidth: 600,
-    maxWidth: 1400,
-    minHeight: 600,
-    maxHeight: 1000
+    width: 1000,
+    height: 1000,
+    minWidth: 800,
+    maxWidth: 1600,
+    minHeight: 800,
+    maxHeight: 1200
   });
 
   useEffect(() => {
@@ -76,30 +76,30 @@ export function FlipBook({ pages }: FlipBookProps) {
       
       if (isSmallMobile) {
         setDimensions({
-          width: Math.min(containerWidth - 40, 320),
-          height: Math.min(containerHeight - 150, 600),
-          minWidth: 300,
-          maxWidth: 350,
-          minHeight: 500,
-          maxHeight: 700
-        });
-      } else if (isMobile) {
-        setDimensions({
-          width: Math.min(containerWidth - 60, 450),
-          height: Math.min(containerHeight - 120, 750),
-          minWidth: 400,
-          maxWidth: 500,
+          width: Math.min(containerWidth - 40, 400),
+          height: Math.min(containerHeight - 150, 700),
+          minWidth: 350,
+          maxWidth: 450,
           minHeight: 600,
           maxHeight: 800
         });
+      } else if (isMobile) {
+        setDimensions({
+          width: Math.min(containerWidth - 60, 550),
+          height: Math.min(containerHeight - 120, 850),
+          minWidth: 500,
+          maxWidth: 600,
+          minHeight: 700,
+          maxHeight: 900
+        });
       } else {
         setDimensions({
-          width: Math.min(containerWidth - 100, 800),
-          height: Math.min(containerHeight - 150, 800),
-          minWidth: 600,
-          maxWidth: 1400,
-          minHeight: 600,
-          maxHeight: 1000
+          width: Math.min(containerWidth - 100, 1000),
+          height: Math.min(containerHeight - 150, 1000),
+          minWidth: 800,
+          maxWidth: 1600,
+          minHeight: 800,
+          maxHeight: 1200
         });
       }
     };

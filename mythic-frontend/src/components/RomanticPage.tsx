@@ -43,37 +43,36 @@ export const RomanticPage = React.forwardRef<HTMLDivElement, RomanticPageProps>(
         }}
       >
         {/* Декоративные сердца в углах */}
-        <div style={{position: 'absolute', top: 18, left: 24, fontSize: 36, opacity: 0.18, pointerEvents: 'none'}}>💖</div>
-        <div style={{position: 'absolute', top: 18, right: 24, fontSize: 36, opacity: 0.18, pointerEvents: 'none'}}>💕</div>
-        <div style={{position: 'absolute', bottom: 18, left: 24, fontSize: 36, opacity: 0.18, pointerEvents: 'none'}}>💞</div>
-        <div style={{position: 'absolute', bottom: 18, right: 24, fontSize: 36, opacity: 0.18, pointerEvents: 'none'}}>💓</div>
+        <div style={{position: 'absolute', top: 18, left: 24, fontSize: 28, opacity: 0.15, pointerEvents: 'none'}}>💖</div>
+        <div style={{position: 'absolute', top: 18, right: 24, fontSize: 28, opacity: 0.15, pointerEvents: 'none'}}>💕</div>
+        <div style={{position: 'absolute', bottom: 18, left: 24, fontSize: 28, opacity: 0.15, pointerEvents: 'none'}}>💞</div>
+        <div style={{position: 'absolute', bottom: 18, right: 24, fontSize: 28, opacity: 0.15, pointerEvents: 'none'}}>💓</div>
         
         {/* Декоративная линия */}
-        <div style={{width: '100%', textAlign: 'center', marginTop: 8, marginBottom: 8}}>
-          <span style={{fontSize: 32, color: '#e75480', fontFamily: 'Dancing Script, cursive'}}>❦</span>
+        <div style={{width: '100%', textAlign: 'center', marginTop: 6, marginBottom: 6}}>
+          <span style={{fontSize: 24, color: '#e75480', fontFamily: 'Dancing Script, cursive'}}>❦</span>
         </div>
         
         <div
           className="flex flex-col h-full w-full p-6 overflow-y-auto"
           style={{ 
             boxSizing: 'border-box', 
-            paddingBottom: 56,
-            /* Улучшенный скроллбар */
+            paddingBottom: 50,
             scrollbarWidth: 'thin',
             scrollbarColor: '#e75480 transparent',
           }}
         >
           {title && (
             <h2
-              className="text-4xl font-bold text-center mb-4"
+              className="text-center mb-3"
               style={{
                 color: '#c71585',
                 fontFamily: "'Dancing Script', 'Playfair Display', serif",
-                fontSize: 42,
+                fontSize: 36,
                 fontWeight: 700,
-                letterSpacing: '1.5px',
+                letterSpacing: '1.2px',
                 lineHeight: 1.1,
-                marginBottom: 16,
+                marginBottom: 12,
                 textShadow: '0 2px 8px #fff6fb',
               }}
             >
@@ -83,37 +82,39 @@ export const RomanticPage = React.forwardRef<HTMLDivElement, RomanticPageProps>(
           
           {/* Завиток под заголовком */}
           {title && (
-            <div style={{fontSize: 32, color: '#e75480', fontFamily: 'Dancing Script, cursive', marginBottom: 16, textAlign: 'center'}}>❧</div>
+            <div style={{fontSize: 24, color: '#e75480', fontFamily: 'Dancing Script, cursive', marginBottom: 12, textAlign: 'center'}}>❧</div>
           )}
           
+          {/* Текст перед изображением */}
           {text && (
             <div
-              className="text-center mb-6"
+              className="text-center mb-4"
               style={{
                 color: '#8b5a8b',
                 fontFamily: "'Playfair Display', 'Georgia', serif",
-                fontSize: 22,
+                fontSize: 18,
                 wordBreak: 'break-word',
-                lineHeight: 1.7,
+                lineHeight: 1.6,
                 textShadow: '0 1px 6px #fff6fb',
-                marginBottom: 24,
+                marginBottom: 16,
               }}
               dangerouslySetInnerHTML={{ __html: text }}
             />
           )}
           
-          {/* Большое изображение в центре */}
+          {/* Увеличенное изображение */}
           {image && (
-            <div className="flex-1 flex flex-col items-center justify-center mb-4">
+            <div className="flex justify-center mb-4">
               <img
                 src={image}
                 alt=""
                 className="max-w-full"
                 style={{
-                  maxHeight: '60vh',
+                  maxHeight: '450px',
+                  maxWidth: '100%',
                   width: 'auto',
                   objectFit: 'contain',
-                  borderRadius: 24,
+                  borderRadius: 20,
                   boxShadow: '0 8px 32px rgba(255,182,193,0.3), 0 4px 16px rgba(255,105,180,0.2)',
                   background: '#fff',
                   border: '3px solid #fbcfe8',
@@ -128,23 +129,23 @@ export const RomanticPage = React.forwardRef<HTMLDivElement, RomanticPageProps>(
                   e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,182,193,0.3), 0 4px 16px rgba(255,105,180,0.2)';
                 }}
               />
-              
-              {/* Подпись под изображением */}
-              {caption && (
-                <div
-                  className="text-center mt-4"
-                  style={{
-                    fontFamily: "'Dancing Script', cursive",
-                    fontSize: 24,
-                    color: '#e75480',
-                    fontStyle: 'italic',
-                    letterSpacing: '0.5px',
-                    textShadow: '0 1px 4px #fff6fb',
-                  }}
-                >
-                  {caption} 💕
-                </div>
-              )}
+            </div>
+          )}
+          
+          {/* Подпись под изображением */}
+          {caption && (
+            <div
+              className="text-center mb-4"
+              style={{
+                fontFamily: "'Dancing Script', cursive",
+                fontSize: 22,
+                color: '#e75480',
+                fontStyle: 'italic',
+                letterSpacing: '0.5px',
+                textShadow: '0 1px 4px #fff6fb',
+              }}
+            >
+              {caption} 💕
             </div>
           )}
         </div>
@@ -172,16 +173,16 @@ export const RomanticPage = React.forwardRef<HTMLDivElement, RomanticPageProps>(
         `}</style>
         
         {/* Декоративная линия снизу */}
-        <div style={{width: '100%', textAlign: 'center', marginBottom: 8}}>
-          <span style={{fontSize: 32, color: '#e75480', fontFamily: 'Dancing Script, cursive'}}>❦</span>
+        <div style={{width: '100%', textAlign: 'center', marginBottom: 6}}>
+          <span style={{fontSize: 24, color: '#e75480', fontFamily: 'Dancing Script, cursive'}}>❦</span>
         </div>
         
         <div
-          className="absolute bottom-4 right-4 text-lg font-bold"
+          className="absolute bottom-3 right-4 text-lg font-bold"
           style={{
             color: '#c71585',
             fontFamily: "'Dancing Script', 'Playfair Display', serif",
-            fontSize: 26,
+            fontSize: 22,
             textShadow: '0 1px 6px #fff6fb',
           }}
         >
