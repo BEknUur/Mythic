@@ -1512,6 +1512,12 @@ def create_literary_instagram_book_html(content: dict, analysis: dict, images: l
         .final-content {{ font-size: 18pt; }}
         .final-signature {{ font-size: 14pt; }}
     }}
+
+    @media (max-width: 428px) {{
+        .book-page {{            
+            padding: 1cm; /* Увеличенные отступы для веб-просмотра */
+        }}
+    }}
     </style>
 </head>
 <body>
