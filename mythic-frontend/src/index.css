@@ -159,14 +159,40 @@
 /* Улучшенные стили для книжного контента с мобильной адаптацией */
 .book-content {
   font-family: 'Inter', sans-serif;
-  line-height: 1.7;
+  line-height: 1.8; /* Увеличиваем для лучшей читаемости */
   color: #1f2937;
-  padding: 1rem; /* Добавляем padding для мобильных */
+  padding: 1.5rem; /* Больше padding для мобильных */
+  font-size: 16px; /* Базовый размер для мобильных */
+  word-wrap: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  overflow-wrap: break-word;
+  /* Улучшенная читаемость на мобильных */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+@media (min-width: 640px) {
+  .book-content {
+    font-size: 18px;
+    padding: 2rem;
+  }
 }
 
 @media (min-width: 768px) {
   .book-content {
-    padding: 2rem;
+    padding: 2.5rem;
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .book-content {
+    padding: 3rem;
+    font-size: 19px;
   }
 }
 
@@ -176,83 +202,143 @@
 .book-content h4 {
   font-family: 'Playfair Display', serif;
   font-weight: 600;
-  margin-bottom: 1rem;
-  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  margin-top: 2rem;
   color: #111827;
-  line-height: 1.3; /* Лучше для заголовков на мобильных */
+  line-height: 1.2; /* Лучше для заголовков на мобильных */
+  word-wrap: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  overflow-wrap: break-word;
 }
 
 .book-content h1 {
-  font-size: 1.75rem; /* Меньше на мобильных */
+  font-size: 1.875rem; /* Увеличиваем для мобильных */
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  margin-top: 1rem;
+  line-height: 1.1;
+}
+
+@media (min-width: 640px) {
+  .book-content h1 {
+    font-size: 2.25rem;
+  }
 }
 
 @media (min-width: 768px) {
   .book-content h1 {
-    font-size: 2.25rem;
+    font-size: 2.5rem;
   }
 }
 
 .book-content h2 {
   font-size: 1.5rem;
   border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.75rem;
+  margin-top: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .book-content h2 {
+    font-size: 1.75rem;
+  }
 }
 
 @media (min-width: 768px) {
   .book-content h2 {
-    font-size: 1.875rem;
+    font-size: 2rem;
   }
 }
 
 .book-content h3 {
   font-size: 1.25rem;
+  margin-top: 2rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .book-content h3 {
     font-size: 1.5rem;
   }
 }
 
+@media (min-width: 768px) {
+  .book-content h3 {
+    font-size: 1.625rem;
+  }
+}
+
 .book-content p {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   text-align: justify;
   /* Лучшая читаемость на мобильных */
   word-wrap: break-word;
   hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  overflow-wrap: break-word;
+  line-height: 1.75;
+  text-justify: inter-word;
+}
+
+@media (max-width: 640px) {
+  .book-content p {
+    text-align: left; /* На очень маленьких экранах левое выравнивание лучше */
+    line-height: 1.8;
+  }
 }
 
 .book-content img {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
-  margin: 1.5rem auto;
+  margin: 2rem auto;
   display: block;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .book-content blockquote {
   border-left: 4px solid #f59e0b;
-  padding-left: 1rem;
-  margin: 1.5rem 0;
+  padding: 1.5rem;
+  margin: 2rem 0;
   font-style: italic;
   background-color: #fef3c7;
-  padding: 1rem;
-  border-radius: 4px;
+  border-radius: 8px;
   /* Лучшая адаптация для мобильных */
   word-wrap: break-word;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+  .book-content blockquote {
+    padding: 1rem;
+    margin: 1.5rem 0;
+  }
 }
 
 .book-content ul,
 .book-content ol {
-  margin-bottom: 1.25rem;
-  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-left: 2rem;
+}
+
+@media (max-width: 640px) {
+  .book-content ul,
+  .book-content ol {
+    padding-left: 1.5rem;
+  }
 }
 
 .book-content li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  word-wrap: break-word;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  line-height: 1.6;
 }
 
 .book-content .romantic-text {
@@ -262,9 +348,16 @@
 
 .book-content .chapter {
   page-break-before: always;
-  margin-top: 2rem;
+  margin-top: 3rem;
   padding-top: 2rem;
   border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 640px) {
+  .book-content .chapter {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+  }
 }
 
 /* Улучшенные анимации с учетом предпочтений пользователя */
@@ -339,10 +432,71 @@
 
 .mobile-text {
   @apply text-sm sm:text-base;
+  line-height: 1.6;
+  word-wrap: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  overflow-wrap: break-word;
 }
 
 .mobile-card {
   @apply mx-4 sm:mx-6 lg:mx-auto;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.mobile-container {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.mobile-safe-area {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mobile-reading {
+  font-size: 16px;
+  line-height: 1.8;
+  word-wrap: break-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  overflow-wrap: break-word;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 640px) {
+  .mobile-reading {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-reading {
+    font-size: 18px;
+  }
+}
+
+/* Специальные стили для touch устройств */
+.touch-optimized {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.scroll-smooth {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 /* Скрытие элементов для screen readers, но оставление для навигации */
