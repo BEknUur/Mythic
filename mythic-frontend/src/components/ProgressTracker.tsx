@@ -68,31 +68,40 @@ const ProgressBar: React.FC<{ value: number; className?: string }> = ({ value, c
   <Progress value={value} className={className} />
 );
 
-// Компонент анимации печатающейся машинки
-const TypewriterText: React.FC<{ text: string; speed?: number; className?: string }> = ({ 
+// Компонент анимации печатающейся машинки - оптимизированная версия
+const TypewriterText: React.FC<{ text: string; speed?: number; className?: string }> = React.memo(({ 
   text, 
   speed = 50, 
   className = "" 
 }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    if (currentIndex < text.length) {
-      const timeout = setTimeout(() => {
-        setDisplayedText(prev => prev + text[currentIndex]);
-        setCurrentIndex(prev => prev + 1);
-      }, speed);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [currentIndex, text, speed]);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Сброс анимации при изменении текста
   useEffect(() => {
     setDisplayedText('');
     setCurrentIndex(0);
+    // Очищаем предыдущий таймаут
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
   }, [text]);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      timeoutRef.current = setTimeout(() => {
+        setDisplayedText(prev => prev + text[currentIndex]);
+        setCurrentIndex(prev => prev + 1);
+      }, speed);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [currentIndex, text, speed]);
 
   return (
     <span className={className}>
@@ -102,7 +111,7 @@ const TypewriterText: React.FC<{ text: string; speed?: number; className?: strin
       )}
     </span>
   );
-};
+});
 
 export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerProps) {
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -224,9 +233,31 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     }
 
     let retryCount = 0;
-    const maxRetries = 3;
-    let pollInterval = 3000; // Start with 3 seconds instead of 5
+    const maxRetries = 5; // Увеличиваем максимальное количество попыток
+    let pollInterval = 5000; // Начинаем с 5 секунд вместо 3
     let intervalId: NodeJS.Timeout | null = null;
+    let consecutiveErrors = 0;
+    const maxConsecutiveErrors = 10; // Останавливаем после 10 подряд ошибок
+
+    const isServerError = (error: any): boolean => {
+      // Проверяем на критические ошибки сервера
+      if (error?.status) {
+        return error.status >= 500 && error.status < 600; // 500-599 статусы
+      }
+      if (error?.message) {
+        return error.message.includes('502 Bad Gateway') || 
+               error.message.includes('503 Service Unavailable') ||
+               error.message.includes('504 Gateway Timeout');
+      }
+      return false;
+    };
+
+    const isNetworkError = (error: any): boolean => {
+      return error?.status === 408 || 
+             error?.message?.includes('timeout') ||
+             error?.message?.includes('Network error') ||
+             error?.name === 'AbortError';
+    };
 
     const pollStatus = async () => {
       try {
@@ -234,36 +265,92 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         const currentStatus = await api.getStatus(runId, token || undefined);
         handleStatusUpdate(currentStatus);
         
-        // Reset retry count and interval on successful request
+        // Сбрасываем счетчики при успешном запросе
         retryCount = 0;
-        pollInterval = 3000; // Reset to 3 seconds
+        consecutiveErrors = 0;
+        pollInterval = 5000; // Возвращаем к 5 секунды
         
-        // Clear existing interval and set new one with updated interval
+        // Очищаем существующий интервал и устанавливаем новый
         if (intervalId) {
           clearInterval(intervalId);
         }
         intervalId = setInterval(pollStatus, pollInterval);
         
+        // Убираем ошибку если была
+        if (error) {
+          setError(null);
+        }
+        
       } catch (err) {
         console.error("Polling error:", err);
+        consecutiveErrors++;
+        
+        // Если это критическая ошибка сервера и много подряд ошибок
+        if (isServerError(err) && consecutiveErrors >= 3) {
+          console.log(`Server error detected, stopping polling temporarily. Error: ${err.message}`);
+          setError('Сервер временно недоступен. Повторим попытку через 2 минуты...');
+          
+          // Останавливаем polling на 2 минуты при ошибках сервера
+          if (intervalId) {
+            clearInterval(intervalId);
+          }
+          
+          setTimeout(() => {
+            console.log('Resuming polling after server error...');
+            consecutiveErrors = 0;
+            retryCount = 0;
+            pollInterval = 10000; // Начинаем с 10 секунд после перерыва
+            intervalId = setInterval(pollStatus, pollInterval);
+          }, 120000); // 2 минуты
+          
+          return;
+        }
+        
+        // Если слишком много ошибок подряд - останавливаем
+        if (consecutiveErrors >= maxConsecutiveErrors) {
+          console.log(`Too many consecutive errors (${consecutiveErrors}), stopping polling`);
+          setError('Слишком много ошибок подключения. Попробуйте обновить страницу.');
+          if (intervalId) {
+            clearInterval(intervalId);
+          }
+          return;
+        }
+        
         retryCount++;
         
-        // Implement exponential backoff for failed requests
+        // Обычная логика retry для сетевых ошибок
         if (retryCount <= maxRetries) {
-          pollInterval = Math.min(pollInterval * 2, 15000); // Max 15 seconds
-          console.log(`Retrying in ${pollInterval}ms (attempt ${retryCount}/${maxRetries})`);
+          // Увеличиваем интервал более плавно
+          if (isNetworkError(err)) {
+            pollInterval = Math.min(pollInterval * 1.5, 30000); // Максимум 30 секунд
+          } else if (isServerError(err)) {
+            pollInterval = Math.min(pollInterval * 2, 60000); // Максимум 1 минута для ошибок сервера
+          } else {
+            pollInterval = Math.min(pollInterval * 1.2, 15000); // Максимум 15 секунд для других ошибок
+          }
           
-          // Clear existing interval and set new one with updated interval
+          console.log(`Retrying in ${pollInterval}ms (attempt ${retryCount}/${maxRetries}, consecutive errors: ${consecutiveErrors})`);
+          
+          // Показываем более информативное сообщение об ошибке
+          if (isServerError(err)) {
+            setError('Сервер временно недоступен, продолжаем попытки...');
+          } else if (isNetworkError(err)) {
+            setError('Медленное соединение, ожидайте...');
+          } else {
+            setError('Соединение нестабильно, повторяем запрос...');
+          }
+          
+          // Очищаем существующий интервал и устанавливаем новый
           if (intervalId) {
             clearInterval(intervalId);
           }
           intervalId = setInterval(pollStatus, pollInterval);
         } else {
-          // After max retries, show error but keep trying with longer intervals
-          setError('Соединение нестабильно. Продолжаем попытки...');
-          pollInterval = 15000; // 15 seconds for persistent errors
+          // После превышения максимальных попыток - увеличиваем интервал но продолжаем
+          setError('Соединение нестабильно. Проверяем состояние реже...');
+          pollInterval = 60000; // 1 минута для длительных проблем
+          retryCount = 0; // Сбрасываем счетчик попыток
           
-          // Clear existing interval and set new one with updated interval
           if (intervalId) {
             clearInterval(intervalId);
           }
@@ -272,10 +359,10 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       }
     };
 
-    // Initial poll
+    // Первоначальный запрос
     pollStatus();
     
-    // Set up initial interval
+    // Устанавливаем первоначальный интервал
     intervalId = setInterval(pollStatus, pollInterval);
 
     return () => {
@@ -283,7 +370,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         clearInterval(intervalId);
       }
     };
-  }, [runId, onComplete, status, showFormatDialog, getToken]);
+  }, [runId, onComplete, status, showFormatDialog, getToken, error]);
 
   const progressValue = status ? (Object.values(status.stages).filter(Boolean).length / Object.keys(status.stages).length) * 100 : 0;
   

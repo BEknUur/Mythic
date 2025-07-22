@@ -164,11 +164,13 @@
   padding: 1.5rem; /* Больше padding для мобильных */
   font-size: 16px; /* Базовый размер для мобильных */
   word-wrap: break-word;
-  hyphens: auto;
-  -webkit-hyphens: auto;
-  -moz-hyphens: auto;
-  -ms-hyphens: auto;
+  /* Менее агрессивные переносы для русского языка */
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
+  -ms-hyphens: manual;
   overflow-wrap: break-word;
+  word-break: normal; /* Не разбиваем слова принудительно */
   /* Улучшенная читаемость на мобильных */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -179,6 +181,10 @@
   .book-content {
     font-size: 18px;
     padding: 2rem;
+    /* На больших экранах можем использовать автоматические переносы */
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
   }
 }
 
@@ -207,10 +213,11 @@
   color: #111827;
   line-height: 1.2; /* Лучше для заголовков на мобильных */
   word-wrap: break-word;
-  hyphens: auto;
-  -webkit-hyphens: auto;
-  -moz-hyphens: auto;
+  hyphens: none; /* Заголовки не переносим */
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
   overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .book-content h1 {
@@ -272,13 +279,14 @@
 .book-content p {
   margin-bottom: 1.5rem;
   text-align: justify;
-  /* Лучшая читаемость на мобильных */
+  /* Лучшая читаемость на мобильных без агрессивных переносов */
   word-wrap: break-word;
-  hyphens: auto;
-  -webkit-hyphens: auto;
-  -moz-hyphens: auto;
-  -ms-hyphens: auto;
+  hyphens: manual; /* Только ручные переносы */
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
+  -ms-hyphens: manual;
   overflow-wrap: break-word;
+  word-break: normal; /* Не разбиваем слова принудительно */
   line-height: 1.75;
   text-justify: inter-word;
 }
@@ -287,6 +295,17 @@
   .book-content p {
     text-align: left; /* На очень маленьких экранах левое выравнивание лучше */
     line-height: 1.8;
+    /* Увеличиваем отступы между абзацами для лучшей читаемости */
+    margin-bottom: 1.75rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .book-content p {
+    /* На больших экранах можем использовать автоматические переносы */
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
   }
 }
 
@@ -308,8 +327,9 @@
   border-radius: 8px;
   /* Лучшая адаптация для мобильных */
   word-wrap: break-word;
-  hyphens: auto;
+  hyphens: manual;
   overflow-wrap: break-word;
+  word-break: normal;
   line-height: 1.6;
 }
 
@@ -317,6 +337,14 @@
   .book-content blockquote {
     padding: 1rem;
     margin: 1.5rem 0;
+  }
+}
+
+@media (min-width: 640px) {
+  .book-content blockquote {
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
   }
 }
 
@@ -336,9 +364,18 @@
 .book-content li {
   margin-bottom: 0.75rem;
   word-wrap: break-word;
-  hyphens: auto;
+  hyphens: manual;
   overflow-wrap: break-word;
+  word-break: normal;
   line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .book-content li {
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+  }
 }
 
 .book-content .romantic-text {
@@ -434,10 +471,20 @@
   @apply text-sm sm:text-base;
   line-height: 1.6;
   word-wrap: break-word;
-  hyphens: auto;
-  -webkit-hyphens: auto;
-  -moz-hyphens: auto;
+  /* Менее агрессивные переносы */
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
   overflow-wrap: break-word;
+  word-break: normal;
+}
+
+@media (min-width: 640px) {
+  .mobile-text {
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+  }
 }
 
 .mobile-card {
@@ -464,10 +511,12 @@
   font-size: 16px;
   line-height: 1.8;
   word-wrap: break-word;
-  hyphens: auto;
-  -webkit-hyphens: auto;
-  -moz-hyphens: auto;
+  /* Менее агрессивные переносы для чтения */
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
   overflow-wrap: break-word;
+  word-break: normal;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -476,6 +525,10 @@
 @media (min-width: 640px) {
   .mobile-reading {
     font-size: 18px;
+    /* На больших экранах можем использовать авто-переносы */
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
   }
 }
 
@@ -532,13 +585,43 @@
   display: flex;
   flex-direction: column;
   font-family: 'Inter', sans-serif;
+  /* Улучшенная читаемость текста */
+  word-wrap: break-word;
+  hyphens: manual; /* Только ручные переносы */
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
+  overflow-wrap: break-word;
+  word-break: normal; /* Не разбиваем слова принудительно */
+  line-height: 1.6;
 }
 
 .flip-page-content {
   flex: 1;
   overflow: hidden;
   word-wrap: break-word;
-  hyphens: auto;
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
+  overflow-wrap: break-word;
+  word-break: normal;
+  line-height: 1.7;
+  text-align: justify;
+}
+
+@media (max-width: 640px) {
+  .flip-page-content {
+    text-align: left; /* Левое выравнивание на мобильных */
+    line-height: 1.8;
+  }
+}
+
+@media (min-width: 640px) {
+  .flip-page-content {
+    /* Автоматические переносы на больших экранах */
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+  }
 }
 
 .flip-page-number {
@@ -557,6 +640,12 @@
   justify-content: center;
   text-align: center;
   padding: 1rem;
+  word-wrap: break-word;
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .demo-title {
@@ -565,6 +654,12 @@
   font-weight: 600;
   margin-bottom: 1rem;
   color: #1f2937;
+  /* Заголовки не переносим */
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  word-break: normal;
+  line-height: 1.2;
 }
 
 .demo-text {
@@ -573,21 +668,45 @@
   color: #4b5563;
   margin-bottom: 1rem;
   text-align: justify;
+  word-wrap: break-word;
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  -moz-hyphens: manual;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+@media (max-width: 640px) {
+  .demo-text {
+    text-align: left;
+    line-height: 1.7;
+  }
+}
+
+@media (min-width: 640px) {
+  .demo-text {
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+  }
 }
 
 /* Мобильная адаптация для FlipBook */
 @media (max-width: 768px) {
   .flip-page {
     padding: 0.75rem;
+    font-size: 14px;
+    line-height: 1.6;
   }
   
   .demo-title {
     font-size: 1.25rem;
+    line-height: 1.1;
   }
   
   .demo-text {
     font-size: 0.875rem;
-    line-height: 1.5;
+    line-height: 1.6;
   }
   
   .flip-page-number {
@@ -604,16 +723,20 @@
 @media (max-width: 480px) {
   .flip-page {
     padding: 0.5rem;
+    font-size: 13px;
+    line-height: 1.6;
   }
   
   .demo-title {
     font-size: 1.125rem;
     margin-bottom: 0.75rem;
+    line-height: 1.1;
   }
   
   .demo-text {
     font-size: 0.8rem;
     margin-bottom: 0.75rem;
+    line-height: 1.6;
   }
   
   .flip-book-wrapper {

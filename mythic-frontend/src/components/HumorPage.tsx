@@ -14,15 +14,22 @@ function splitCamelCase(str: string) {
 
 export const HumorPage = React.forwardRef<HTMLDivElement, HumorPageProps>(
   ({ title, text, image, caption, number }, ref) => {
-    // Подключаем Comic Sans (один раз на страницу)
+    // Подключаем Comic Sans (один раз глобально)
     React.useEffect(() => {
+      const fontId = 'comic-neue-font';
+      
+      // Проверяем, не загружен ли уже шрифт
+      if (document.getElementById(fontId)) {
+        return;
+      }
+      
       const comicSans = document.createElement('link');
+      comicSans.id = fontId;
       comicSans.rel = 'stylesheet';
       comicSans.href = 'https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap';
       document.head.appendChild(comicSans);
-      return () => {
-        document.head.removeChild(comicSans);
-      };
+      
+      // Не удаляем шрифт при размонтировании, так как он может использоваться другими страницами
     }, []);
 
     return (

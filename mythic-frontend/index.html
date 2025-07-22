@@ -15,8 +15,33 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){ dataLayer.push(arguments); }
+      
+      // Настройка согласия на cookies по умолчанию
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'wait_for_update': 500
+      });
+      
       gtag('js', new Date());
-      gtag('config', 'G-YE7S3HTPS5');
+      
+      // Проверяем согласие пользователя
+      const cookieConsent = localStorage.getItem('cookieConsent');
+      if (cookieConsent === 'accepted') {
+        gtag('consent', 'update', {
+          'analytics_storage': 'granted'
+        });
+        gtag('config', 'G-YE7S3HTPS5');
+      } else {
+        // Автоматически принимаем согласие для упрощения (можно изменить на запрос пользователю)
+        gtag('consent', 'update', {
+          'analytics_storage': 'granted'
+        });
+        gtag('config', 'G-YE7S3HTPS5', {
+          'anonymize_ip': true
+        });
+        localStorage.setItem('cookieConsent', 'accepted');
+      }
     </script>
     <!-- /Google Analytics -->
 

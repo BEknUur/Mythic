@@ -482,8 +482,16 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Add improved CSS animations and mobile styles to the document head
+    // Add improved CSS animations and mobile styles to the document head - только один раз
+    const styleId = 'flipbook-styles';
+    
+    // Проверяем, не добавлены ли уже стили
+    if (document.getElementById(styleId)) {
+      return;
+    }
+    
     const style = document.createElement('style');
+    style.id = styleId;
     style.textContent = `
       /* Базовые анимации */
       @keyframes sparkle {
@@ -580,10 +588,14 @@ export function FlipBookReader({ bookId, runId, onBack }: FlipBookReaderProps) {
 `;
     document.head.appendChild(style);
 
+    // Cleanup только удаляет стили если компонент полностью размонтируется
     return () => {
-      document.head.removeChild(style);
+      const existingStyle = document.getElementById(styleId);
+      if (existingStyle && document.head.contains(existingStyle)) {
+        document.head.removeChild(existingStyle);
+      }
     };
-  }, []);
+  }, []); // Пустой массив зависимостей - выполняется только один раз
 
   useEffect(() => {
     (async () => {

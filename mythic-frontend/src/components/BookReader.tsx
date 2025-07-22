@@ -101,11 +101,13 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         line-height: 1.8 !important;
         padding: 1.5rem !important;
         word-wrap: break-word !important;
-        hyphens: auto !important;
-        -webkit-hyphens: auto !important;
-        -moz-hyphens: auto !important;
-        -ms-hyphens: auto !important;
+        /* Менее агрессивные переносы для русского языка */
+        hyphens: manual !important;
+        -webkit-hyphens: manual !important;
+        -moz-hyphens: manual !important;
+        -ms-hyphens: manual !important;
         overflow-wrap: break-word !important;
+        word-break: normal !important;
         text-rendering: optimizeLegibility !important;
         -webkit-font-smoothing: antialiased !important;
         -moz-osx-font-smoothing: grayscale !important;
@@ -124,7 +126,15 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
           max-width: 100% !important;
           word-wrap: break-word !important;
           overflow-wrap: break-word !important;
-          hyphens: auto !important;
+          /* Только ручные переносы на мобильных для лучшей читаемости */
+          hyphens: manual !important;
+          -webkit-hyphens: manual !important;
+          -moz-hyphens: manual !important;
+          word-break: normal !important;
+        }
+        
+        .book-content p {
+          margin-bottom: 1.75rem !important;
         }
       }
       
@@ -132,6 +142,15 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         .book-content {
           font-size: 18px !important;
           padding: 2rem !important;
+        }
+        
+        /* На больших экранах можем использовать автоматические переносы */
+        .book-content p,
+        .book-content li,
+        .book-content blockquote {
+          hyphens: auto !important;
+          -webkit-hyphens: auto !important;
+          -moz-hyphens: auto !important;
         }
       }
       
@@ -155,9 +174,12 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         margin-top: 2rem !important;
         margin-bottom: 1.5rem !important;
         word-wrap: break-word !important;
-        hyphens: auto !important;
-        -webkit-hyphens: auto !important;
+        /* Заголовки не переносим */
+        hyphens: none !important;
+        -webkit-hyphens: none !important;
+        -moz-hyphens: none !important;
         overflow-wrap: break-word !important;
+        word-break: normal !important;
         max-width: 100% !important;
       }
       
@@ -242,11 +264,13 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         margin-bottom: 1.5rem !important;
         text-align: justify !important;
         word-wrap: break-word !important;
-        hyphens: auto !important;
-        -webkit-hyphens: auto !important;
-        -moz-hyphens: auto !important;
-        -ms-hyphens: auto !important;
+        /* Менее агрессивные переносы */
+        hyphens: manual !important;
+        -webkit-hyphens: manual !important;
+        -moz-hyphens: manual !important;
+        -ms-hyphens: manual !important;
         overflow-wrap: break-word !important;
+        word-break: normal !important;
         line-height: 1.75 !important;
         text-justify: inter-word !important;
         max-width: 100% !important;
@@ -256,7 +280,7 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         .book-content p {
           text-align: left !important;
           line-height: 1.8 !important;
-          margin-bottom: 1.25rem !important;
+          margin-bottom: 1.75rem !important;
         }
       }
       
@@ -283,8 +307,11 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         border-radius: 8px !important;
         font-style: italic !important;
         word-wrap: break-word !important;
-        hyphens: auto !important;
+        hyphens: manual !important;
+        -webkit-hyphens: manual !important;
+        -moz-hyphens: manual !important;
         overflow-wrap: break-word !important;
+        word-break: normal !important;
         line-height: 1.6 !important;
         max-width: 100% !important;
       }
@@ -311,8 +338,11 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
       .book-content li {
         margin-bottom: 0.75rem !important;
         word-wrap: break-word !important;
-        hyphens: auto !important;
+        hyphens: manual !important;
+        -webkit-hyphens: manual !important;
+        -moz-hyphens: manual !important;
         overflow-wrap: break-word !important;
+        word-break: normal !important;
         line-height: 1.6 !important;
       }
       
@@ -368,6 +398,9 @@ export function BookReader({ bookId, runId, onBack }: BookReaderProps) {
         border-bottom: 1px solid #e5e7eb !important;
         font-size: 1rem !important;
         line-height: 1.5 !important;
+        hyphens: none !important;
+        -webkit-hyphens: none !important;
+        -moz-hyphens: none !important;
       }
       
       @media (max-width: 640px) {
