@@ -2311,7 +2311,7 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
         text-align: center;
     }}
     .final-content {{
-        font-family: 'Cinzel', serif;
+        font-family: 'Playfair Display', serif;
         font-style: italic;
         font-size: 20pt;
         line-height: 1.7;
@@ -2342,6 +2342,11 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
         .chapter-subtitle {{ font-size: 10pt; }}
         .final-content {{ font-size: 12pt; }}
         .final-signature {{ font-size: 10pt; }}
+    }}
+    @media (max-width: 428px) {{
+        .book-page {{            
+            padding: 1cm; /* Увеличенные отступы для веб-просмотра */
+        }}
     }}
     </style>
 </head>
@@ -2396,7 +2401,7 @@ def create_fantasy_instagram_book_html(content: dict, analysis: dict, images: li
         # Добавляем главу к HTML
         html += f"""
 <div id="chapter-{chapter_key}" class="book-page chapter-page">
-    <h3 class="chapter-subtitle">Глава {i+1}</h3>
+    <h3 class="chapter-subtitle">{chapter_title}</h3>
     <h2 class="chapter-main-title">{chapter_title}</h2>
     {image_html}
     <div class="chapter-body">
@@ -2881,6 +2886,11 @@ def create_classic_humor_book_html(content: dict, analysis: dict, images: list[P
         .chapter-subtitle {{ font-size: 10pt; }}
         .final-content {{ font-size: 12pt; }}
         .final-signature {{ font-size: 10pt; }}
+    }}
+    @media (max-width: 428px) {{
+        .book-page {{            
+            padding: 1cm; /* Увеличенные отступы для веб-просмотра */
+        }}
     }}
     </style>
 </head>
