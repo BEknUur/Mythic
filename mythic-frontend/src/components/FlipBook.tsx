@@ -308,9 +308,9 @@ export function FlipBook({ pages }: FlipBookProps) {
         autoSize={false}
         disableFlipByClick={false}
         style={{ margin: '0 auto' }}
-        onFlip={(e) => console.log('Page flipped:', e)}
+        onFlip={(e: any) => console.log('Page flipped:', e)}
         onChangeOrientation={() => console.log('Orientation changed')}
-        onChangeState={(e) => console.log('State changed:', e)}
+        onChangeState={(e: any) => console.log('State changed:', e)}
       >
         {preparedPages}
       </HTMLFlipBook>
