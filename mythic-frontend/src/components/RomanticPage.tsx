@@ -43,109 +43,134 @@ export const RomanticPage = React.forwardRef<HTMLDivElement, RomanticPageProps>(
         }}
       >
         {/* Декоративные сердца в углах */}
-        <div style={{position: 'absolute', top: 18, left: 24, fontSize: 28, opacity: 0.15, pointerEvents: 'none'}}>💖</div>
-        <div style={{position: 'absolute', top: 18, right: 24, fontSize: 28, opacity: 0.15, pointerEvents: 'none'}}>💕</div>
-        <div style={{position: 'absolute', bottom: 18, left: 24, fontSize: 28, opacity: 0.15, pointerEvents: 'none'}}>💞</div>
-        <div style={{position: 'absolute', bottom: 18, right: 24, fontSize: 28, opacity: 0.15, pointerEvents: 'none'}}>💓</div>
+        <div style={{position: 'absolute', top: 12, left: 16, fontSize: 24, opacity: 0.12, pointerEvents: 'none'}}>💖</div>
+        <div style={{position: 'absolute', top: 12, right: 16, fontSize: 24, opacity: 0.12, pointerEvents: 'none'}}>💕</div>
+        <div style={{position: 'absolute', bottom: 12, left: 16, fontSize: 24, opacity: 0.12, pointerEvents: 'none'}}>💞</div>
+        <div style={{position: 'absolute', bottom: 12, right: 16, fontSize: 24, opacity: 0.12, pointerEvents: 'none'}}>💓</div>
         
-        {/* Декоративная линия */}
-        <div style={{width: '100%', textAlign: 'center', marginTop: 6, marginBottom: 6}}>
-          <span style={{fontSize: 24, color: '#e75480', fontFamily: 'Dancing Script, cursive'}}>❦</span>
-        </div>
-        
+        {/* Горизонтальная компоновка */}
         <div
-          className="flex flex-col h-full w-full p-6 overflow-y-auto"
+          className="flex h-full w-full p-6"
           style={{ 
             boxSizing: 'border-box', 
-            paddingBottom: 50,
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#e75480 transparent',
+            paddingBottom: 40,
+            gap: '24px'
           }}
         >
-          {title && (
-            <h2
-              className="text-center mb-3"
-              style={{
-                color: '#c71585',
-                fontFamily: "'Dancing Script', 'Playfair Display', serif",
-                fontSize: 36,
-                fontWeight: 700,
-                letterSpacing: '1.2px',
-                lineHeight: 1.1,
-                marginBottom: 12,
-                textShadow: '0 2px 8px #fff6fb',
-              }}
-            >
-              {title ? splitCamelCase(title) : null}
-            </h2>
-          )}
-          
-          {/* Завиток под заголовком */}
-          {title && (
-            <div style={{fontSize: 24, color: '#e75480', fontFamily: 'Dancing Script, cursive', marginBottom: 12, textAlign: 'center'}}>❧</div>
-          )}
-          
-          {/* Текст перед изображением */}
-          {text && (
-            <div
-              className="text-center mb-4"
-              style={{
-                color: '#8b5a8b',
-                fontFamily: "'Playfair Display', 'Georgia', serif",
-                fontSize: 18,
-                wordBreak: 'break-word',
-                lineHeight: 1.6,
-                textShadow: '0 1px 6px #fff6fb',
-                marginBottom: 16,
-              }}
-              dangerouslySetInnerHTML={{ __html: text }}
-            />
-          )}
-          
-          {/* Увеличенное изображение */}
-          {image && (
-            <div className="flex justify-center mb-4">
-              <img
-                src={image}
-                alt=""
-                className="max-w-full"
-                style={{
-                  maxHeight: '450px',
-                  maxWidth: '100%',
-                  width: 'auto',
-                  objectFit: 'contain',
-                  borderRadius: 20,
-                  boxShadow: '0 8px 32px rgba(255,182,193,0.3), 0 4px 16px rgba(255,105,180,0.2)',
-                  background: '#fff',
-                  border: '3px solid #fbcfe8',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,182,193,0.4), 0 6px 20px rgba(255,105,180,0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,182,193,0.3), 0 4px 16px rgba(255,105,180,0.2)';
-                }}
-              />
+          {/* Левая колонка с текстом */}
+          <div 
+            className="flex-1 flex flex-col overflow-y-auto"
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#e75480 transparent',
+              paddingRight: '12px'
+            }}
+          >
+            {/* Декоративная линия */}
+            <div style={{width: '100%', textAlign: 'center', marginBottom: 8}}>
+              <span style={{fontSize: 20, color: '#e75480', fontFamily: 'Dancing Script, cursive'}}>❦</span>
             </div>
-          )}
+            
+            {title && (
+              <h2
+                className="text-center mb-3"
+                style={{
+                  color: '#c71585',
+                  fontFamily: "'Dancing Script', 'Playfair Display', serif",
+                  fontSize: 32,
+                  fontWeight: 700,
+                  letterSpacing: '1px',
+                  lineHeight: 1.1,
+                  marginBottom: 12,
+                  textShadow: '0 2px 8px #fff6fb',
+                }}
+              >
+                {title ? splitCamelCase(title) : null}
+              </h2>
+            )}
+            
+            {/* Завиток под заголовком */}
+            {title && (
+              <div style={{fontSize: 20, color: '#e75480', fontFamily: 'Dancing Script, cursive', marginBottom: 16, textAlign: 'center'}}>❧</div>
+            )}
+            
+            {/* Текст */}
+            {text && (
+              <div
+                className="text-justify"
+                style={{
+                  color: '#8b5a8b',
+                  fontFamily: "'Playfair Display', 'Georgia', serif",
+                  fontSize: 18,
+                  wordBreak: 'break-word',
+                  lineHeight: 1.6,
+                  textShadow: '0 1px 6px #fff6fb',
+                  flex: 1
+                }}
+                dangerouslySetInnerHTML={{ __html: text }}
+              />
+            )}
+            
+            {/* Декоративная линия снизу */}
+            <div style={{width: '100%', textAlign: 'center', marginTop: 16}}>
+              <span style={{fontSize: 20, color: '#e75480', fontFamily: 'Dancing Script, cursive'}}>❦</span>
+            </div>
+          </div>
           
-          {/* Подпись под изображением */}
-          {caption && (
-            <div
-              className="text-center mb-4"
+          {/* Правая колонка с изображением */}
+          {image && (
+            <div 
+              className="flex-1 flex flex-col overflow-y-auto"
               style={{
-                fontFamily: "'Dancing Script', cursive",
-                fontSize: 22,
-                color: '#e75480',
-                fontStyle: 'italic',
-                letterSpacing: '0.5px',
-                textShadow: '0 1px 4px #fff6fb',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#e75480 transparent',
+                paddingLeft: '12px'
               }}
             >
-              {caption} 💕
+              <div className="flex flex-col items-center justify-center h-full">
+                <img
+                  src={image}
+                  alt=""
+                  className="max-w-full"
+                  style={{
+                    maxHeight: '600px',
+                    maxWidth: '100%',
+                    width: 'auto',
+                    objectFit: 'contain',
+                    borderRadius: 20,
+                    boxShadow: '0 8px 32px rgba(255,182,193,0.3), 0 4px 16px rgba(255,105,180,0.2)',
+                    background: '#fff',
+                    border: '3px solid #fbcfe8',
+                    transition: 'all 0.3s ease',
+                    cursor: 'zoom-in'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(255,182,193,0.4), 0 6px 20px rgba(255,105,180,0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 8px 32px rgba(255,182,193,0.3), 0 4px 16px rgba(255,105,180,0.2)';
+                  }}
+                />
+                
+                {/* Подпись под изображением */}
+                {caption && (
+                  <div
+                    className="text-center mt-4"
+                    style={{
+                      fontFamily: "'Dancing Script', cursive",
+                      fontSize: 20,
+                      color: '#e75480',
+                      fontStyle: 'italic',
+                      letterSpacing: '0.5px',
+                      textShadow: '0 1px 4px #fff6fb',
+                    }}
+                  >
+                    {caption} 💕
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -170,12 +195,12 @@ export const RomanticPage = React.forwardRef<HTMLDivElement, RomanticPageProps>(
           .romantic-page .flex.flex-col::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(180deg, #c71585, #e75480);
           }
+          
+          /* Курсор zoom для изображения */
+          .romantic-page img:hover {
+            cursor: zoom-in;
+          }
         `}</style>
-        
-        {/* Декоративная линия снизу */}
-        <div style={{width: '100%', textAlign: 'center', marginBottom: 6}}>
-          <span style={{fontSize: 24, color: '#e75480', fontFamily: 'Dancing Script, cursive'}}>❦</span>
-        </div>
         
         <div
           className="absolute bottom-3 right-4 text-lg font-bold"

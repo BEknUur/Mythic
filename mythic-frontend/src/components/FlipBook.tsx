@@ -59,12 +59,12 @@ export function FlipBook({ pages }: FlipBookProps) {
 
   // Определяем размеры в зависимости от размера экрана
   const [dimensions, setDimensions] = useState({
-    width: 1000,
-    height: 1000,
-    minWidth: 800,
-    maxWidth: 1600,
-    minHeight: 800,
-    maxHeight: 1200
+    width: 1600,
+    height: 800,
+    minWidth: 1200,
+    maxWidth: 1800,
+    minHeight: 700,
+    maxHeight: 900
   });
 
   useEffect(() => {
@@ -77,29 +77,29 @@ export function FlipBook({ pages }: FlipBookProps) {
       if (isSmallMobile) {
         setDimensions({
           width: Math.min(containerWidth - 40, 400),
-          height: Math.min(containerHeight - 150, 700),
+          height: Math.min(containerHeight - 150, 300),
           minWidth: 350,
           maxWidth: 450,
-          minHeight: 600,
-          maxHeight: 800
+          minHeight: 250,
+          maxHeight: 350
         });
       } else if (isMobile) {
         setDimensions({
-          width: Math.min(containerWidth - 60, 550),
-          height: Math.min(containerHeight - 120, 850),
+          width: Math.min(containerWidth - 60, 600),
+          height: Math.min(containerHeight - 120, 400),
           minWidth: 500,
-          maxWidth: 600,
-          minHeight: 700,
-          maxHeight: 900
+          maxWidth: 650,
+          minHeight: 350,
+          maxHeight: 450
         });
       } else {
         setDimensions({
-          width: Math.min(containerWidth - 100, 1000),
-          height: Math.min(containerHeight - 150, 1000),
-          minWidth: 800,
-          maxWidth: 1600,
-          minHeight: 800,
-          maxHeight: 1200
+          width: Math.min(containerWidth - 100, 1600),
+          height: Math.min(containerHeight - 150, 800),
+          minWidth: 1200,
+          maxWidth: 1800,
+          minHeight: 700,
+          maxHeight: 900
         });
       }
     };
