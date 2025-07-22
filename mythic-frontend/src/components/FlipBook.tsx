@@ -178,20 +178,48 @@ export function FlipBook({ pages }: FlipBookProps) {
         
         /* Красивый скроллбар для WebKit браузеров */
         .flip-page-content::-webkit-scrollbar {
-          width: 6px;
+          width: 12px;
         }
         
         .flip-page-content::-webkit-scrollbar-track {
-          background: transparent;
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 6px;
+          margin: 4px;
         }
         
         .flip-page-content::-webkit-scrollbar-thumb {
-          background-color: #cbd5e1;
-          border-radius: 3px;
+          background: linear-gradient(180deg, #64748b, #94a3b8);
+          border-radius: 6px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          transition: all 0.3s ease;
         }
         
         .flip-page-content::-webkit-scrollbar-thumb:hover {
-          background-color: #94a3b8;
+          background: linear-gradient(180deg, #475569, #64748b);
+          transform: scale(1.1);
+        }
+        
+        /* Глобальные стили скроллбаров для всех элементов книги */
+        .flip-page .overflow-y-auto::-webkit-scrollbar {
+          width: 10px;
+        }
+        
+        .flip-page .overflow-y-auto::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 5px;
+          margin: 2px;
+        }
+        
+        .flip-page .overflow-y-auto::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #6366f1, #8b5cf6);
+          border-radius: 5px;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          transition: all 0.3s ease;
+        }
+        
+        .flip-page .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #4f46e5, #7c3aed);
+          box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
         }
         
         .flip-page-number {

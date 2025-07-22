@@ -125,6 +125,42 @@ export const HumorPage = React.forwardRef<HTMLDivElement, HumorPageProps>(
         <div style={{width: '100%', textAlign: 'center', marginBottom: 8}}>
           <span style={{fontSize: 32, color: '#ffb347', fontFamily: 'Comic Neue, Comic Sans MS, cursive'}}>✦</span>
         </div>
+        
+        {/* Стили скроллбара */}
+        <style>{`
+          .humor-page .overflow-y-auto::-webkit-scrollbar {
+            width: 12px;
+          }
+          
+          .humor-page .overflow-y-auto::-webkit-scrollbar-track {
+            background: rgba(255, 179, 71, 0.15);
+            border-radius: 6px;
+            margin: 4px;
+            border: 1px solid rgba(255, 183, 77, 0.2);
+          }
+          
+          .humor-page .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #ffb347, #ffa500, #ff8c00);
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 2px 8px rgba(255, 179, 71, 0.3);
+            transition: all 0.3s ease;
+          }
+          
+          .humor-page .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #ff8c00, #ffb347, #ffa500);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 140, 0, 0.4);
+          }
+          
+          /* Плавная прокрутка */
+          .humor-page .overflow-y-auto {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: #ffb347 rgba(255, 179, 71, 0.15);
+          }
+        `}</style>
+        
         <div
           className="absolute bottom-4 right-4 text-lg font-bold"
           style={{

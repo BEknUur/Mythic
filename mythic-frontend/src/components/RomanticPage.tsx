@@ -178,27 +178,66 @@ export const RomanticPage = React.forwardRef<HTMLDivElement, RomanticPageProps>(
         {/* Улучшенные стили для скроллбара */}
         <style>{`
           .romantic-page .flex.flex-col::-webkit-scrollbar {
-            width: 8px;
+            width: 12px;
           }
           
           .romantic-page .flex.flex-col::-webkit-scrollbar-track {
-            background: rgba(255, 182, 193, 0.1);
-            border-radius: 4px;
+            background: rgba(255, 182, 193, 0.15);
+            border-radius: 6px;
+            margin: 4px;
+            border: 1px solid rgba(255, 192, 203, 0.2);
           }
           
           .romantic-page .flex.flex-col::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #e75480, #ff69b4);
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: linear-gradient(180deg, #e75480, #ff69b4, #ff1493);
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 2px 8px rgba(231, 84, 128, 0.3);
+            transition: all 0.3s ease;
           }
           
           .romantic-page .flex.flex-col::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, #c71585, #e75480);
+            background: linear-gradient(180deg, #c71585, #e75480, #ff69b4);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(199, 21, 133, 0.4);
+          }
+          
+          /* Глобальные стили для всех прокручиваемых элементов */
+          .romantic-page .overflow-y-auto::-webkit-scrollbar {
+            width: 12px;
+          }
+          
+          .romantic-page .overflow-y-auto::-webkit-scrollbar-track {
+            background: rgba(255, 182, 193, 0.15);
+            border-radius: 6px;
+            margin: 4px;
+            border: 1px solid rgba(255, 192, 203, 0.2);
+          }
+          
+          .romantic-page .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #e75480, #ff69b4, #ff1493);
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 2px 8px rgba(231, 84, 128, 0.3);
+            transition: all 0.3s ease;
+          }
+          
+          .romantic-page .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #c71585, #e75480, #ff69b4);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(199, 21, 133, 0.4);
           }
           
           /* Курсор zoom для изображения */
           .romantic-page img:hover {
             cursor: zoom-in;
+          }
+          
+          /* Плавная прокрутка */
+          .romantic-page .overflow-y-auto {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: #e75480 rgba(255, 182, 193, 0.15);
           }
         `}</style>
         

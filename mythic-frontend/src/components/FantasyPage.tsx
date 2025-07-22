@@ -125,6 +125,42 @@ export const FantasyPage = React.forwardRef<HTMLDivElement, FantasyPageProps>(
         <div style={{width: '100%', textAlign: 'center', marginBottom: 8}}>
           <span style={{fontSize: 32, color: '#bfa76f', fontFamily: 'Cormorant Garamond, Lora, serif'}}>✧</span>
         </div>
+        
+        {/* Стили скроллбара */}
+        <style>{`
+          .fantasy-page .overflow-y-auto::-webkit-scrollbar {
+            width: 12px;
+          }
+          
+          .fantasy-page .overflow-y-auto::-webkit-scrollbar-track {
+            background: rgba(191, 167, 111, 0.15);
+            border-radius: 6px;
+            margin: 4px;
+            border: 1px solid rgba(184, 160, 130, 0.2);
+          }
+          
+          .fantasy-page .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #bfa76f, #8b7355, #7a6f5f);
+            border-radius: 6px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 2px 8px rgba(191, 167, 111, 0.3);
+            transition: all 0.3s ease;
+          }
+          
+          .fantasy-page .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #8b7355, #bfa76f, #7a6f5f);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(139, 115, 85, 0.4);
+          }
+          
+          /* Плавная прокрутка */
+          .fantasy-page .overflow-y-auto {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: #bfa76f rgba(191, 167, 111, 0.15);
+          }
+        `}</style>
+        
         <div
           className="absolute bottom-4 right-4 text-lg font-bold"
           style={{
