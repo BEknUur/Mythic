@@ -44,7 +44,7 @@ def analyze_profile_for_fantasy(posts_data: list) -> dict:
     
     # Анализируем для фэнтези-контекста
     analysis["hero_name"] = analysis["full_name"] or analysis["username"]
-    analysis["realm_description"] = f"Королевство @{analysis['username']}"
+    analysis["realm_description"] = f"Королевство @@{analysis['username']}"
     
     return analysis
 
@@ -305,7 +305,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <title>{book_title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
     :root {{
@@ -319,11 +319,11 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
         --shadow-soft: rgba(0, 0, 0, 0.1);
     }}
 
-    @page {{
+    @@page {{
         size: A5 portrait;
         margin: 2.5cm;
         
-        @bottom-center {{
+        @@bottom-center {{
             content: counter(page);
             font-family: 'Playfair Display', serif;
             font-size: 16pt;
@@ -552,7 +552,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
         opacity: 0.7;
     }}
 
-    @media screen {{
+    @@media screen {{
         body {{
             font-size: 16px;
         }}
@@ -899,7 +899,7 @@ def create_epic_fantasy_html(analysis: dict, chapters: dict, images: list[Path])
     <title>{book_title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
     :root {{
@@ -913,11 +913,11 @@ def create_epic_fantasy_html(analysis: dict, chapters: dict, images: list[Path])
         --shadow-soft: rgba(0, 0, 0, 0.1);
     }}
 
-    @page {{
+    @@page {{
         size: A5 portrait;
         margin: 2.5cm;
         
-        @bottom-center {{
+        @@bottom-center {{
             content: counter(page);
             font-family: 'Playfair Display', serif;
             font-size: 16pt;
@@ -1146,7 +1146,7 @@ def create_epic_fantasy_html(analysis: dict, chapters: dict, images: list[Path])
         opacity: 0.7;
     }}
 
-    @media screen {{
+    @@media screen {{
         body {{
             font-size: 16px;
         }}
