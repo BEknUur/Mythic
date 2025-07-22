@@ -60,9 +60,11 @@ export function FlipBook({ pages }: FlipBookProps) {
   // Определяем размеры в зависимости от размера экрана
   const [dimensions, setDimensions] = useState({
     width: 800,
+    height: 650,
     minWidth: 600,
     maxWidth: 1400,
-    minHeight: 300
+    minHeight: 450,
+    maxHeight: 800
   });
 
   useEffect(() => {
@@ -75,23 +77,29 @@ export function FlipBook({ pages }: FlipBookProps) {
       if (isSmallMobile) {
         setDimensions({
           width: Math.min(containerWidth - 40, 320),
+          height: Math.min(containerHeight - 200, 480),
           minWidth: 300,
           maxWidth: 350,
-          minHeight: 250
+          minHeight: 420,
+          maxHeight: 550
         });
       } else if (isMobile) {
         setDimensions({
           width: Math.min(containerWidth - 60, 450),
+          height: Math.min(containerHeight - 180, 600),
           minWidth: 400,
           maxWidth: 500,
-          minHeight: 300
+          minHeight: 500,
+          maxHeight: 650
         });
       } else {
         setDimensions({
           width: Math.min(containerWidth - 100, 800),
+          height: Math.min(containerHeight - 200, 650),
           minWidth: 600,
           maxWidth: 1400,
-          minHeight: 300
+          minHeight: 450,
+          maxHeight: 800
         });
       }
     };
@@ -152,21 +160,17 @@ export function FlipBook({ pages }: FlipBookProps) {
           box-shadow: 0 0 20px rgba(0,0,0,0.1);
           border: 1px solid #e5e7eb;
           border-radius: 8px;
-          overflow: visible;
+          overflow: hidden;
           display: flex;
           flex-direction: column;
-          min-height: 300px;
-          height: auto;
         }
         
         .flip-page-content {
           flex: 1;
           padding: 20px;
-          overflow: visible;
+          overflow-y: auto;
           font-family: 'Inter', sans-serif;
           line-height: 1.6;
-          height: auto;
-          min-height: 250px;
         }
         
         .flip-page-number {
@@ -233,12 +237,12 @@ export function FlipBook({ pages }: FlipBookProps) {
       <HTMLFlipBook
         ref={flipBookRef}
         width={dimensions.width}
-        height={1200}
+        height={dimensions.height}
         size="stretch"
         minWidth={dimensions.minWidth}
         maxWidth={dimensions.maxWidth}
         minHeight={dimensions.minHeight}
-        maxHeight={1500}
+        maxHeight={dimensions.maxHeight}
         maxShadowOpacity={0.15}
         showCover={false}
         className="shadow-2xl book-container"
