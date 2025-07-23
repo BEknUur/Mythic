@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import ClientDisconnect
 import re
 from dotenv import load_dotenv
 
@@ -1569,7 +1570,17 @@ def status_page(runId: str):
 @app.post("/create-book")
 async def create_book(request: Request, background: BackgroundTasks, current_user: dict = Depends(get_current_user)):
     """(DEPRECATED) Создает книгу в фоновом режиме."""
-    payload = await request.json()
+    try:
+        payload = await request.json()
+    except Exception as e:
+        # Обрабатываем случай когда клиент отключился
+        if "ClientDisconnect" in str(e):
+            log.warning(f"Client disconnected during create-book request")
+            raise HTTPException(400, "Request was cancelled by client")
+        else:
+            log.error(f"Error parsing request body: {e}")
+            raise HTTPException(400, "Invalid request body")
+    
     run_id = payload.get("runId")
 
     if not run_id:

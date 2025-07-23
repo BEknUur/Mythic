@@ -348,7 +348,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <title>{book_title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
     :root {{
@@ -897,7 +897,7 @@ def create_epic_fantasy_html(analysis: dict, chapters: dict, images: list[Path])
     <title>{book_title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
     :root {{
