@@ -383,3 +383,50 @@ export const api = {
     return res.json()
   },
 }
+
+/* ──────────── POLAR PAYMENTS ──────────── */
+export interface CreateCheckoutRequest {
+  product_type: 'pro_subscription' | 'single_generation';
+  customer_email?: string;
+}
+
+// Добавляем схему валидации
+const CheckoutResponseSchema = z.object({
+  checkout_url: z.string(),
+  success: z.boolean(),
+  message: z.string(),
+});
+
+export type CheckoutResponse = z.infer<typeof CheckoutResponseSchema>;
+
+export const payments = {
+  async createCheckout(request: CreateCheckoutRequest, token: string): Promise<CheckoutResponse> {
+    const response = await fetchWithRetry(`${BASE_URL}/payments/create-checkout`, {
+      method: 'POST',
+      headers: headersWithAuth(token),
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+    }
+
+    const data = await response.json();
+    return CheckoutResponseSchema.parse(data);
+  },
+
+  async getCheckoutStatus(checkoutId: string, token: string) {
+    const response = await fetchWithRetry(`${BASE_URL}/payments/checkout-status/${checkoutId}`, {
+      method: 'GET',
+      headers: headersWithAuth(token),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new ApiError(errorText || `HTTP ${response.status}`, response.status);
+    }
+
+    return response.json();
+  }
+};

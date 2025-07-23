@@ -1,24 +1,23 @@
-import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate, Navigate, useParams } from 'react-router-dom'
-import { MainLayout } from './components/MainLayout'
-import { HomePage } from './components/HomePage'
-import { GeneratePage } from './components/GeneratePage'
-import { ProgressTracker } from './components/ProgressTracker'
-import { MyBooksLibrary } from './components/MyBooksLibrary'
-import { BookReader } from './components/BookReader'
-import { FlipBookReader } from './components/FlipBookReader'
-import { BookViewer } from '@/components/BookViewer'
-import { TikTokPage } from './components/TikTokPage'
-import { FlipBookPage } from './components/FlipBookPage'
-import { HelpPage } from './components/HelpPage'
-import { ComingSoonPage } from './components/ComingSoonPage'
-import { PricingPage } from './components/PricingPage'
-import { TourProvider, TourAlertDialog, TOUR_STEP_IDS, useTour } from '@/components/ui/tour'
-import { Toaster } from './components/ui/toaster'
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Toaster } from '@/components/ui/toaster';
+import { BookViewer } from '@/components/BookViewer';
+import { BookReader } from '@/components/BookReader';
+import { FlipBookReader } from '@/components/FlipBookReader';
+import { MyBooksLibrary } from '@/components/MyBooksLibrary';
+import { HomePage } from '@/components/HomePage';
+import { GeneratePage } from '@/components/GeneratePage';
+import { ProgressTracker } from '@/components/ProgressTracker';
+import { TikTokPage } from '@/components/TikTokPage';
+import { PricingPage } from '@/components/PricingPage';
+import { SettingsPage } from '@/components/SettingsPage';
+import { HelpPage } from '@/components/HelpPage';
+import { FlipBookPage } from '@/components/FlipBookPage';
+import { MainLayout } from '@/components/MainLayout';
+import { TourProvider, useTour, TourAlertDialog, TOUR_STEP_IDS } from '@/components/ui/tour';
+import { PaymentSuccessPage } from '@/components/PaymentSuccessPage';
+import { PaymentCancelPage } from '@/components/PaymentCancelPage';
 import './App.css'
-
-
-const SettingsPage = () => <div className="p-8"><h1>Настройки</h1><p>Скоро здесь можно будет настроить приложение.</p></div>;
 
 // Компонент для роута /reader/:id
 function BookViewerRoute() {
@@ -141,6 +140,10 @@ function AppContent() {
           <Route path="/help" element={<HelpPage />} />
           <Route path="/flipbook" element={<FlipBookPage />} />
         </Route>
+        
+        {/* Payment routes */}
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/payment/cancel" element={<PaymentCancelPage />} />
         
         <Route 
           path="/progress"

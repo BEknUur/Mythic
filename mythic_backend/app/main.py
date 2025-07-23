@@ -7,9 +7,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import ClientDisconnect
 import re
 from dotenv import load_dotenv
+import os
+from pathlib import Path
 
-
-load_dotenv()  # Загружаем переменные из .env файла
+# Загружаем .env файл из корня проекта (на уровень выше mythic_backend)
+env_path = Path(__file__).parent.parent.parent / '.env'
+load_dotenv(env_path)
 
 from app.routers import auth
 from app.routers import user_router
@@ -43,7 +46,6 @@ from app.config import settings
 from app.services.apify_client import run_actor, fetch_run, fetch_items
 from app.services.downloader import download_photos
 from app.auth import clerk_auth
-import os
 
 log = logging.getLogger("api")
 app = FastAPI(title="Романтическая Летопись Любви", description="Создает красивые романтические книги на основе Instagram профилей для ваших любимых")
@@ -1819,3 +1821,97 @@ async def download_saved_book(
         filename=filename,
         media_type=media_type
     )
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# POLAR PAYMENT ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+from app.services.polar_service import polar_service
+from pydantic import BaseModel
+
+class CreateCheckoutRequest(BaseModel):
+    product_type: str  # "pro_subscription" или "single_generation" 
+    customer_email: str = None
+
+class CheckoutResponse(BaseModel):
+    checkout_url: str
+    success: bool
+    message: str
+
+@app.post("/payments/create-checkout", response_model=CheckoutResponse)
+async def create_polar_checkout(
+    request: CreateCheckoutRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Создает Polar checkout для оплаты"""
+    if not polar_service:
+        raise HTTPException(500, "Polar сервис недоступен")
+    
+    try:
+        # Получаем email пользователя из Clerk
+        user_email = current_user.get("email_addresses", [{}])[0].get("email_address") if current_user.get("email_addresses") else None
+        customer_email = request.customer_email or user_email
+        
+        if request.product_type == "pro_subscription":
+            checkout_url = polar_service.create_pro_subscription_checkout(customer_email)
+        elif request.product_type == "single_generation":
+            checkout_url = polar_service.create_single_generation_checkout(customer_email)
+        else:
+            raise HTTPException(400, "Неверный тип продукта")
+        
+        log.info(f"Создан checkout для пользователя {current_user.get('sub')}, тип: {request.product_type}")
+        
+        return CheckoutResponse(
+            checkout_url=checkout_url,
+            success=True,
+            message="Checkout создан успешно"
+        )
+        
+    except Exception as e:
+        log.error(f"Ошибка создания checkout: {e}")
+        raise HTTPException(500, f"Ошибка создания checkout: {str(e)}")
+
+@app.get("/payments/checkout-status/{checkout_id}")
+async def get_checkout_status(
+    checkout_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Получает статус checkout"""
+    if not polar_service:
+        raise HTTPException(500, "Polar сервис недоступен")
+    
+    try:
+        status = polar_service.get_checkout_status(checkout_id)
+        return {"success": True, "status": status}
+    except Exception as e:
+        log.error(f"Ошибка получения статуса checkout {checkout_id}: {e}")
+        raise HTTPException(500, f"Ошибка получения статуса: {str(e)}")
+
+@app.post("/webhook/polar")
+async def polar_webhook(request: Request):
+    """Обработка webhook от Polar"""
+    try:
+        payload = await request.json()
+        event_type = payload.get("type")
+        
+        log.info(f"Получен Polar webhook: {event_type}")
+        
+        if event_type == "checkout.completed":
+            checkout_data = payload.get("data", {})
+            checkout_id = checkout_data.get("id")
+            customer_email = checkout_data.get("customer_email")
+            
+            # Здесь можно добавить логику для активации Pro подписки
+            # Например, обновить статус пользователя в базе данных
+            
+            log.info(f"Оплата завершена: checkout_id={checkout_id}, email={customer_email}")
+        
+        return {"success": True}
+        
+    except Exception as e:
+        log.error(f"Ошибка обработки Polar webhook: {e}")
+        raise HTTPException(500, f"Ошибка webhook: {str(e)}")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

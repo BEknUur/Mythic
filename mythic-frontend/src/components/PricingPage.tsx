@@ -3,6 +3,9 @@ import { Check, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ProModal } from './ProModal';
+import { useAuth } from '@clerk/clerk-react';
+import { useToast } from '@/hooks/use-toast';
+import { payments } from '@/lib/api';
 
 const tiers = [
   {
@@ -19,6 +22,7 @@ const tiers = [
     ],
     cta: 'Начать бесплатно',
     isMostPopular: false,
+    action: 'free'
   },
   {
     name: 'Pro',
@@ -34,15 +38,53 @@ const tiers = [
     ],
     cta: 'Перейти на Pro',
     isMostPopular: true,
+    action: 'pro'
   },
 ];
 
 export function PricingPage() {
   const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { getToken } = useAuth();
+  const { toast } = useToast();
 
   const handleProClick = () => {
     setIsProModalOpen(true);
-  }
+  };
+
+  const handleSinglePayment = async () => {
+    setIsLoading(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Необходима авторизация');
+      }
+
+      const response = await payments.createCheckout({
+        product_type: 'single_generation'
+      }, token);
+
+      if (response.success) {
+        window.location.href = response.checkout_url;
+      } else {
+        throw new Error(response.message);
+      }
+    } catch (error) {
+      console.error('Ошибка создания checkout:', error);
+      toast({
+        title: "Ошибка",
+        description: error instanceof Error ? error.message : 'Не удалось создать платеж',
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFreeClick = () => {
+    // Перенаправляем на страницу создания книги
+    window.location.href = '/generate';
+  };
 
   return (
     <>
@@ -62,6 +104,17 @@ export function PricingPage() {
             <div className="col-span-1 lg:col-span-2 flex justify-center mb-4">
               <div className="bg-purple-50 border border-purple-200 rounded-xl px-6 py-4 text-center max-w-xl w-full text-purple-900 text-base font-medium">
                 После бесплатных генераций каждая новая генерация книги (Classic или Flipbook) стоит <span className="font-bold">$0.99</span>.
+                <div className="mt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleSinglePayment}
+                    disabled={isLoading}
+                    className="bg-white hover:bg-purple-50"
+                  >
+                    {isLoading ? 'Загрузка...' : 'Оплатить одну генерацию ($0.99)'}
+                  </Button>
+                </div>
               </div>
             </div>
             {tiers.map((tier) => (
@@ -102,7 +155,7 @@ export function PricingPage() {
                       ? 'bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600'
                       : 'bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-200'
                   )}
-                  onClick={tier.isMostPopular ? handleProClick : undefined}
+                  onClick={tier.action === 'pro' ? handleProClick : handleFreeClick}
                 >
                   {tier.cta}
                 </Button>
