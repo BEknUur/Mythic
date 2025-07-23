@@ -646,12 +646,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <h3 class="chapter-subtitle">Глава 1</h3>
     <h2 class="chapter-main-title">Древнее пророчество</h2>
     
-    {f"""
-    <div class="chapter-image-container">
-        <img src="{processed_images[0]}" alt="Photo for Chapter 1" class="chapter-image">
-        <p class="chapter-image-caption"> Избранный судьбой </p>
-    </div>
-    """ if processed_images else ""}
+    {f'<div class="chapter-image-container"><img src="{processed_images[0]}" alt="Photo for Chapter 1" class="chapter-image"><p class="chapter-image-caption"> Избранный судьбой </p></div>' if processed_images else ""}
 
     <div class="chapter-body">
         {format_paragraphs(chapters.get('prophecy', 'Древние пророчества говорили о великом герое...'))}
@@ -662,12 +657,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <h3 class="chapter-subtitle">Глава 2</h3>
     <h2 class="chapter-main-title">Магическое королевство</h2>
     
-    {f"""
-    <div class="chapter-image-container">
-        <img src="{processed_images[1]}" alt="Photo for Chapter 2" class="chapter-image">
-        <p class="chapter-image-caption"> Владыка стихий </p>
-    </div>
-    """ if len(processed_images) > 1 else ""}
+    {f'<div class="chapter-image-container"><img src="{processed_images[1]}" alt="Photo for Chapter 2" class="chapter-image"><p class="chapter-image-caption"> Владыка стихий </p></div>' if len(processed_images) > 1 else ""}
 
     <div class="chapter-body">
         {format_paragraphs(chapters.get('magical_realm', 'Королевство магии раскинулось между мирами...'))}
@@ -678,12 +668,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <h3 class="chapter-subtitle">Глава 3</h3>
     <h2 class="chapter-main-title">Древняя мудрость</h2>
     
-    {f"""
-    <div class="chapter-image-container">
-        <img src="{processed_images[2]}" alt="Photo for Chapter 3" class="chapter-image">
-        <p class="chapter-image-caption"> Хранитель мудрости </p>
-    </div>
-    """ if len(processed_images) > 2 else ""}
+    {f'<div class="chapter-image-container"><img src="{processed_images[2]}" alt="Photo for Chapter 3" class="chapter-image"><p class="chapter-image-caption"> Хранитель мудрости </p></div>' if len(processed_images) > 2 else ""}
 
     <div class="chapter-body">
         {format_paragraphs(chapters.get('ancient_wisdom', 'Мудрость веков живет в глазах героя...'))}
@@ -694,12 +679,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <h3 class="chapter-subtitle">Глава 4</h3>
     <h2 class="chapter-main-title">Магические артефакты</h2>
     
-    {f"""
-    <div class="chapter-image-container">
-        <img src="{processed_images[3]}" alt="Photo for Chapter 4" class="chapter-image">
-        <p class="chapter-image-caption"> Собиратель артефактов </p>
-    </div>
-    """ if len(processed_images) > 3 else ""}
+    {f'<div class="chapter-image-container"><img src="{processed_images[3]}" alt="Photo for Chapter 4" class="chapter-image"><p class="chapter-image-caption"> Собиратель артефактов </p></div>' if len(processed_images) > 3 else ""}
 
     <div class="chapter-body">
         {format_paragraphs(chapters.get('magical_artifacts', 'Древние артефакты хранят силу веков...'))}
@@ -710,12 +690,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <h3 class="chapter-subtitle">Глава 5</h3>
     <h2 class="chapter-main-title">Власть над стихиями</h2>
     
-    {f"""
-    <div class="chapter-image-container">
-        <img src="{processed_images[4]}" alt="Photo for Chapter 5" class="chapter-image">
-        <p class="chapter-image-caption"> Повелитель магии </p>
-    </div>
-    """ if len(processed_images) > 4 else ""}
+    {f'<div class="chapter-image-container"><img src="{processed_images[4]}" alt="Photo for Chapter 5" class="chapter-image"><p class="chapter-image-caption"> Повелитель магии </p></div>' if len(processed_images) > 4 else ""}
 
     <div class="chapter-body">
         {format_paragraphs(chapters.get('elemental_power', 'Стихии повинуются воле героя...'))}
@@ -726,12 +701,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <h3 class="chapter-subtitle">Глава 6</h3>
     <h2 class="chapter-main-title">Союз с драконом</h2>
     
-    {f"""
-    <div class="chapter-image-container">
-        <img src="{processed_images[5]}" alt="Photo for Chapter 6" class="chapter-image">
-        <p class="chapter-image-caption"> Драконий всадник </p>
-    </div>
-    """ if len(processed_images) > 5 else ""}
+    {f'<div class="chapter-image-container"><img src="{processed_images[5]}" alt="Photo for Chapter 6" class="chapter-image"><p class="chapter-image-caption"> Драконий всадник </p></div>' if len(processed_images) > 5 else ""}
 
     <div class="chapter-body">
         {format_paragraphs(chapters.get('dragon_bond', 'Древний дракон признал в герое равного...'))}
@@ -742,12 +712,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <h3 class="chapter-subtitle">Глава 7</h3>
     <h2 class="chapter-main-title">Зов приключений</h2>
     
-    {f"""
-    <div class="chapter-image-container">
-        <img src="{processed_images[6]}" alt="Photo for Chapter 7" class="chapter-image">
-        <p class="chapter-image-caption"> Странник миров </p>
-    </div>
-    """ if len(processed_images) > 6 else ""}
+    {f'<div class="chapter-image-container"><img src="{processed_images[6]}" alt="Photo for Chapter 7" class="chapter-image"><p class="chapter-image-caption"> Странник миров </p></div>' if len(processed_images) > 6 else ""}
 
     <div class="chapter-body">
         {format_paragraphs(chapters.get('quest_calling', 'Судьба зовет героя в великий поход...'))}
@@ -758,12 +723,7 @@ def create_fantasy_html(analysis: dict, chapters: dict, images: list[Path]) -> s
     <h3 class="chapter-subtitle">Глава 8</h3>
     <h2 class="chapter-main-title">Легендарные подвиги</h2>
     
-    {f"""
-    <div class="chapter-image-container">
-        <img src="{processed_images[7]}" alt="Photo for Chapter 8" class="chapter-image">
-        <p class="chapter-image-caption"> Покоритель судьбы </p>
-    </div>
-    """ if len(processed_images) > 7 else ""}
+    {f'<div class="chapter-image-container"><img src="{processed_images[7]}" alt="Photo for Chapter 8" class="chapter-image"><p class="chapter-image-caption"> Покоритель судьбы </p></div>' if len(processed_images) > 7 else ""}
 
     <div class="chapter-body">
         {format_paragraphs(chapters.get('legendary_deeds', 'Барды слагают песни о подвигах героя...'))}
@@ -868,12 +828,7 @@ def create_epic_fantasy_html(analysis: dict, chapters: dict, images: list[Path])
             </li>"""
             
             # Добавляем изображение
-            image_html = f"""
-            <div class="chapter-image-container">
-                <img src="{processed_images[chapter_number-1]}" alt="Photo for Chapter {chapter_number}" class="chapter-image">
-                <p class="chapter-image-caption">{emoji}</p>
-            </div>
-            """ if chapter_number-1 < len(processed_images) else ""
+            image_html = f'<div class="chapter-image-container"><img src="{processed_images[chapter_number-1]}" alt="Photo for Chapter {chapter_number}" class="chapter-image"><p class="chapter-image-caption">{emoji}</p></div>' if chapter_number-1 < len(processed_images) else ""
             
             # Добавляем главу
             chapter_pages += f"""
