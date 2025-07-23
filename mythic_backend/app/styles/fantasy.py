@@ -253,7 +253,8 @@ def generate_epic_fantasy_book(run_id: str, images, comments, user_id=None):
                     max_tokens=900
                 )
                 if not generated_content or len(re.findall(r"\w+", generated_content.strip())) < 60:
-                    print(f"⚠️ Короткий текст для главы {config['key']} ({len(re.findall(r'\w+', generated_content.strip()))} слов), пробую еще раз...")
+                    word_count = len(re.findall(r'\w+', generated_content.strip()))
+                    print(f"⚠️ Короткий текст для главы {config['key']} ({word_count} слов), пробую еще раз...")
                     time.sleep(1.2)  # Небольшая задержка между попытками
                     continue
                 clean_content = strip_cliches(generated_content)
