@@ -624,6 +624,9 @@
   overflow-wrap: break-word;
   word-break: normal; /* Не разбиваем слова принудительно */
   line-height: 1.6;
+  /* Улучшенное позиционирование */
+  min-height: 100%;
+  height: 100%;
 }
 
 .flip-page-content {
@@ -637,12 +640,72 @@
   word-break: normal;
   line-height: 1.7;
   text-align: justify;
+  /* Улучшенное отображение изображений */
+  min-height: 0;
+}
+
+/* Улучшенные стили для изображений */
+.flip-page-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  margin: 12px 0;
+  display: block;
+}
+
+/* Центрирование изображений */
+.flip-page-content .image-container,
+.flip-page-content .page-image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.flip-page-content .image-container img,
+.flip-page-content .page-image-container img {
+  max-width: 90% !important;
+  max-height: 300px !important;
+  object-fit: contain !important;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease;
+}
+
+.flip-page-content .image-container img:hover,
+.flip-page-content .page-image-container img:hover {
+  transform: scale(1.02);
+}
+
+/* Подписи к изображениям */
+.flip-page-content .image-caption,
+.flip-page-content .caption {
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 8px;
+  font-style: italic;
+  line-height: 1.4;
 }
 
 @media (max-width: 640px) {
   .flip-page-content {
     text-align: left; /* Левое выравнивание на мобильных */
     line-height: 1.8;
+    padding: 0.75rem;
+  }
+  
+  .flip-page-content img {
+    margin: 8px 0;
+  }
+  
+  .flip-page-content .image-container img,
+  .flip-page-content .page-image-container img {
+    max-height: 200px !important;
   }
 }
 
@@ -662,6 +725,7 @@
   color: #666;
   font-size: 0.875rem;
   opacity: 0.7;
+  z-index: 10;
 }
 
 .demo-content {
@@ -789,45 +853,22 @@
 .book-container .stf__parent {
   width: 100% !important;
   height: auto !important;
-  min-height: 600px !important;
+  min-height: 500px !important;
 }
 
 /* Переопределение стилей библиотеки react-pageflip */
 .book-container .stf__item {
-  height: 600px !important;
-  min-height: 600px !important;
+  height: auto !important;
+  min-height: 500px !important;
+  max-height: none !important;
 }
 
 .book-container .flip-page {
   height: 100% !important;
-  min-height: 600px !important;
+  min-height: 500px !important;
 }
 
 @media (max-width: 768px) {
-  .book-container .stf__parent {
-    min-height: 500px !important;
-  }
-  
-  .book-container .stf__item {
-    height: 500px !important;
-    min-height: 500px !important;
-    font-size: 14px !important;
-    line-height: 1.5 !important;
-    padding: 0.75rem !important;
-  }
-  
-  .book-container .flip-page {
-    min-height: 500px !important;
-  }
-  
-  .book-container .stf__block {
-    width: 100% !important;
-    max-width: 350px !important;
-    margin: 0 auto !important;
-  }
-}
-
-@media (max-width: 480px) {
   .book-container .stf__parent {
     min-height: 450px !important;
   }
@@ -835,8 +876,9 @@
   .book-container .stf__item {
     height: 450px !important;
     min-height: 450px !important;
-    font-size: 13px !important;
-    padding: 0.5rem !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    padding: 0.75rem !important;
   }
   
   .book-container .flip-page {
@@ -844,7 +886,30 @@
   }
   
   .book-container .stf__block {
-    max-width: 280px !important;
+    width: 100% !important;
+    max-width: 600px !important;
+    margin: 0 auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-container .stf__parent {
+    min-height: 400px !important;
+  }
+  
+  .book-container .stf__item {
+    height: 400px !important;
+    min-height: 400px !important;
+    font-size: 13px !important;
+    padding: 0.5rem !important;
+  }
+  
+  .book-container .flip-page {
+    min-height: 400px !important;
+  }
+  
+  .book-container .stf__block {
+    max-width: 350px !important;
   }
 }
 
@@ -864,5 +929,63 @@
   
   .safe-area-right {
     padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Улучшения для стилизованных страниц */
+.romantic-page, .humor-page, .fantasy-page {
+  min-height: 100% !important;
+  height: 100% !important;
+}
+
+.romantic-page .flex, .humor-page .flex, .fantasy-page .flex {
+  min-height: 0;
+}
+
+/* Улучшенное отображение HTML контента в стилизованных страницах */
+.romantic-page [dangerouslySetInnerHTML] img,
+.humor-page [dangerouslySetInnerHTML] img,
+.fantasy-page [dangerouslySetInnerHTML] img {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  border-radius: 8px;
+  margin: 12px auto;
+  display: block;
+}
+
+/* Мобильная адаптация для стилизованных страниц */
+@media (max-width: 768px) {
+  .romantic-page, .humor-page, .fantasy-page {
+    font-size: 14px !important;
+  }
+  
+  .romantic-page h1, .romantic-page h2,
+  .humor-page h1, .humor-page h2,
+  .fantasy-page h1, .fantasy-page h2 {
+    font-size: 18px !important;
+    line-height: 1.2 !important;
+  }
+  
+  .romantic-page p, .humor-page p, .fantasy-page p {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .romantic-page, .humor-page, .fantasy-page {
+    font-size: 13px !important;
+    padding: 0.5rem !important;
+  }
+  
+  .romantic-page h1, .romantic-page h2,
+  .humor-page h1, .humor-page h2,
+  .fantasy-page h1, .fantasy-page h2 {
+    font-size: 16px !important;
+  }
+  
+  .romantic-page p, .humor-page p, .fantasy-page p {
+    font-size: 13px !important;
   }
 }

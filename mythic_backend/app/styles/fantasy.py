@@ -238,8 +238,25 @@ def generate_epic_fantasy_book(run_id: str, images, comments, user_id=None):
         {"key": "epilogue", "title": "Эпилог: Возвращение домой", "prompt": f"Заверши книгу эпилогом: как {full_name} возвращается домой, что изменилось в мире и в нём/ней самом?"},
     ]
     chapters = {}
-    for config in fantasy_configs:
-        print(f"🧙 Генерирую главу: {config['key']} - {config['title']}")
+    total_chapters = len(fantasy_configs)
+    
+    for idx, config in enumerate(fantasy_configs, 1):
+        print(f"🧙 Генерирую главу: {config['key']} - {config['title']} ({idx}/{total_chapters})")
+        
+        # Обновляем статус в файле для фронтенда
+        try:
+            status_file = run_dir / "status.json"
+            status_data = {
+                "stage": "generating_chapters",
+                "current_chapter": idx,
+                "total_chapters": total_chapters,
+                "chapter_title": config['title'],
+                "progress_percent": int((idx - 1) / total_chapters * 100)
+            }
+            status_file.write_text(json.dumps(status_data, ensure_ascii=False))
+        except Exception as e:
+            print(f"⚠️ Не удалось обновить статус: {e}")
+        
         for _ in range(3):
             try:
                 generated_content = generate_memoir_chapter(
@@ -255,16 +272,16 @@ def generate_epic_fantasy_book(run_id: str, images, comments, user_id=None):
                 if not generated_content or len(re.findall(r"\w+", generated_content.strip())) < 60:
                     word_count = len(re.findall(r'\w+', generated_content.strip()))
                     print(f"⚠️ Короткий текст для главы {config['key']} ({word_count} слов), пробую еще раз...")
-                    time.sleep(1.2)  # Небольшая задержка между попытками
+                    # time.sleep(1.2)  # Убираем задержку для ускорения
                     continue
                 clean_content = strip_cliches(generated_content)
                 chapters[config['key']] = clean_content
                 print(f"✅ Глава {config['key']} сгенерирована успешно!")
-                time.sleep(1.2)  # Задержка между главами
+                # time.sleep(1.2)  # Убираем задержку между главами
                 break
             except Exception as e:
                 print(f"❌ Ошибка генерации главы '{config['title']}': {e}")
-                time.sleep(1.2)  # Задержка при ошибке
+                # time.sleep(1.2)  # Убираем задержку при ошибке
         else:
             chapters[config['key']] = QUICK_FALLBACKS.get(config['key'], f"{config['title']} о {full_name} — даже магия не смогла родить текст!")
             print(f"⚠️ Использую fallback для главы {config['key']}")
@@ -272,9 +289,34 @@ def generate_epic_fantasy_book(run_id: str, images, comments, user_id=None):
     print(f"📚 Всего сгенерировано глав: {len(chapters)}")
     print(f"📝 Ключи глав: {list(chapters.keys())}")
     
+    # Обновляем финальный статус
+    try:
+        status_file = run_dir / "status.json"
+        status_data = {
+            "stage": "creating_html",
+            "progress_percent": 90,
+            "message": "Создаю финальную HTML книгу..."
+        }
+        status_file.write_text(json.dumps(status_data, ensure_ascii=False))
+    except Exception as e:
+        print(f"⚠️ Не удалось обновить финальный статус: {e}")
+    
     html = create_epic_fantasy_html(analysis, chapters, actual_images)
     html_file = run_dir / "book.html"
     html_file.write_text(html, encoding="utf-8")
+    
+    # Обновляем статус завершения
+    try:
+        status_file = run_dir / "status.json"
+        status_data = {
+            "stage": "completed",
+            "progress_percent": 100,
+            "message": "Эпическая фэнтези-книга готова!"
+        }
+        status_file.write_text(json.dumps(status_data, ensure_ascii=False))
+    except Exception as e:
+        print(f"⚠️ Не удалось обновить статус завершения: {e}")
+    
     print("🧙 Эпическая фэнтези-книга создана!")
     return html
 

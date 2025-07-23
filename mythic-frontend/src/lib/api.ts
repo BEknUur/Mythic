@@ -88,7 +88,7 @@ const headersWithAuth = (token?: string) => ({
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 })
 
-const createFetchWithTimeout = (timeoutMs: number = 30000) => {
+const createFetchWithTimeout = (timeoutMs: number = 60000) => {  // Увеличиваем с 30 до 60 секунд
   return async (url: string, options: RequestInit = {}) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -116,7 +116,7 @@ const fetchWithRetry = async (
   url: string, 
   options: RequestInit = {}, 
   maxRetries: number = 2,
-  timeoutMs: number = 30000
+  timeoutMs: number = 60000  // Увеличиваем с 30 до 60 секунд
 ): Promise<Response> => {
   const fetchWithTimeout = createFetchWithTimeout(timeoutMs);
   let lastError: Error;
@@ -188,7 +188,7 @@ export const api = {
     url.searchParams.set('style', style);
     const res = await fetchWithRetry(url.toString(), {
       headers: headersWithAuth(token),
-    })
+    }, 2, 120000)  // 2 минуты для начала процесса
     if (!res.ok)
       throw new ApiError(await res.text(), res.status)
     return StartScrapeResponseSchema.parse(await res.json())
@@ -197,7 +197,7 @@ export const api = {
   async getStatus(runId: string, token?: string): Promise<StatusResponse> {
     const res = await fetchWithRetry(`${BASE_URL}/status/${runId}`, {
       headers: headersWithAuth(token),
-    })
+    }, 2, 120000)  // 2 минуты таймаут для статуса
     if (!res.ok) {
       const errorText = await res.text();
       throw new ApiError(errorText, res.status);
@@ -222,7 +222,7 @@ export const api = {
   async getBookContent(runId: string, token?: string): Promise<string> {
     const res = await fetchWithRetry(`${BASE_URL}/view/${runId}/book.html`, {
       headers: headersWithAuth(token),
-    })
+    }, 2, 180000)  // 3 минуты для получения готовой книги
     if (!res.ok) throw new Error(res.statusText)
     return res.text()
   },
@@ -232,7 +232,7 @@ export const api = {
     const res = await fetchWithRetry(`${BASE_URL}/generate-pdf/${runId}`, {
       method: 'POST',
       headers: headersWithAuth(token),
-    })
+    }, 2, 300000)  // 5 минут для генерации PDF
     if (!res.ok)
       throw new ApiError(await res.text(), res.status)
     return res.json() as Promise<{

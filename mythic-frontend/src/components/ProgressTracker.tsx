@@ -234,7 +234,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
 
     let retryCount = 0;
     const maxRetries = 5; // Увеличиваем максимальное количество попыток
-    let pollInterval = 5000; // Начинаем с 5 секунд вместо 3
+    let pollInterval = 10000; // Увеличиваем с 5 до 10 секунд для снижения нагрузки
     let intervalId: NodeJS.Timeout | null = null;
     let consecutiveErrors = 0;
     const maxConsecutiveErrors = 10; // Останавливаем после 10 подряд ошибок
@@ -268,7 +268,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         // Сбрасываем счетчики при успешном запросе
         retryCount = 0;
         consecutiveErrors = 0;
-        pollInterval = 5000; // Возвращаем к 5 секунды
+        pollInterval = 10000; // Возвращаем к 10 секунды
         
         // Очищаем существующий интервал и устанавливаем новый
         if (intervalId) {
@@ -299,7 +299,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
             console.log('Resuming polling after server error...');
             consecutiveErrors = 0;
             retryCount = 0;
-            pollInterval = 10000; // Начинаем с 10 секунд после перерыва
+            pollInterval = 15000; // Начинаем с 15 секунд после перерыва для плавного возобновления
             intervalId = setInterval(pollStatus, pollInterval);
           }, 120000); // 2 минуты
           
@@ -322,11 +322,11 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         if (retryCount <= maxRetries) {
           // Увеличиваем интервал более плавно
           if (isNetworkError(err)) {
-            pollInterval = Math.min(pollInterval * 1.5, 30000); // Максимум 30 секунд
+            pollInterval = Math.min(pollInterval * 1.5, 60000); // Максимум 60 секунд вместо 30
           } else if (isServerError(err)) {
-            pollInterval = Math.min(pollInterval * 2, 60000); // Максимум 1 минута для ошибок сервера
+            pollInterval = Math.min(pollInterval * 2, 120000); // Максимум 2 минуты вместо 1
           } else {
-            pollInterval = Math.min(pollInterval * 1.2, 15000); // Максимум 15 секунд для других ошибок
+            pollInterval = Math.min(pollInterval * 1.2, 30000); // Максимум 30 секунд вместо 15
           }
           
           console.log(`Retrying in ${pollInterval}ms (attempt ${retryCount}/${maxRetries}, consecutive errors: ${consecutiveErrors})`);
