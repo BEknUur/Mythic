@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ book_title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      font-family: 'Playfair Display', serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .flip-book-container {
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      width: 100vw; 
+      height: 100vh;
+      perspective: 2000px;
+      background: none;
+    }
+    #book {
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+      border-radius: 18px;
+      background: none;
+    }
+    .page {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-radius: 18px;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+      margin: 0 2px;
+      min-width: 480px; 
+      min-height: 600px;
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+      align-items: center;
+      position: relative;
+      padding: 48px 36px;
+    }
+    .cover-title {
+      font-size: 2.8em;
+      color: #2c3e50;
+      font-weight: 700;
+      margin-bottom: 0.5em;
+      text-shadow: 0 2px 8px rgba(255, 255, 255, 0.8);
+    }
+    .cover-subtitle {
+      font-size: 1.2em;
+      color: #7f8c8d;
+      margin-bottom: 2em;
+      font-style: italic;
+    }
+    .book-ornament {
+      font-size: 2.5em;
+      color: #3498db;
+      margin-bottom: 0.5em;
+    }
+    .toc-title, .chapter-title {
+      color: #2c3e50;
+      font-weight: 700;
+      font-size: 2em;
+      margin-bottom: 0.5em;
+      text-align: center;
+    }
+    .chapter-body {
+      color: #34495e;
+      font-size: 1.1em;
+      margin-bottom: 1em;
+      text-align: left;
+      line-height: 1.6;
+    }
+    .page-number {
+      position: absolute;
+      bottom: 24px;
+      right: 36px;
+      color: #2c3e50;
+      font-size: 1.1em;
+      opacity: 0.7;
+    }
+    .footer-ornament {
+      position: absolute;
+      bottom: 24px;
+      left: 36px;
+      color: #3498db;
+      font-size: 1.2em;
+      opacity: 0.7;
+    }
+    img {
+      max-width: 90%;
+      max-height: 400px;
+      border-radius: 12px;
+      margin: 1em 0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="flip-book-container">
+    <div id="book">
+      <!-- Обложка -->
+      <div class="page">
+        <div class="book-ornament">📚</div>
+        <div class="cover-title">{{ book_title }}</div>
+        <div class="cover-subtitle">{{ book_subtitle }}</div>
+      </div>
+      
+      <!-- Оглавление -->
+      <div class="page">
+        <div class="toc-title">{{ toc_title }}</div>
+        <ul style="list-style:none; padding:0; color: #34495e;">
+          {% set text_pages = pages | selectattr('type', 'equalto', 'text') | list %}
+          {% for page in text_pages %}
+            <li style="margin-bottom:0.7em; font-size:1.1em;">
+              {{ page.title | striptags }}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      
+      <!-- Главы -->
+      {% for page in pages %}
+      <div class="page">
+        {% if page.type == 'text' %}
+          <div class="chapter-title">{{ page.title | striptags }}</div>
+          <div class="chapter-body">{{ page.text|safe }}</div>
+        {% elif page.type == 'image' %}
+          {% if page.image %}
+            <img src="{{ page.image }}" alt="Chapter Image" />
+          {% endif %}
+          {% if page.caption %}
+            <div style="color:#7f8c8d;font-style:italic;margin-top:0.5em;text-align:center;">
+              {{ page.caption }}
+            </div>
+          {% endif %}
+        {% endif %}
+        <div class="page-number">{{ loop.index + 2 }}</div>
+        <div class="footer-ornament">✨</div>
+      </div>
+      {% endfor %}
+      
+      <!-- Благодарности -->
+      <div class="page">
+        <div class="chapter-title">{{ gratitude_title }}</div>
+        <div class="chapter-body" style="text-align:center;">
+          Спасибо за то, что были частью этой истории!<br>
+          С теплыми пожеланиями, Mythic
+        </div>
+        <div class="page-number">{{ pages|length + 3 }}</div>
+        <div class="footer-ornament">📚</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- JavaScript для flipbook -->
+  <script src="https://unpkg.com/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script>
+    function initializeBook() {
+      const book = document.getElementById('book');
+      if (!book) {
+        console.error('Book element not found');
+        return;
+      }
+      
+      if (typeof StPageFlip === 'undefined') {
+        console.log('StPageFlip not loaded yet, retrying...');
+        setTimeout(initializeBook, 100);
+        return;
+      }
+      
+      try {
+        const pageFlip = new StPageFlip.PageFlip(book, {
+          width: 480,
+          height: 600,
+          showCover: true,
+          mobileScrollSupport: true,
+          flippingTime: 900,
+          usePortrait: true
+        });
+        
+        pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+        console.log('Flipbook initialized successfully');
+      } catch (error) {
+        console.error('Error initializing flipbook:', error);
+      }
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeBook);
+    } else {
+      initializeBook();
+    }
+  </script>
+</body>
+</html> 

@@ -12,6 +12,90 @@ from app.services.llm_client import async_client, settings
 # Подключаем шаблоны из папки app/templates
 env = Environment(loader=FileSystemLoader('app/templates'))
 
+def create_embedded_flipbook_template():
+    """
+    Создает встроенный шаблон flipbook как последний resort
+    """
+    try:
+        from jinja2 import Template
+        embedded_template = """<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ book_title }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #fff0f6 0%, #ffe0ec 100%);
+      font-family: 'Playfair Display', serif;
+      margin: 0; padding: 0; overflow: hidden;
+    }
+    .flip-book-container {
+      display: flex; justify-content: center; align-items: center;
+      width: 100vw; height: 100vh; perspective: 2000px;
+    }
+    #book { box-shadow: 0 8px 40px rgba(255, 0, 128, 0.08); border-radius: 18px; }
+    .page {
+      background: linear-gradient(135deg, #fff0f6 0%, #ffe0ec 100%);
+      border-radius: 18px; box-shadow: 0 2px 16px rgba(255, 0, 128, 0.07);
+      margin: 0 2px; min-width: 480px; min-height: 600px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      position: relative; padding: 48px 36px;
+    }
+    .cover-title { font-size: 2.8em; color: #e75480; font-weight: 700; margin-bottom: 0.5em; }
+    .cover-subtitle { font-size: 1.2em; color: #b06ab3; margin-bottom: 2em; font-style: italic; }
+    .chapter-title { color: #e75480; font-weight: 700; font-size: 2em; margin-bottom: 0.5em; text-align: center; }
+    .chapter-body { color: #7a3b69; font-size: 1.1em; margin-bottom: 1em; text-align: left; }
+    .page-number { position: absolute; bottom: 24px; right: 36px; color: #e75480; font-size: 1.1em; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="flip-book-container">
+    <div id="book">
+      <div class="page">
+        <div style="font-size: 2.5em; color: #ffb6c1; margin-bottom: 0.5em;">💖</div>
+        <div class="cover-title">{{ book_title }}</div>
+        <div class="cover-subtitle">{{ book_subtitle }}</div>
+      </div>
+      {% for page in pages %}
+      <div class="page">
+        {% if page.type == 'text' %}
+          <div class="chapter-title">{{ page.title | striptags }}</div>
+          <div class="chapter-body">{{ page.text|safe }}</div>
+        {% elif page.type == 'image' %}
+          {% if page.image %}<img src="{{ page.image }}" style="max-width:90%;border-radius:12px;margin:1em 0;" />{% endif %}
+          {% if page.caption %}<div style="color:#e75480;font-style:italic;margin-top:0.5em;">{{ page.caption }}</div>{% endif %}
+        {% endif %}
+        <div class="page-number">{{ loop.index + 1 }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <script src="https://unpkg.com/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script>
+    function initializeBook() {
+      const book = document.getElementById('book');
+      if (!book) return;
+      if (typeof StPageFlip === 'undefined') { setTimeout(initializeBook, 100); return; }
+      const pageFlip = new StPageFlip.PageFlip(book, {
+        width: 480, height: 600, showCover: true,
+        mobileScrollSupport: true, flippingTime: 900, usePortrait: true
+      });
+      pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeBook);
+    } else { initializeBook(); }
+  </script>
+</body>
+</html>"""
+        return Template(embedded_template)
+    except Exception as e:
+        print(f"❌ Ошибка создания встроенного шаблона: {e}")
+        return None
+
+
 def _get_profile_context(run_id: str) -> dict:
     """Загружает и парсит posts.json для получения контекста о профиле."""
     posts_path = Path('data') / run_id / 'posts.json'
@@ -175,15 +259,97 @@ async def generate_flipbook_data(run_id: str, image_paths: list[str]) -> dict:
     return {"pages": pages_content, "prologue": ""}
 
 
+def create_fallback_flipbook_data(run_id: str) -> dict:
+    """
+    Создает простые данные для flipbook на основе изображений, когда LLM недоступен
+    """
+    try:
+        print("📚 Создаю простую версию flipbook без LLM...")
+        
+        # Загружаем основные данные
+        run_dir = Path("data") / run_id
+        images_dir = run_dir / "images"
+        
+        # Получаем контекст профиля
+        profile_context = _get_profile_context(run_id)
+        username = profile_context.get("username", "Герой")
+        full_name = profile_context.get("full_name", username)
+        
+        # Собираем изображения
+        image_files = []
+        if images_dir.exists():
+            for img_file in sorted(images_dir.glob("*"))[:5]:  # Максимум 5 изображений
+                if img_file.suffix.lower() in ['.jpg', '.jpeg', '.png', '.webp']:
+                    # Кодируем изображения в base64
+                    try:
+                        with open(img_file, "rb") as image_file:
+                            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                        extension = img_file.suffix.lower().replace('.', '')
+                        if extension == 'jpg': extension = 'jpeg'
+                        image_base64 = f"data:image/{extension};base64,{encoded_string}"
+                        image_files.append({
+                            "name": img_file.name,
+                            "base64": image_base64
+                        })
+                    except Exception as e:
+                        print(f"❌ Ошибка кодирования {img_file.name}: {e}")
+        
+        if not image_files:
+            print("❌ Нет изображений для создания fallback flipbook")
+            return {}
+        
+        # Создаем простые страницы
+        pages = []
+        chapter_titles = [
+            "Знакомство с героем",
+            "Путь к мечте", 
+            "Моменты счастья",
+            "Новые горизонты",
+            "Продолжение истории"
+        ]
+        
+        for i, img_data in enumerate(image_files):
+            title = chapter_titles[i % len(chapter_titles)]
+            
+            # Страница с текстом
+            pages.append({
+                "title": f"## {title}",
+                "text": f"<p>Каждый момент в жизни {full_name} наполнен особым смыслом и красотой. Эта глава рассказывает о важных моментах и событиях, которые делают жизнь яркой и запоминающейся.</p>",
+                "image": None,
+                "caption": None,
+                "type": "text"
+            })
+            
+            # Страница с изображением
+            pages.append({
+                "title": title,
+                "text": None,
+                "image": img_data["base64"],
+                "caption": f"Особенный момент из жизни {full_name}",
+                "type": "image"
+            })
+        
+        print(f"✅ Создан простой flipbook с {len(pages)} страницами")
+        return {"pages": pages, "prologue": f"Добро пожаловать в историю {full_name}"}
+        
+    except Exception as e:
+        print(f"❌ Ошибка создания fallback flipbook: {e}")
+        return {}
+
+
 def build_flipbook_html(run_id: str, data: dict, style: str = 'romantic'):
     """
     Рендерит HTML-флипбук на основе готовых данных (пролог и страницы).
     Теперь поддерживает динамические шаблоны по стилю книги.
     Для каждой главы делаем две страницы: текст отдельно, фото отдельно (как было раньше).
     """
+    # Если нет данных от LLM - создаем fallback
     if not data or "pages" not in data:
-        print("️️⚠️ Нет данных для сборки HTML флипбука.")
-        return
+        print("️️⚠️ Нет данных от LLM для сборки HTML флипбука. Создаю fallback версию...")
+        data = create_fallback_flipbook_data(run_id)
+        if not data:
+            print("❌ Не удалось создать даже fallback версию flipbook")
+            return
 
     # Динамические заголовки по стилю
     if style == 'fantasy':
@@ -237,7 +403,22 @@ def build_flipbook_html(run_id: str, data: dict, style: str = 'romantic'):
             "type": "image"
         })
 
-    tpl = env.get_template(tpl_name)
+    # Пытаемся загрузить шаблон с fallback
+    try:
+        tpl = env.get_template(tpl_name)
+    except Exception as e:
+        print(f"⚠️ Не найден шаблон {tpl_name}, использую базовый: {e}")
+        tpl_name = 'flipbook_template.html'
+        try:
+            tpl = env.get_template(tpl_name)
+        except Exception as e2:
+            print(f"❌ Не найден даже базовый шаблон {tpl_name}: {e2}")
+            # Создаем минимальный встроенный шаблон
+            tpl = create_embedded_flipbook_template()
+            if not tpl:
+                print("❌ Не удалось создать даже встроенный шаблон")
+                return
+    
     html = tpl.render(
         run_id=run_id,
         prologue=data.get("prologue", ""),

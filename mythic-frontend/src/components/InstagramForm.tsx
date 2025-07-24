@@ -17,11 +17,13 @@ import {
   BookOpen,
   Camera,
   Palette,
-  Zap
+  Zap,
+  Lock,
+  Crown
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { StylePicker, STYLES } from './StylePicker';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth, useUser, SignInButton } from '@clerk/clerk-react';
 
 interface InstagramFormProps {
   onScrapeStart: (runId: string) => void;
@@ -36,10 +38,20 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
   const [style, setStyle] = useState<string>('romantic');
   const { toast } = useToast();
   const { getToken } = useAuth();
+  const { isSignedIn } = useUser();
 
   const validateInstagramUrl = (url: string): boolean => {
     const instagramUrlPattern = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/;
     return instagramUrlPattern.test(url);
+  };
+
+  // Функция для извлечения username из URL
+  const extractUsername = (url: string): string => {
+    const urlMatch = url.match(/^https?:\/\/(www\.)?instagram\.com\/([a-zA-Z0-9_.]+)\/?$/);
+    if (urlMatch) {
+      return urlMatch[2];
+    }
+    return 'unknown'; // Fallback если не удалось извлечь
   };
 
   const checkConnection = async () => {
@@ -88,10 +100,13 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
 
     try {
       const token = await getToken?.();
-      const result = await api.startScrape(url, style, token || undefined);
+      const extractedUsername = extractUsername(url);
+      const result = await api.startScrape(url, extractedUsername, style, token || undefined);
       toast({
         title: "🚀 Начинаем создание книги!",
-        description: `Ваш запрос принят, создаем "${STYLES.find(s=>s.value===style)?.label}" книгу`,
+        description: isSignedIn 
+          ? `Ваш запрос принят, создаем "${STYLES.find(s=>s.value===style)?.label}" книгу`
+          : `Книга создается! Вы сможете просмотреть первые 10 страниц бесплатно.`,
       });
       onScrapeStart(result.runId);
     } catch (error) {
@@ -108,9 +123,24 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
   };
 
   const features = [
-    { icon: Camera, title: "Анализ фото", description: "Собираем красивые фотографии из профиля" },
-    { icon: Palette, title: "ИИ генерация", description: "Создаем романтическую историю с помощью ИИ" },
-    { icon: BookOpen, title: "Книга HTML", description: "Красивая веб-книга для просмотра и скачивания" },
+    { 
+      icon: Camera, 
+      title: "Анализ фото", 
+      description: "Собираем красивые фотографии из профиля",
+      isPremium: false
+    },
+    { 
+      icon: Palette, 
+      title: "ИИ генерация", 
+      description: "Создаем романтическую историю с помощью ИИ",
+      isPremium: false
+    },
+    { 
+      icon: BookOpen, 
+      title: "Полная книга", 
+      description: "Доступ ко всем страницам + сохранение",
+      isPremium: true
+    },
   ];
 
   return (
@@ -136,6 +166,11 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Превратите Instagram профиль в прекрасную романтическую книгу с помощью искусственного интеллекта
             </p>
+            {!isSignedIn && (
+              <p className="text-lg text-blue-600 font-medium">
+                📖 Попробуйте бесплатно - просмотрите первые 10 страниц!
+              </p>
+            )}
           </div>
 
           <div className="flex justify-center gap-2">
@@ -159,16 +194,35 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
           {features.map((feature, index) => {
             const IconComponent = feature.icon;
             return (
-              <Card key={index} className="border-0 bg-white/60 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+              <Card key={index} className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] ${
+                feature.isPremium && !isSignedIn 
+                  ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200' 
+                  : 'bg-white/60 backdrop-blur-sm'
+              }`}>
                 <CardContent className="p-6 text-center space-y-4">
-                  <div className="flex justify-center">
-                    <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-3 rounded-full">
+                  <div className="flex justify-center relative">
+                    <div className={`p-3 rounded-full ${
+                      feature.isPremium && !isSignedIn
+                        ? 'bg-gradient-to-r from-amber-500 to-orange-600'
+                        : 'bg-gradient-to-r from-pink-500 to-purple-600'
+                    }`}>
                       <IconComponent className="h-6 w-6 text-white" />
                     </div>
+                    {feature.isPremium && !isSignedIn && (
+                      <Crown className="h-4 w-4 text-amber-600 absolute -top-1 -right-1" />
+                    )}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-800">{feature.title}</h3>
+                    <h3 className="font-semibold text-gray-800 flex items-center justify-center gap-2">
+                      {feature.title}
+                      {feature.isPremium && !isSignedIn && (
+                        <Lock className="h-4 w-4 text-amber-600" />
+                      )}
+                    </h3>
                     <p className="text-sm text-gray-600">{feature.description}</p>
+                    {feature.isPremium && !isSignedIn && (
+                      <p className="text-xs text-amber-700 font-medium mt-2">Требует авторизацию</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -183,7 +237,9 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
               Начните создание книги
             </CardTitle>
             <CardDescription className="text-lg">
-              Введите ссылку на Instagram профиль для создания романтической книги
+              {isSignedIn 
+                ? "Введите ссылку на Instagram профиль для создания полной романтической книги"
+                : "Введите ссылку на Instagram профиль и попробуйте бесплатно первые 10 страниц"}
             </CardDescription>
           </CardHeader>
           
@@ -216,6 +272,29 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
             </div>
 
             <Separator />
+
+            {/* Preview Mode Banner for Non-Authenticated Users */}
+            {!isSignedIn && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <Lock className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-blue-900">Режим предварительного просмотра</h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Вы можете создать книгу и просмотреть первые 10 страниц бесплатно. 
+                      Для полного доступа ко всем страницам и возможности сохранения требуется авторизация.
+                    </p>
+                    <div className="mt-3">
+                      <SignInButton mode="modal">
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                          Войти для полного доступа
+                        </Button>
+                      </SignInButton>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -270,7 +349,7 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
                 ) : (
                   <>
                     <Heart className="h-5 w-5 mr-2" />
-                    Создать романтическую книгу
+                    {isSignedIn ? 'Создать романтическую книгу' : 'Попробовать бесплатно (10 страниц)'}
                   </>
                 )}
               </Button>
@@ -284,6 +363,9 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
                 <li>• Собираем красивые фотографии и информацию</li>
                 <li>• ИИ создает романтическую историю на основе контента</li>
                 <li>• Генерируем красивую HTML книгу для просмотра</li>
+                {!isSignedIn && (
+                  <li className="text-blue-700 font-medium">• 📖 Без авторизации: доступ к первым 10 страницам</li>
+                )}
               </ul>
             </div>
           </CardContent>

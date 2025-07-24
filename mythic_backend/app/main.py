@@ -112,12 +112,24 @@ def health_check():
 @app.get("/start-scrape")
 async def start_scrape(
     url: AnyUrl,
+    username: str,  # Добавляем обязательный параметр username
     style: str = 'romantic',
-    current_user: dict = Depends(get_current_user),
+    request: Request = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """Начать скрапинг Instagram профиля - только для авторизованных пользователей"""
-    clean_url = str(url).rstrip("/")        
+    """Начать скрапинг Instagram профиля - теперь без обязательной авторизации, достаточно username"""
+    clean_url = str(url).rstrip("/")
+    
+    # Проверяем авторизацию опционально
+    current_user = get_user_from_request(request) if request else None
+    
+    # Если пользователь авторизован - используем его ID, иначе используем username как временный ID
+    if current_user:
+        user_identifier = current_user.get("sub")
+        is_authenticated = True
+    else:
+        user_identifier = f"temp_user_{username.lower()}"  # Префикс для временных пользователей
+        is_authenticated = False
 
     run_input = {
         "directUrls":     [clean_url],
@@ -139,20 +151,25 @@ async def start_scrape(
 
     run = await run_actor(run_input, webhooks=[webhook])
     run_id = run["id"]
-    clerk_user_id = current_user.get("sub")
     
-    # Создаем сессию обработки в БД
-    await UserService.create_processing_session(
-        db=db,
-        run_id=run_id,
-        clerk_user_id=clerk_user_id,
-        instagram_url=clean_url
-    )
+    # Создаем сессию обработки в БД только для авторизованных пользователей
+    if is_authenticated:
+        await UserService.create_processing_session(
+            db=db,
+            run_id=run_id,
+            clerk_user_id=user_identifier,
+            instagram_url=clean_url
+        )
     
-    # Сохраняем информацию о пользователе для этого run_id (для совместимости)
+    # Сохраняем информацию о пользователе для этого run_id
     run_dir = Path("data") / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
-    user_meta = {"user_id": clerk_user_id, "created_at": datetime.datetime.now().isoformat()}
+    user_meta = {
+        "user_id": user_identifier,
+        "username": username,
+        "is_authenticated": is_authenticated,
+        "created_at": datetime.datetime.now().isoformat()
+    }
     (run_dir / "user_meta.json").write_text(json.dumps(user_meta, ensure_ascii=False), encoding="utf-8")
     
     # Сохраняем выбранный стиль (простым текстовым файлом)
@@ -161,7 +178,7 @@ async def start_scrape(
     except Exception as e:
         print(f"❌ Не удалось сохранить стиль: {e}")
     
-    log.info("Actor started runId=%s for user=%s", run_id, clerk_user_id)
+    log.info("Actor started runId=%s for user=%s", run_id, user_identifier)
     return {"runId": run_id, "message": "Начинаю исследовать вашу личность... Это займет несколько минут"}
 
 
@@ -199,8 +216,11 @@ async def apify_webhook(request: Request, background: BackgroundTasks):
 
 
 @app.get("/status/{run_id}")
-def status(run_id: str, current_user: dict = Depends(get_current_user)):
-    """Проверить статус создания книги - только для авторизованных пользователей"""
+def status(run_id: str, request: Request):
+    """Проверить статус создания книги - доступно для всех, но с проверкой прав доступа"""
+    
+    # Получаем пользователя опционально
+    current_user = get_user_from_request(request)
     
     # Проверяем кэш
     cached_status = get_cached_status(run_id)
@@ -214,6 +234,39 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
     if not run_dir.exists():
         raise HTTPException(404, "Run not found")
     
+    # Проверяем права доступа к этой книге
+    user_meta_file = run_dir / "user_meta.json"
+    has_access = False
+    
+    if user_meta_file.exists():
+        try:
+            user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
+            stored_user_id = user_meta.get("user_id")
+            is_authenticated = user_meta.get("is_authenticated", False)
+            
+            if current_user:
+                current_user_id = current_user.get("sub")
+                # Пользователь имеет доступ если это его книга
+                if stored_user_id == current_user_id:
+                    has_access = True
+                # Или если у него есть права авторизованного пользователя
+                elif current_user_id and current_user_id.startswith("user_"):
+                    has_access = True
+            else:
+                # Для неавторизованных пользователей разрешаем просмотр статуса их книг
+                # (они могут получить доступ, зная run_id)
+                has_access = True
+        except Exception as e:
+            log.warning(f"Error reading user meta for run {run_id}: {e}")
+            # В случае ошибки разрешаем доступ (обратная совместимость)
+            has_access = True
+    else:
+        # Если нет метаданных пользователя - разрешаем доступ (старые книги)
+        has_access = True
+    
+    if not has_access:
+        raise HTTPException(403, "Доступ к этой книге запрещен")
+    
     # Кэшируем результаты проверки файлов
     posts_json = run_dir / "posts.json"
     images_dir = run_dir / "images"
@@ -222,7 +275,7 @@ def status(run_id: str, current_user: dict = Depends(get_current_user)):
     style_file = run_dir / "style.txt"
     format_file = run_dir / "format.txt"
     
-    log.info(f"Status check for {run_id} by user {current_user.get('sub')}")
+    log.info(f"Status check for {run_id} by user {current_user.get('sub') if current_user else 'anonymous'}")
     
     # Быстрые проверки без лишних операций
     data_collected = posts_json.exists()
@@ -379,20 +432,109 @@ def download_file(run_id: str, filename: str, request: Request):
         filename=filename
     )
 
+# Функция для ограничения книги первыми страницами
+def limit_book_pages(html_content: str, max_pages: int = 10) -> str:
+    """Ограничивает HTML книгу первыми max_pages страницами"""
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # Находим все страницы книги
+        book_pages = soup.find_all('div', class_='book-page')
+        
+        if len(book_pages) <= max_pages:
+            return html_content  # Если страниц меньше лимита, возвращаем как есть
+        
+        # Оставляем только первые max_pages страниц
+        for i, page in enumerate(book_pages):
+            if i >= max_pages:
+                page.decompose()  # Удаляем страницу из DOM
+        
+        # Создаем страницу с сообщением о необходимости авторизации
+        auth_message_html = """
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; text-align: center; font-family: 'Playfair Display', serif; background-color: #fff; color: #333;">
+            <h2 style="font-size: 2em; margin-bottom: 1em; color: #333;">📚 Для продолжения чтения</h2>
+            <p style="font-size: 1.2em; margin-bottom: 1.5em; color: #666; max-width: 400px; line-height: 1.6;">
+                Это только первые 10 страниц вашей книги. Чтобы прочитать всю историю, войдите в систему или зарегистрируйтесь.
+            </p>
+            <a href="/" style="background-color: #333; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-size: 1.1em; margin-top: 1em;">
+                Войти в систему
+            </a>
+        </div>
+        """
+        
+        auth_message_page = soup.new_tag('div')
+        auth_message_page['class'] = 'book-page auth-required-page'
+        auth_message_page.append(BeautifulSoup(auth_message_html, 'html.parser'))
+        
+        # Находим body и добавляем страницу авторизации
+        body = soup.find('body')
+        if body:
+            body.append(auth_message_page)
+        
+        return str(soup)
+        
+    except Exception as e:
+        log.error(f"Error limiting book pages: {e}")
+        return html_content  # В случае ошибки возвращаем оригинал
 
 @app.get("/view/{run_id}/book.html")
 def view_book_html(run_id: str, request: Request):
-    """Просмотр HTML книги — теперь без авторизации"""
-    # --- ОТКЛЮЧЕНО: current_user = get_user_from_request(request)
-    # if not current_user:
-    #     raise HTTPException(401, "Необходима авторизация для просмотра книги")
+    """Просмотр HTML книги — с ограничением для неавторизованных пользователей только для классических книг"""
+    current_user = get_user_from_request(request)
+    
     run_dir = Path("data") / run_id
     html_file = run_dir / "book.html"
+    user_meta_file = run_dir / "user_meta.json"
+    format_file = run_dir / "format.txt"
+    
     if not html_file.exists():
         raise HTTPException(404, "Книга не найдена")
+    
     html_content = html_file.read_text(encoding="utf-8")
-    return HTMLResponse(content=html_content)
-
+    
+    # Определяем формат книги
+    book_format = "classic"  # По умолчанию классический формат
+    if format_file.exists():
+        try:
+            book_format = format_file.read_text(encoding="utf-8").strip()
+        except Exception:
+            pass
+    
+    # Проверяем права доступа
+    is_authorized = False
+    
+    if current_user:
+        # Если пользователь авторизован, проверяем права доступа
+        try:
+            if user_meta_file.exists():
+                user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
+                stored_user_id = user_meta.get("user_id")
+                current_user_id = current_user.get("sub")
+                
+                # Пользователь имеет доступ если это его книга
+                if stored_user_id == current_user_id:
+                    is_authorized = True
+                # Или если у него есть права авторизованного пользователя (может смотреть все книги)
+                elif current_user_id and current_user_id.startswith("user_"):
+                    is_authorized = True
+        except Exception as e:
+            log.warning(f"Error checking user access: {e}")
+    
+    # Применяем ограничения только для классических книг
+    # Flipbook всегда показывается полностью
+    if book_format == "flipbook":
+        log.info(f"Full flipbook view for run {run_id} - no restrictions applied")
+        return HTMLResponse(html_content)
+    
+    # Для классических книг - проверяем авторизацию
+    if not is_authorized:
+        html_content = limit_book_pages(html_content, max_pages=10)
+        log.info(f"Classic book view limited to 10 pages for run {run_id}")
+    else:
+        log.info(f"Full classic book view for run {run_id} by user {current_user.get('sub') if current_user else 'unknown'}")
+    
+    return HTMLResponse(html_content)
 
 @app.post("/generate-pdf/{run_id}")
 async def generate_pdf(run_id: str, current_user: dict = Depends(get_current_user)):
@@ -1570,8 +1712,11 @@ def status_page(runId: str):
     return HTMLResponse(content=html_content)
 
 @app.post("/create-book")
-async def create_book(request: Request, background: BackgroundTasks, current_user: dict = Depends(get_current_user)):
-    """(DEPRECATED) Создает книгу в фоновом режиме."""
+async def create_book(request: Request, background: BackgroundTasks):
+    """Создает книгу в фоновом режиме - теперь доступно и без авторизации"""
+    # Получаем пользователя опционально
+    current_user = get_user_from_request(request)
+    
     try:
         payload = await request.json()
     except Exception as e:
@@ -1588,13 +1733,65 @@ async def create_book(request: Request, background: BackgroundTasks, current_use
     if not run_id:
         raise HTTPException(400, "runId is required")
 
+    # Проверяем метаданные пользователя из файла
+    run_dir = Path("data") / run_id
+    user_meta_file = run_dir / "user_meta.json"
+    
+    if not user_meta_file.exists():
+        raise HTTPException(404, "Книга не найдена или недоступна")
+    
+    try:
+        user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
+        stored_user_id = user_meta.get("user_id")
+        is_authenticated = user_meta.get("is_authenticated", False)
+    except Exception:
+        raise HTTPException(500, "Ошибка чтения метаданных книги")
+
     # Сохраняем формат книги
     (Path("data") / run_id / "format.txt").write_text("classic", encoding="utf-8")
     
     # Запускаем полную сборку в фоне
-    background.add_task(run_full_build, run_id, "classic", current_user)
+    # Передаем пользователя или None для неавторизованных
+    user_for_build = current_user if current_user else {"sub": stored_user_id}
+    background.add_task(run_full_build, run_id, "classic", user_for_build)
     
     return {"status": "ok", "runId": run_id, "message": "Начинаю создавать вашу книгу..."}
+
+@app.post("/create-flipbook")
+async def create_flipbook(request: Request, background: BackgroundTasks):
+    """Создает flipbook в фоновом режиме - теперь доступно и без авторизации"""
+    # Получаем пользователя опционально
+    current_user = get_user_from_request(request)
+    
+    payload = await request.json()
+    run_id = payload.get("runId")
+
+    if not run_id:
+        raise HTTPException(400, "runId is required")
+    
+    # Проверяем метаданные пользователя из файла
+    run_dir = Path("data") / run_id
+    user_meta_file = run_dir / "user_meta.json"
+    
+    if not user_meta_file.exists():
+        raise HTTPException(404, "Книга не найдена или недоступна")
+    
+    try:
+        user_meta = json.loads(user_meta_file.read_text(encoding="utf-8"))
+        stored_user_id = user_meta.get("user_id")
+        is_authenticated = user_meta.get("is_authenticated", False)
+    except Exception:
+        raise HTTPException(500, "Ошибка чтения метаданных книги")
+        
+    # Сохраняем формат книги
+    (Path("data") / run_id / "format.txt").write_text("flipbook", encoding="utf-8")
+
+    # Запускаем полную сборку в фоне
+    # Передаем пользователя или None для неавторизованных
+    user_for_build = current_user if current_user else {"sub": stored_user_id}
+    background.add_task(run_full_build, run_id, "flipbook", user_for_build)
+
+    return {"status": "ok", "runId": run_id, "message": "Начинаю создавать ваш флипбук..."}
 
 async def run_full_build(run_id: str, book_format: str, user: dict):
     """
@@ -1637,23 +1834,6 @@ async def wait_for_images(images_dir: Path):
     while not images_dir.exists() or not any(images_dir.iterdir()):
         await asyncio.sleep(5)
     print(f"✅ Изображения в {images_dir} обнаружены.")
-
-@app.post("/create-flipbook")
-async def create_flipbook(request: Request, background: BackgroundTasks, current_user: dict = Depends(get_current_user)):
-    """Создает flipbook в фоновом режиме."""
-    payload = await request.json()
-    run_id = payload.get("runId")
-
-    if not run_id:
-        raise HTTPException(400, "runId is required")
-        
-    # Сохраняем формат книги
-    (Path("data") / run_id / "format.txt").write_text("flipbook", encoding="utf-8")
-
-    # Запускаем полную сборку в фоне
-    background.add_task(run_full_build, run_id, "flipbook", current_user)
-
-    return {"status": "ok", "runId": run_id, "message": "Начинаю создавать ваш флипбук..."}
 
 # Модели для работы с книгами пользователя
 class SaveBookRequest(BaseModel):

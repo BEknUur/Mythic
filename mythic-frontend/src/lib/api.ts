@@ -180,11 +180,13 @@ export const api = {
   /* ---------- instagram → apify ---------- */
   async startScrape(
     instagramUrl: string,
+    username: string,  // Добавляем обязательный параметр username
     style: string = 'romantic',
     token?: string,
   ): Promise<StartScrapeResponse> {
     const url = new URL(`${BASE_URL}/start-scrape`);
     url.searchParams.set('url', instagramUrl);
+    url.searchParams.set('username', username);  // Передаем username как параметр запроса
     url.searchParams.set('style', style);
     const res = await fetchWithRetry(url.toString(), {
       headers: headersWithAuth(token),

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Loader2, RefreshCw, AlertTriangle, Heart, Book, Camera, User, Lock, BookOpen, Newspaper, X, ArrowLeft } from 'lucide-react';
+import { CheckCircle, Loader2, RefreshCw, AlertTriangle, Heart, Book, Camera, User, Lock, BookOpen, Newspaper, X, ArrowLeft, Crown } from 'lucide-react';
 import { useUser, SignInButton, UserButton, useAuth } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
 import { BookReadyDialog } from './BookReadyDialog';
@@ -85,6 +85,7 @@ const TypewriterText: React.FC<{ text: string; speed?: number; className?: strin
     // Очищаем предыдущий таймаут
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
   }, [text]);
 
@@ -99,6 +100,7 @@ const TypewriterText: React.FC<{ text: string; speed?: number; className?: strin
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
     };
   }, [currentIndex, text, speed]);
@@ -136,59 +138,30 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
     return 'analysis';
   }, [status, isCreatingBook]);
 
+  // useEffect для обновления сообщения при изменении статуса
   useEffect(() => {
-    const stageKey = getCurrentStageKey();
+    // Локальная версия getCurrentStageKey
+    const getStageKey = () => {
+      if (!status) return 'initial';
+      if (status.stages.book_generated) return 'ready';
+      if (isCreatingBook) return 'book';
+      if (status.stages.images_downloaded) return 'book';
+      if (status.stages.data_collected) return 'photos';
+      return 'analysis';
+    };
+    
+    const stageKey = getStageKey();
     const messages = stageMessages[stageKey];
     
-    // Сразу установить первое сообщение для нового этапа
-    const currentApiMessage = status?.message;
-    if (currentApiMessage) {
-        // Если с бэкенда пришло сообщение, используем его, чтобы показать первоначальный статус
-        setCurrentMessage(currentApiMessage);
+    // Устанавливаем сообщение при изменении статуса
+    if (status?.message) {
+        setCurrentMessage(status.message);
     } else {
-        // Иначе — первое из списка для этапа
-        setCurrentMessage(messages[0]);
+        // Берем случайное сообщение из списка для разнообразия
+        const randomIndex = Math.floor(Math.random() * messages.length);
+        setCurrentMessage(messages[randomIndex]);
     }
-
-    const messageInterval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * messages.length);
-      setCurrentMessage(messages[randomIndex]);
-    }, 3000); // Меняем сообщение каждые 3 секунды
-      
-    return () => clearInterval(messageInterval);
-  }, [status, isCreatingBook, getCurrentStageKey]);
-
-
-  // Если пользователь не авторизован, показываем предупреждение
-  if (!isSignedIn) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
-          <Card className="bg-white border border-red-200">
-            <CardContent className="text-center py-12">
-              <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                <Lock className="h-8 w-8 text-red-600" />
-              </div>
-              <h2 className="text-2xl font-semibold text-black mb-4">Доступ ограничен</h2>
-              <p className="text-gray-600 mb-6">
-                Для просмотра процесса создания и результата книги необходимо войти в систему
-              </p>
-              <div className="flex gap-3 justify-center">
-                <SignInButton mode="modal">
-                  <Button>
-                    Войти в систему
-                  </Button>
-                </SignInButton>
-                <Button variant="outline" onClick={onReset}>
-                  Вернуться назад
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  }, [status, isCreatingBook]);
 
   const handleStatusUpdate = (newStatus: StatusResponse) => {
     setStatus(newStatus);
@@ -263,7 +236,10 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
       try {
         const token = await getToken();
         const currentStatus = await api.getStatus(runId, token || undefined);
+        
+        // Обновляем статус и обрабатываем изменения
         handleStatusUpdate(currentStatus);
+        setStatus(currentStatus);
         
         // Сбрасываем счетчики при успешном запросе
         retryCount = 0;
@@ -277,9 +253,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         intervalId = setInterval(pollStatus, pollInterval);
         
         // Убираем ошибку если была
-        if (error) {
-          setError(null);
-        }
+        setError(null);
         
       } catch (err) {
         console.error("Polling error:", err);
@@ -370,7 +344,7 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
         clearInterval(intervalId);
       }
     };
-  }, [runId, onComplete, status, showFormatDialog, getToken, error]);
+  }, [runId, onComplete, showFormatDialog, getToken]); // Убрал status и error из зависимостей
 
   const progressValue = status ? (Object.values(status.stages).filter(Boolean).length / Object.keys(status.stages).length) * 100 : 0;
   
@@ -390,8 +364,33 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950 p-4">
         <div className="w-full max-w-2xl">
-        <header className="flex justify-end mb-8">
-          <UserButton afterSignOutUrl="/" />
+        <header className="flex justify-between items-center mb-8">
+          {/* Preview Mode Banner for Non-Authenticated Users */}
+          {!isSignedIn ? (
+            <div className="flex-1 mr-4">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center space-x-2">
+                  <Lock className="h-4 w-4 text-blue-600" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900">Режим предпросмотра</p>
+                    <p className="text-xs text-blue-700">
+                      Вы увидите первые 10 страниц. Для полного доступа требуется авторизация.
+                    </p>
+                  </div>
+                  <SignInButton mode="modal">
+                    <Button size="sm" variant="outline" className="text-blue-600 border-blue-300 hover:bg-blue-50 text-xs px-2 py-1">
+                      <Crown className="h-3 w-3 mr-1" />
+                      Войти
+                    </Button>
+                  </SignInButton>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1"></div>
+          )}
+          
+          {isSignedIn && <UserButton afterSignOutUrl="/" />}
         </header>
 
         <Card className="w-full bg-white dark:bg-gray-900 shadow-xl rounded-2xl border-gray-100 dark:border-gray-800">
@@ -401,7 +400,9 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               </div>
             <CardTitle className="text-3xl font-bold text-gray-900 dark:text-gray-50">Создаем {bookStyle}</CardTitle>
             <CardDescription className="text-lg text-gray-500 dark:text-gray-400 mt-2">
-              Наш искусственный интеллект анализирует ваш Instagram и создает {bookStyle}-хронику о великом герое.
+              {isSignedIn 
+                ? `Наш искусственный интеллект анализирует ваш Instagram и создает ${bookStyle}-хронику о великом герое.`
+                : `Создаем вашу книгу! Вы сможете просмотреть первые 10 страниц бесплатно.`}
               </CardDescription>
             </CardHeader>
           <CardContent className="px-8 pb-8">
@@ -471,20 +472,36 @@ export function ProgressTracker({ runId, onComplete, onReset }: ProgressTrackerP
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <button
                   onClick={() => createBookWithFormat('classic')}
-                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300 md:col-span-2"
+                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300"
                 >
                   <Book className="w-8 h-8 text-purple-600 mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Классическая книга</h3>
-                  <p className="text-gray-500 dark:text-gray-400">Традиционный формат с главами, красивым дизайном и плавным повествованием.</p>
+                  <p className="text-gray-500 dark:text-gray-400 mb-2">Традиционный формат с главами, красивым дизайном и плавным повествованием.</p>
+                  {!isSignedIn && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
+                      <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center">
+                        <Lock className="w-3 h-3 mr-1" />
+                        Без авторизации: первые 10 страниц
+                      </p>
+                    </div>
+                  )}
                 </button>
 
                 <button
                   onClick={() => createBookWithFormat('flipbook')}
-                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300 md:col-span-2"
+                  className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-left hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300"
                 >
                   <Book className="w-8 h-8 text-purple-600 mb-4 rotate-90" />
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Flipbook</h3>
-                  <p className="text-gray-500 dark:text-gray-400">Интерактивный формат с эффектом перелистывания страниц и возможностью скачать PDF.</p>
+                  <p className="text-gray-500 dark:text-gray-400 mb-2">Интерактивный формат с эффектом перелистывания страниц и возможностью скачать PDF.</p>
+                  {!isSignedIn && (
+                    <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-200 dark:border-green-800">
+                      <p className="text-xs text-green-700 dark:text-green-300 flex items-center">
+                        <BookOpen className="w-3 h-3 mr-1" />
+                        Доступно полностью для всех!
+                      </p>
+                    </div>
+                  )}
                 </button>
               </div>
               <div className="mt-8">

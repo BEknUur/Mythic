@@ -1,35 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import {
-  ClipboardCopy,
-  ExternalLink,
-  Users,
-  FileText,
-  Check,
-  Download,
-  Pencil,
+import { 
+  BookOpen, 
+  Download, 
+  Copy, 
+  CheckCircle, 
+  Edit3, 
+  X, 
+  ArrowLeft,
+  Lock,
+  Crown
 } from 'lucide-react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth, useUser, SignInButton } from '@clerk/clerk-react';
 import { api, type StatusResponse } from '@/lib/api';
 import { BookReader } from './BookReader';
-import { FlipBookReader } from './FlipBookReader';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-
 
 interface BookReadyDialogProps {
   isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  runId: string | null;
-  status: StatusResponse | null;
+  onOpenChange: (open: boolean) => void;
+  runId?: string;
+  status?: StatusResponse;
 }
 
 export function BookReadyDialog({
@@ -39,77 +40,34 @@ export function BookReadyDialog({
   status,
 }: BookReadyDialogProps) {
   const { toast } = useToast();
-  const [isCopied, setIsCopied] = useState(false);
-  const [bookContent, setBookContent] = useState<string>('');
-  const [isLoadingContent, setIsLoadingContent] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isFlipView, setIsFlipView] = useState(status?.format === 'flipbook');
-
-  // Обновляем режим просмотра при изменении статуса
-  useEffect(() => {
-    if (status?.format === 'flipbook') {
-      setIsFlipView(true);
-    }
-  }, [status]);
   const { getToken } = useAuth();
+  const { isSignedIn } = useUser();
+  const [isCopied, setIsCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [customTitle, setCustomTitle] = useState('');
 
-  const profile = status?.profile;
-  const hasHtmlFile = status?.stages.book_generated || status?.files?.html;
-
-  const loadBookContentForPreview = async () => {
-    if (!hasHtmlFile || !runId) return;
-    setIsLoadingContent(true);
-    try {
-        const token = await getToken();
-        const rawHtml = await api.getBookContent(runId, token || undefined);
-        const bodyMatch = rawHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-        let bodyContent = bodyMatch ? bodyMatch[1] : rawHtml;
-        bodyContent = bodyContent.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-        setBookContent(bodyContent);
-    } catch (error) {
-        console.error("Ошибка загрузки контента:", error);
-        toast({ title: "Ошибка", description: "Не удалось загрузить контент книги.", variant: "destructive" });
-    } finally {
-        setIsLoadingContent(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen && hasHtmlFile) {
-        loadBookContentForPreview();
-    }
-  }, [isOpen, hasHtmlFile]);
+  const isFlipbook = status?.format === 'flipbook';
+  const hasLimitations = !isSignedIn && !isFlipbook; // Ограничения только для неавторизованных в классических книгах
 
   const openBookInNewTab = async () => {
     if (!runId) return;
 
-    // Если flipbook — открываем прямую ссылку
-    if (status?.format === 'flipbook') {
-      window.open(`/view/${runId}/book.html`, '_blank');
-      return;
-    }
-
-    // Для обычной книги — старый способ
-    try {
-      const token = await getToken();
-      const content = await api.getBookContent(runId, token || undefined);
-      const newWindow = window.open('', '_blank');
-      if (newWindow) {
-        newWindow.document.write(content);
-        newWindow.document.close();
-      }
-    } catch (error) {
-      console.error('Error opening book:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось открыть книгу',
-        variant: 'destructive',
-      });
-    }
+    // Для flipbook И обычной книги - используем SPA роут
+    // Это обеспечит правильное отображение через React компоненты
+    window.open(`/reader/${runId}`, '_blank');
   };
 
   const downloadBook = async () => {
     if (!runId) return;
+    
+    if (!isSignedIn) {
+      toast({
+        title: 'Требуется авторизация',
+        description: 'Для скачивания книги необходимо войти в систему',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     try {
       const token = await getToken();
@@ -124,6 +82,36 @@ export function BookReadyDialog({
     }
   };
 
+  const saveToLibrary = async () => {
+    if (!runId) return;
+    
+    if (!isSignedIn) {
+      toast({
+        title: 'Требуется авторизация',
+        description: 'Для сохранения книги необходимо войти в систему',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      await api.saveBookToLibrary(runId, customTitle || undefined, token || undefined);
+      toast({
+        title: 'Успешно!',
+        description: 'Книга сохранена в вашей библиотеке',
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving book:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось сохранить книгу',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const shareableUrl = `${window.location.origin}/reader/${runId}`;
 
   const copyToClipboard = () => {
@@ -131,7 +119,9 @@ export function BookReadyDialog({
     setIsCopied(true);
     toast({
       title: 'Ссылка скопирована!',
-      description: 'Внимание: для просмотра потребуется авторизация.',
+      description: isSignedIn 
+        ? 'Поделитесь книгой с друзьями!' 
+        : 'Внимание: для полного просмотра потребуется авторизация.',
     });
     setTimeout(() => setIsCopied(false), 2000);
   };
@@ -141,162 +131,152 @@ export function BookReadyDialog({
     onOpenChange(true);
   };
 
-  if (isFlipView) {
+  if (isEditing && runId) {
     return (
-      <Dialog open={true} onOpenChange={(open) => !open && setIsFlipView(false)}>
-        <DialogContent className="max-w-full w-full h-full max-h-full p-0 gap-0">
-          <VisuallyHidden>
-            <DialogTitle>Flipbook View</DialogTitle>
-            <DialogDescription>Interactive flipbook view of the generated book.</DialogDescription>
-          </VisuallyHidden>
-          <FlipBookReader runId={runId} onBack={() => setIsFlipView(false)} />
-        </DialogContent>
-      </Dialog>
+      <div className="fixed inset-0 z-50">
+        <BookReader runId={runId} onBack={handleBackFromReader} />
+      </div>
     );
   }
-
-  if (isEditing) {
-    return (
-      <Dialog open={true} onOpenChange={(open) => !open && setIsEditing(false)}>
-        <DialogContent className="max-w-full w-full h-full max-h-full p-0 gap-0">
-          <VisuallyHidden>
-            <DialogTitle>Book Reader View</DialogTitle>
-            <DialogDescription>Reading and editing view of the generated book.</DialogDescription>
-          </VisuallyHidden>
-          <BookReader runId={runId} onBack={handleBackFromReader} />
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  if (!runId || !status) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] bg-white border-none rounded-xl shadow-2xl pb-8 overflow-y-auto">
-        <DialogHeader className="text-center pt-4">
-          <DialogTitle className="text-3xl font-normal text-black">
-            {status?.style === 'fantasy' ? 'Эпическая книга готова!' :
-             status?.style === 'humor' ? 'Веселая книга готова!' :
-             'Книга готова!'}
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-green-600" />
+            Ваша книга готова!
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            {status?.style === 'fantasy' ? 'Ваша персональная фэнтези-хроника создана и готова к прочтению.' :
-             status?.style === 'humor' ? 'Ваша юмористическая биография создана и готова поднять настроение.' :
-             'Ваша персональная история создана и готова к просмотру.'}
+          <DialogDescription>
+            {isFlipbook 
+              ? "Интерактивная книга создана! Доступна для просмотра всем пользователям."
+              : isSignedIn 
+                ? "Романтическая книга создана с любовью. Выберите действие:"
+                : "Книга готова! Вы можете просмотреть первые 10 страниц бесплатно."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <div className="relative border bg-white rounded-lg overflow-hidden h-[50vh]">
-            {status?.format === 'flipbook' ? (
-              <iframe
-                src={`/view/${runId}/book.html`}
-                width="100%"
-                height="100%"
-                style={{ border: 'none', minHeight: '100%', minWidth: '100%' }}
-                title="Flipbook Preview"
-                allowFullScreen
-              />
-            ) : isLoadingContent ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center space-y-2">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mx-auto"></div>
-                  <p className="text-sm text-muted-foreground">Загружаем вашу книгу...</p>
+        {/* Preview Mode Warning for Non-Authenticated Users - только для классических книг */}
+        {hasLimitations && (
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-start space-x-3">
+                <Lock className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-blue-900">Режим предварительного просмотра</h4>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Вы можете просмотреть первые 10 страниц. Для полного доступа ко всем страницам, 
+                    скачивания и сохранения книги войдите в систему.
+                  </p>
+                  <div className="mt-3">
+                    <SignInButton mode="modal">
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Crown className="h-4 w-4 mr-2" />
+                        Войти для полного доступа
+                      </Button>
+                    </SignInButton>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <iframe
-                src={`/view/${runId}/book.html`}
-                width="100%"
-                height="100%"
-                className="rounded-xl border"
-                style={{ minHeight: '400px', minWidth: '100%', background: 'white' }}
-                title="Book Preview"
-              />
-            )}
-          </div>
+            </CardContent>
+          </Card>
+        )}
 
-          <div className="space-y-4">
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <div className="flex items-center gap-2 text-green-800">
-                <Check className="h-5 w-5" />
-                <div>
-                  <p className="font-semibold">Книга автоматически сохранена!</p>
-                  <p className="text-sm text-green-700">
-                    Ваша книга уже добавлена в раздел "Мои книги" и доступна в любое время
+        {/* Success message for Flipbook */}
+        {isFlipbook && !isSignedIn && (
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+            <CardContent className="p-4">
+              <div className="flex items-start space-x-3">
+                <BookOpen className="h-5 w-5 text-green-600 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-green-900">Flipbook готов!</h4>
+                  <p className="text-sm text-green-700 mt-1">
+                    Ваша интерактивная книга доступна полностью без ограничений. 
+                    Для дополнительных возможностей (сохранение, скачивание PDF) войдите в систему.
                   </p>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Открыть в новой вкладке — теперь ведет на SPA роут */}
-              <a
-                href={`/reader/${runId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center h-20 px-6 w-full rounded-lg bg-black text-white font-semibold text-lg hover:bg-neutral-800 transition-colors justify-start"
-                style={{ textDecoration: 'none' }}
+        <div className="flex flex-col gap-3 py-4">
+          <Button
+            onClick={openBookInNewTab}
+            className="h-12 text-base bg-blue-600 hover:bg-blue-700 text-white"
+            size="lg"
+          >
+            <BookOpen className="mr-2 h-5 w-5" />
+            {isFlipbook 
+              ? 'Открыть Flipbook' 
+              : hasLimitations 
+                ? 'Просмотреть (10 страниц)' 
+                : 'Открыть книгу'}
+          </Button>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              onClick={downloadBook}
+              variant="outline"
+              className="h-10 text-sm"
+              disabled={!isSignedIn}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {isSignedIn ? 'Скачать PDF' : 'Требует вход'}
+            </Button>
+
+            {isSignedIn ? (
+              <Button
+                onClick={saveToLibrary}
+                variant="outline"
+                className="h-10 text-sm"
               >
-                <ExternalLink className="h-5 w-5 mr-2" />
-                <div className="text-left leading-tight">
-                  <div className="font-semibold">Открыть в новой вкладке</div>
-                  <div className="text-xs opacity-80 leading-tight">Полноэкранный режим</div>
-                </div>
-              </a>
-              {/* PDF download button removed for flipbook */}
-              {status?.format !== 'flipbook' && (
-                <Button onClick={downloadBook} size="lg" className="inline-flex items-center h-20 px-6 w-full rounded-lg bg-black text-white font-semibold text-lg hover:bg-neutral-800 transition-colors justify-start">
-                  <Download className="h-5 w-5 mr-2" />
-                  <div className="text-left leading-tight">
-                    <div className="font-semibold">Скачать PDF</div>
-                    <div className="text-xs opacity-80 leading-tight">Сохранить на устройство</div>
-                  </div>
-                </Button>
-              )}
-            </div>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Сохранить
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="h-10 text-sm"
+                disabled
+              >
+                <Lock className="mr-2 h-4 w-4" />
+                Требует вход
+              </Button>
+            )}
           </div>
 
-          {profile && (
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm bg-slate-50/50 p-4 rounded-lg border">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Users className="h-4 w-4 text-slate-400" />
-                <span className="font-medium text-black">Пользователь:</span> @{profile.username}
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <FileText className="h-4 w-4 text-slate-400" />
-                <span className="font-medium text-black">Имя:</span> {profile.fullName}
-              </div>
-               <div className="flex items-center gap-2 text-muted-foreground">
-                <Users className="h-4 w-4 text-slate-400" />
-                <span className="font-medium text-black">Подписчики:</span> {profile.followers}
-              </div>
-               <div className="flex items-center gap-2 text-muted-foreground">
-                <FileText className="h-4 w-4 text-slate-400" />
-                <span className="font-medium text-black">Постов:</span> {profile.posts}
-              </div>
-              {profile.stories && profile.stories > 0 && (
-                <div className="flex items-center gap-2 text-muted-foreground col-span-2">
-                  <span className="text-slate-400">📖</span>
-                  <span className="font-medium text-black">Историй:</span> {profile.stories}
-                </div>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="share-url" className="text-sm text-gray-600">
+              Поделиться книгой:
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="share-url"
+                value={shareableUrl}
+                readOnly
+                className="text-sm"
+              />
+              <Button
+                onClick={copyToClipboard}
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+              >
+                {isCopied ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
             </div>
-          )}
-
-          <div>
-             <p className="text-sm font-medium mb-2">Ссылка для поделиться</p>
-             <div className="relative">
-                <Input readOnly value={shareableUrl} className="pr-12 bg-slate-100"/>
-                <Button variant="ghost" size="icon" className="absolute top-1/2 right-1 -translate-y-1/2" onClick={copyToClipboard}>
-                    {isCopied ? <Check className="h-4 w-4 text-green-500"/> : <ClipboardCopy className="h-4 w-4" />}
-                    <span className="sr-only">Скопировать ссылку</span>
-                </Button>
-             </div>
-             <p className="text-xs text-muted-foreground mt-1">
-               ⚠️ Для просмотра по ссылке потребуется авторизация в системе
-             </p>
+            {!isSignedIn && (
+              <p className="text-xs text-gray-500">
+                {isFlipbook 
+                  ? "✨ Flipbook доступен полностью для всех по ссылке"
+                  : "⚠️ Для полного просмотра по ссылке потребуется авторизация"}
+              </p>
+            )}
           </div>
         </div>
       </DialogContent>

@@ -15,26 +15,6 @@ interface FormProps {
   onStartScrape: (runId: string) => void;
 }
 
-const StepAuthentication = () => (
-  <motion.div
-    className="text-center"
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-  >
-    <div className="mx-auto w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-      <User className="h-6 w-6 text-gray-500 dark:text-gray-400" />
-    </div>
-    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-2">Требуется авторизация</h3>
-    <p className="text-gray-500 dark:text-gray-400 mb-6">Чтобы начать, войдите или зарегистрируйтесь.</p>
-    <SignInButton mode="modal">
-      <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-200">
-        Войти в систему
-      </Button>
-    </SignInButton>
-  </motion.div>
-);
-
 const StepMainForm = ({ onStartScrape }: FormProps) => {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +22,7 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
   const [style, setStyle] = useState('romantic');
   const { toast } = useToast();
   const { getToken } = useAuth();
+  const { isSignedIn } = useUser();
 
   // Функция для нормализации входа пользователя
   const normalizeInstagramInput = (input: string): string => {
@@ -61,6 +42,20 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
     }
     
     return trimmed; // Возвращаем как есть для показа ошибки валидации
+  };
+
+  // Функция для извлечения username из URL или input
+  const extractUsername = (input: string): string => {
+    const trimmed = input.trim();
+    
+    // Если это URL, извлекаем username
+    const urlMatch = trimmed.match(/^https?:\/\/(www\.)?instagram\.com\/([a-zA-Z0-9_.]+)\/?$/);
+    if (urlMatch) {
+      return urlMatch[2];
+    }
+    
+    // Убираем @ если есть в начале
+    return trimmed.replace(/^@/, '');
   };
 
   const validateInstagramInput = (input: string): boolean => {
@@ -92,8 +87,15 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
     try {
       const token = await getToken();
       const normalizedUrl = normalizeInstagramInput(url);
-      const result = await api.startScrape(normalizedUrl, style, token || undefined);
-      toast({ title: "Отлично!", description: `Книга в стиле "${style}" отправлена в обработку.` });
+      const extractedUsername = extractUsername(url);
+      
+      const result = await api.startScrape(normalizedUrl, extractedUsername, style, token || undefined);
+      toast({ 
+        title: "Отлично!", 
+        description: isSignedIn 
+          ? `Книга в стиле "${style}" отправлена в обработку.`
+          : `Книга создается! Вы сможете просмотреть первые 10 страниц. Для полного доступа потребуется авторизация.`
+      });
       onStartScrape(result.runId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка';
@@ -114,8 +116,12 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
         <div className="mx-auto w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
           <Book className="h-6 w-6 text-gray-500 dark:text-gray-400" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">Заполните детали</h3>
-        <p className="text-gray-500 dark:text-gray-400">Остался последний шаг до создания вашей книги.</p>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">Создайте вашу книгу</h3>
+        <p className="text-gray-500 dark:text-gray-400">
+          {isSignedIn 
+            ? "Создайте книгу с полным доступом"
+            : "Создайте книгу и просмотрите первые 10 страниц бесплатно"}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -144,6 +150,29 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
           <StylePicker value={style} onChange={setStyle} />
         </div>
 
+        {!isSignedIn && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <Lock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">Режим предварительного просмотра</h4>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                  Вы сможете просмотреть первые 10 страниц. Для полного доступа и сохранения книги войдите в систему.
+                </p>
+                <div className="mt-2">
+                  <SignInButton mode="modal">
+                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-300 hover:bg-blue-50">
+                      Войти для полного доступа
+                    </Button>
+                  </SignInButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -158,7 +187,7 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
               Создаем...
             </>
           ) : (
-            'Создать книгу'
+            isSignedIn ? 'Создать книгу' : 'Создать книгу (предпросмотр)'
           )}
         </Button>
       </form>
@@ -166,31 +195,17 @@ const StepMainForm = ({ onStartScrape }: FormProps) => {
   );
 };
 
-
 export function Form({ onStartScrape }: FormProps) {
-  const [step, setStep] = useState<'auth' | 'form'>('auth');
-  const { isSignedIn } = useUser();
-
-  useEffect(() => {
-    if (isSignedIn) {
-      setStep('form');
-    } else {
-      setStep('auth');
-    }
-  }, [isSignedIn]);
-  
+  // Убираем проверку авторизации и всегда показываем форму
   return (
     <section className="py-20 px-4">
       <div className="max-w-md mx-auto">
         <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-8 shadow-lg shadow-gray-100/50 dark:shadow-black/50">
-          <AnimatePresence mode="wait">
-            {step === 'auth' && <StepAuthentication key="auth" />}
-            {step === 'form' && <StepMainForm onStartScrape={onStartScrape} key="form" />}
-          </AnimatePresence>
+          <StepMainForm onStartScrape={onStartScrape} />
         </div>
         <div className="mt-6 text-center text-sm text-gray-400 dark:text-gray-500">
           <p>Ваши данные в безопасности.</p>
-            </div>
+        </div>
       </div>
     </section>
   );
