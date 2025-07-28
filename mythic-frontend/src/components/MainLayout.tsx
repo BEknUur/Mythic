@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { useState, useEffect } from 'react';
 
 export function MainLayout() {
@@ -76,6 +77,11 @@ export function MainLayout() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Language Switcher - Fixed position in top-right corner */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSwitcher />
+      </div>
+
       {/* Улучшенный оверлей для мобильных устройств */}
       {isMobile && isSidebarOpen && (
         <div 

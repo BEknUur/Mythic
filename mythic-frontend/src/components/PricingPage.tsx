@@ -6,47 +6,49 @@ import { ProModal } from './ProModal';
 import { useAuth } from '@clerk/clerk-react';
 import { useToast } from '@/hooks/use-toast';
 import { payments } from '@/lib/api';
-
-const tiers = [
-  {
-    name: 'Бесплатно',
-    price: '$0',
-    frequency: 'навсегда',
-    description: 'Две бесплатные генерации: одна Classic и одна Flipbook. Дальнейшие генерации — платные.',
-    features: [
-      '1 бесплатная генерация Classic',
-      '1 бесплатная генерация Flipbook',
-      'Веб-версия книги',
-      'Возможность скачать PDF',
-      'Стандартная поддержка',
-    ],
-    cta: 'Начать бесплатно',
-    isMostPopular: false,
-    action: 'free'
-  },
-  {
-    name: 'Pro',
-    price: '$9.99',
-    frequency: '/ месяц',
-    description: 'Раскройте полный потенциал и создавайте неограниченное количество историй.',
-    features: [
-      'Неограниченные генерации книг',
-      'Приоритетная обработка',
-      'Доступ к премиум-стилям',
-      'Создание видео для TikTok (скоро)',
-      'Приоритетная поддержка',
-    ],
-    cta: 'Перейти на Pro',
-    isMostPopular: true,
-    action: 'pro'
-  },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function PricingPage() {
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { getToken } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
+
+  const tiers = [
+    {
+      name: t('pricing.free.name'),
+      price: t('pricing.free.price'),
+      frequency: t('pricing.free.frequency'),
+      description: t('pricing.free.description'),
+      features: [
+        t('pricing.features.free.1'),
+        t('pricing.features.free.2'),
+        t('pricing.features.free.3'),
+        t('pricing.features.free.4'),
+        t('pricing.features.free.5'),
+      ],
+      cta: t('pricing.free.cta'),
+      isMostPopular: false,
+      action: 'free'
+    },
+    {
+      name: t('pricing.pro.name'),
+      price: t('pricing.pro.price'),
+      frequency: t('pricing.pro.frequency'),
+      description: t('pricing.pro.description'),
+      features: [
+        t('pricing.features.pro.1'),
+        t('pricing.features.pro.2'),
+        t('pricing.features.pro.3'),
+        t('pricing.features.pro.4'),
+        t('pricing.features.pro.5'),
+      ],
+      cta: t('pricing.pro.cta'),
+      isMostPopular: true,
+      action: 'pro'
+    },
+  ];
 
   const handleProClick = () => {
     setIsProModalOpen(true);
@@ -57,7 +59,7 @@ export function PricingPage() {
     try {
       const token = await getToken();
       if (!token) {
-        throw new Error('Необходима авторизация');
+        throw new Error(t('library.toast.error.auth'));
       }
 
       const response = await payments.createCheckout({
@@ -72,7 +74,7 @@ export function PricingPage() {
     } catch (error) {
       console.error('Ошибка создания checkout:', error);
       toast({
-        title: "Ошибка",
+        title: t('common.error'),
         description: error instanceof Error ? error.message : 'Не удалось создать платеж',
         variant: "destructive",
       });
@@ -92,10 +94,10 @@ export function PricingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-gray-50 mb-4 tracking-tighter">
-              Выберите свой план
+              {t('pricing.title')}
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Начните бесплатно и переходите на Pro, когда будете готовы к безграничному творчеству.
+              {t('pricing.subtitle')}
             </p>
           </div>
 
@@ -103,7 +105,7 @@ export function PricingPage() {
             {/* Инфоблок теперь первый элемент сетки */}
             <div className="col-span-1 lg:col-span-2 flex justify-center mb-4">
               <div className="bg-purple-50 border border-purple-200 rounded-xl px-6 py-4 text-center max-w-xl w-full text-purple-900 text-base font-medium">
-                После бесплатных генераций каждая новая генерация книги (Classic или Flipbook) стоит <span className="font-bold">$0.99</span>.
+                {t('pricing.single_info')} <span className="font-bold">$0.99</span>.
                 <div className="mt-2">
                   <Button 
                     variant="outline" 
@@ -112,7 +114,7 @@ export function PricingPage() {
                     disabled={isLoading}
                     className="bg-white hover:bg-purple-50"
                   >
-                    {isLoading ? 'Загрузка...' : 'Оплатить одну генерацию ($0.99)'}
+                    {isLoading ? t('pricing.loading') : t('pricing.single_button')}
                   </Button>
                 </div>
               </div>
@@ -129,7 +131,7 @@ export function PricingPage() {
                   <div className="absolute top-0 -translate-y-1/2 w-full flex justify-center">
                     <span className="inline-flex items-center gap-2 rounded-full bg-purple-500 px-4 py-1 text-sm font-semibold text-white">
                       <Sparkles className="h-4 w-4" />
-                      Самый популярный
+                      {t('pricing.popular')}
                     </span>
                   </div>
                 )}

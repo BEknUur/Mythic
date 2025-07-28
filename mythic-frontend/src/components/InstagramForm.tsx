@@ -24,6 +24,7 @@ import {
 import { api } from '@/lib/api';
 import { StylePicker, STYLES } from './StylePicker';
 import { useAuth, useUser, SignInButton } from '@clerk/clerk-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface InstagramFormProps {
   onScrapeStart: (runId: string) => void;
@@ -39,6 +40,7 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
   const { toast } = useToast();
   const { getToken } = useAuth();
   const { isSignedIn } = useUser();
+  const { t } = useLanguage();
 
   const validateInstagramUrl = (url: string): boolean => {
     const instagramUrlPattern = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/;
@@ -61,15 +63,15 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
       setIsConnected(true);
       setError('');
       toast({
-        title: "✅ Соединение установлено",
-        description: "Сервер готов к работе",
+        title: t('form.connection_success'),
+        description: t('form.connection_success_desc'),
       });
     } catch (error) {
       setIsConnected(false);
-      setError('Не удается подключиться к серверу. Проверьте, что сервер запущен на localhost:8000');
+      setError(t('form.connection_error'));
       toast({
-        title: "❌ Ошибка соединения",
-        description: "Не удается подключиться к серверу",
+        title: t('common.error'),
+        description: t('form.connection_error_desc'),
         variant: "destructive",
       });
     } finally {
@@ -81,17 +83,17 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
     e.preventDefault();
     
     if (!url.trim()) {
-      setError('Пожалуйста, введите ссылку на Instagram профиль');
+      setError(t('form.invalid_url'));
       return;
     }
 
     if (!validateInstagramUrl(url)) {
-      setError('Пожалуйста, введите корректную ссылку на Instagram профиль (например: https://instagram.com/username)');
+      setError(t('form.invalid_url'));
       return;
     }
 
     if (!isConnected) {
-      setError('Сначала проверьте соединение с сервером');
+      setError(t('form.connection_error'));
       return;
     }
 
@@ -103,17 +105,17 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
       const extractedUsername = extractUsername(url);
       const result = await api.startScrape(url, extractedUsername, style, token || undefined);
       toast({
-        title: "🚀 Начинаем создание книги!",
+        title: t('form.success'),
         description: isSignedIn 
-          ? `Ваш запрос принят, создаем "${STYLES.find(s=>s.value===style)?.label}" книгу`
-          : `Книга создается! Вы сможете просмотреть первые 10 страниц бесплатно.`,
+          ? `${t('form.progress_message')} "${STYLES.find(s=>s.value===style)?.label}"`
+          : t('form.progress_message'),
       });
       onScrapeStart(result.runId);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-      setError(`Ошибка при запуске: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : t('form.error.generation');
+      setError(`${t('form.error.generation')}: ${errorMessage}`);
       toast({
-        title: "❌ Ошибка",
+        title: t('common.error'),
         description: errorMessage,
         variant: "destructive",
       });
@@ -125,20 +127,20 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
   const features = [
     { 
       icon: Camera, 
-      title: "Анализ фото", 
-      description: "Собираем красивые фотографии из профиля",
+      title: t('form.step1'), 
+      description: t('form.step1_desc'),
       isPremium: false
     },
     { 
       icon: Palette, 
-      title: "ИИ генерация", 
-      description: "Создаем романтическую историю с помощью ИИ",
+      title: t('form.step2'), 
+      description: t('form.step2_desc'),
       isPremium: false
     },
     { 
       icon: BookOpen, 
-      title: "Полная книга", 
-      description: "Доступ ко всем страницам + сохранение",
+      title: t('form.step3'), 
+      description: t('form.step3_desc'),
       isPremium: true
     },
   ];
@@ -161,14 +163,14 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
           
           <div className="space-y-4">
             <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent" style={{ fontFamily: 'Dancing Script, cursive' }}>
-              Создайте Романтическую Книгу
+              {t('form.hero_title')}
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Превратите Instagram профиль в прекрасную романтическую книгу с помощью искусственного интеллекта
+              {t('form.hero_description')}
             </p>
             {!isSignedIn && (
               <p className="text-lg text-blue-600 font-medium">
-                📖 Попробуйте бесплатно - просмотрите первые 10 страниц!
+                {t('form.hero_free_trial')}
               </p>
             )}
           </div>
@@ -180,11 +182,11 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
             </Badge>
             <Badge variant="secondary" className="px-3 py-1">
               <Zap className="h-3 w-3 mr-1" />
-              ИИ генерация
+              {t('form.step2')}
             </Badge>
             <Badge variant="secondary" className="px-3 py-1">
               <BookOpen className="h-3 w-3 mr-1" />
-              HTML книга
+              {t('form.step3')}
             </Badge>
           </div>
         </div>
@@ -221,7 +223,7 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
                     </h3>
                     <p className="text-sm text-gray-600">{feature.description}</p>
                     {feature.isPremium && !isSignedIn && (
-                      <p className="text-xs text-amber-700 font-medium mt-2">Требует авторизацию</p>
+                      <p className="text-xs text-amber-700 font-medium mt-2">{t('form.premium_text')}</p>
                     )}
                   </div>
                 </CardContent>
@@ -234,12 +236,12 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
         <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center space-y-4">
             <CardTitle className="text-2xl bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-              Начните создание книги
+              {t('form.start_title')}
             </CardTitle>
             <CardDescription className="text-lg">
               {isSignedIn 
-                ? "Введите ссылку на Instagram профиль для создания полной романтической книги"
-                : "Введите ссылку на Instagram профиль и попробуйте бесплатно первые 10 страниц"}
+                ? t('form.start_description_signed_in')
+                : t('form.start_description_signed_out')}
             </CardDescription>
           </CardHeader>
           
@@ -263,10 +265,10 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
                   <AlertCircle className="h-4 w-4 mr-2" />
                 )}
                 {isCheckingConnection 
-                  ? 'Проверяем соединение...' 
+                  ? t('form.checking_connection') 
                   : isConnected 
-                  ? 'Соединение установлено' 
-                  : 'Проверить соединение'
+                  ? t('form.connection_established') 
+                  : t('form.check_connection')
                 }
               </Button>
             </div>
@@ -279,15 +281,14 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
                 <div className="flex items-start space-x-3">
                   <Lock className="h-5 w-5 text-blue-600 mt-0.5" />
                   <div className="flex-1">
-                    <h4 className="font-semibold text-blue-900">Режим предварительного просмотра</h4>
+                    <h4 className="font-semibold text-blue-900">{t('form.preview_mode_title')}</h4>
                     <p className="text-sm text-blue-700 mt-1">
-                      Вы можете создать книгу и просмотреть первые 10 страниц бесплатно. 
-                      Для полного доступа ко всем страницам и возможности сохранения требуется авторизация.
+                      {t('form.preview_mode_description')}
                     </p>
                     <div className="mt-3">
                       <SignInButton mode="modal">
                         <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                          Войти для полного доступа
+                          {t('form.sign_in_for_full_access')}
                         </Button>
                       </SignInButton>
                     </div>
@@ -300,7 +301,7 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-3">
                 <Label htmlFor="instagram-url" className="text-base font-medium text-gray-700">
-                  Ссылка на Instagram профиль
+                  {t('form.instagram_url_label')}
                 </Label>
                 <div className="relative">
                   <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -309,20 +310,20 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
                     type="url"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://instagram.com/username"
+                    placeholder={t('form.instagram_url_placeholder')}
                     className="pl-12 h-14 text-lg border-2 border-gray-200 focus:border-pink-400 focus:ring-pink-400 rounded-xl"
                     disabled={isLoading}
                   />
                 </div>
                 <p className="text-sm text-gray-500">
-                  Например: https://instagram.com/username или https://www.instagram.com/username
+                  {t('form.instagram_url_example')}
                 </p>
               </div>
 
               {/* Style Picker */}
               <div className="space-y-2">
                 <Label htmlFor="style-picker" className="text-sm font-medium text-black">
-                  Стиль книги
+                  {t('form.style_label')}
                 </Label>
                 <StylePicker value={style} onChange={setStyle} />
               </div>
@@ -344,12 +345,12 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
                 {isLoading ? (
                   <>
                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Создаем книгу...
+                    {t('form.creating_book')}
                   </>
                 ) : (
                   <>
                     <Heart className="h-5 w-5 mr-2" />
-                    {isSignedIn ? 'Создать романтическую книгу' : 'Попробовать бесплатно (10 страниц)'}
+                    {isSignedIn ? t('form.create_romantic_book') : t('form.try_free_10_pages')}
                   </>
                 )}
               </Button>
@@ -357,14 +358,14 @@ export function InstagramForm({ onScrapeStart }: InstagramFormProps) {
 
             {/* Help Text */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-200">
-              <h3 className="font-semibold text-gray-800 mb-2">💡 Как это работает:</h3>
+              <h3 className="font-semibold text-gray-800 mb-2">{t('form.how_it_works_title')}</h3>
               <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Мы анализируем открытый Instagram профиль</li>
-                <li>• Собираем красивые фотографии и информацию</li>
-                <li>• ИИ создает романтическую историю на основе контента</li>
-                <li>• Генерируем красивую HTML книгу для просмотра</li>
+                <li>• {t('form.how_it_works_step1')}</li>
+                <li>• {t('form.how_it_works_step2')}</li>
+                <li>• {t('form.how_it_works_step3')}</li>
+                <li>• {t('form.how_it_works_step4')}</li>
                 {!isSignedIn && (
-                  <li className="text-blue-700 font-medium">• 📖 Без авторизации: доступ к первым 10 страницам</li>
+                  <li className="text-blue-700 font-medium">{t('form.how_it_works_free_trial')}</li>
                 )}
               </ul>
             </div>

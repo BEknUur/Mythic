@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const testimonials = [
   {
@@ -42,22 +43,24 @@ const testimonials = [
 ];
 
 export function Testimonials() {
+  const { t } = useLanguage();
+  
   return (
     <section className="py-20 sm:py-28 px-4 bg-white dark:bg-gray-950">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-gray-50 mb-4 tracking-tighter">
-            Что говорят о Mythic AI
+            {t('testimonials.title')}
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Реальные отзывы пользователей, которые уже создали свою фэнтези-книгу с помощью Mythic AI.
+            {t('testimonials.subtitle')}
           </p>
         </div>
         <div className="overflow-hidden w-full">
           <motion.div
             className="flex gap-8"
             animate={{ x: ["0%", "-100%"] }}
-            transition={{ repeat: Infinity, repeatType: "loop", duration: 40, ease: "linear" }}
+            transition={{ repeat: Infinity, repeatType: "loop", duration: 20, ease: "linear" }}
           >
             {[...testimonials, ...testimonials].map((testimonial, index) => (
               <div

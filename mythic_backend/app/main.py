@@ -32,7 +32,7 @@ from app.services.image_processor import process_folder
 from app.services.text_collector import collect_texts
 from app.styles import build_book
 from app.auth import get_current_user, get_optional_current_user, get_user_from_request
-from app.database import get_db, create_tables
+from app.database import get_db, create_tables, get_optional_db
 from app.services.user_service import UserService
 from app.services.book_service import BookService
 from app.models import User, Book
@@ -71,7 +71,13 @@ def set_cached_status(run_id: str, data: dict):
 app.add_middleware(NormalizePathMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[ "http://localhost:5173","https://mythicai.me","https://www.mythicai.me"],
+    allow_origins=[
+        "http://localhost:5173",    # Vite dev server default
+        "http://localhost:8080",    # Alternative dev port
+        "http://127.0.0.1:5173",    # IPv4 localhost
+        "https://mythicai.me",
+        "https://www.mythicai.me"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -89,24 +95,34 @@ app.mount("/runs", StaticFiles(directory=str(DATA_DIR), html=False), name="runs"
 @app.get("/health")
 def health_check():
     """Простая проверка работы API"""
-    import psutil
-    import os
-    
-    # Get system info
-    memory = psutil.virtual_memory()
-    disk = psutil.disk_usage('/')
-    
-    return {
-        "status": "ok", 
-        "message": "API работает! 💕",
-        "timestamp": datetime.datetime.now().isoformat(),
-        "system": {
-            "memory_percent": memory.percent,
-            "disk_percent": disk.percent,
-            "cpu_percent": psutil.cpu_percent(interval=1),
-        },
-        "version": "1.0.0"
-    }
+    try:
+        import psutil
+        import os
+        
+        # Get system info
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        
+        return {
+            "status": "ok", 
+            "message": "API работает! 💕",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "system": {
+                "memory_percent": memory.percent,
+                "disk_percent": disk.percent,
+                "cpu_percent": psutil.cpu_percent(interval=0.1),
+            },
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        # Если psutil недоступен, возвращаем базовый ответ
+        return {
+            "status": "ok", 
+            "message": "API работает! 💕",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "version": "1.0.0",
+            "error": f"System metrics unavailable: {str(e)}"
+        }
 
 # ───────────── /start-scrape ────────────────────────────────
 @app.get("/start-scrape")
@@ -115,16 +131,21 @@ async def start_scrape(
     username: str,  # Добавляем обязательный параметр username
     style: str = 'romantic',
     request: Request = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession | None = Depends(get_optional_db)
 ):
     """Начать скрапинг Instagram профиля - теперь без обязательной авторизации, достаточно username"""
     clean_url = str(url).rstrip("/")
     
     # Проверяем авторизацию опционально
-    current_user = get_user_from_request(request) if request else None
+    current_user = None
+    try:
+        current_user = get_user_from_request(request) if request else None
+    except Exception as e:
+        log.warning(f"Error getting user from request: {e}")
+        current_user = None
     
     # Если пользователь авторизован - используем его ID, иначе используем username как временный ID
-    if current_user:
+    if current_user and current_user.get("sub"):
         user_identifier = current_user.get("sub")
         is_authenticated = True
     else:
@@ -153,13 +174,17 @@ async def start_scrape(
     run_id = run["id"]
     
     # Создаем сессию обработки в БД только для авторизованных пользователей
-    if is_authenticated:
-        await UserService.create_processing_session(
-            db=db,
-            run_id=run_id,
-            clerk_user_id=user_identifier,
-            instagram_url=clean_url
-        )
+    if is_authenticated and db is not None:
+        try:
+            await UserService.create_processing_session(
+                db=db,
+                run_id=run_id,
+                clerk_user_id=user_identifier,
+                instagram_url=clean_url
+            )
+        except Exception as e:
+            log.warning(f"Failed to create processing session for user {user_identifier}: {e}")
+            # Продолжаем выполнение даже если база данных недоступна
     
     # Сохраняем информацию о пользователе для этого run_id
     run_dir = Path("data") / run_id
@@ -178,7 +203,7 @@ async def start_scrape(
     except Exception as e:
         print(f"❌ Не удалось сохранить стиль: {e}")
     
-    log.info("Actor started runId=%s for user=%s", run_id, user_identifier)
+    log.info("Actor started runId=%s for user=%s (authenticated=%s)", run_id, user_identifier, is_authenticated)
     return {"runId": run_id, "message": "Начинаю исследовать вашу личность... Это займет несколько минут"}
 
 
@@ -220,7 +245,12 @@ def status(run_id: str, request: Request):
     """Проверить статус создания книги - доступно для всех, но с проверкой прав доступа"""
     
     # Получаем пользователя опционально
-    current_user = get_user_from_request(request)
+    current_user = None
+    try:
+        current_user = get_user_from_request(request)
+    except Exception as e:
+        log.warning(f"Error getting user from request in status check: {e}")
+        current_user = None
     
     # Проверяем кэш
     cached_status = get_cached_status(run_id)
@@ -244,7 +274,7 @@ def status(run_id: str, request: Request):
             stored_user_id = user_meta.get("user_id")
             is_authenticated = user_meta.get("is_authenticated", False)
             
-            if current_user:
+            if current_user and current_user.get("sub"):
                 current_user_id = current_user.get("sub")
                 # Пользователь имеет доступ если это его книга
                 if stored_user_id == current_user_id:
@@ -275,7 +305,8 @@ def status(run_id: str, request: Request):
     style_file = run_dir / "style.txt"
     format_file = run_dir / "format.txt"
     
-    log.info(f"Status check for {run_id} by user {current_user.get('sub') if current_user else 'anonymous'}")
+    current_user_id = current_user.get('sub') if current_user else 'anonymous'
+    log.info(f"Status check for {run_id} by user {current_user_id}")
     
     # Быстрые проверки без лишних операций
     data_collected = posts_json.exists()

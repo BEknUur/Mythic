@@ -17,6 +17,7 @@ import { MainLayout } from '@/components/MainLayout';
 import { TourProvider, useTour, TourAlertDialog, TOUR_STEP_IDS } from '@/components/ui/tour';
 import { PaymentSuccessPage } from '@/components/PaymentSuccessPage';
 import { PaymentCancelPage } from '@/components/PaymentCancelPage';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import './App.css'
 
 // Компонент для роута /reader/:id
@@ -197,9 +198,11 @@ function AppContent() {
 
 function App() {
   return (
-    <TourProvider>
-      <AppContent />
-    </TourProvider>
+    <LanguageProvider>
+      <TourProvider>
+        <AppContent />
+      </TourProvider>
+    </LanguageProvider>
   );
 }
 

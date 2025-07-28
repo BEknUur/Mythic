@@ -2,37 +2,40 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const faqItems = [
-  {
-    question: "Как именно работает сервис?",
-    answer: "Мы анализируем ваш открытый профиль в Instagram, собираем фотографии и информацию, а затем наш искусственный интеллект создает на их основе уникальную романтическую историю. В результате вы получаете красивую веб-книгу."
-  },
-  {
-    question: "Какие данные из Instagram вы используете?",
-    answer: "Мы используем только общедоступную информацию: ваши фотографии, подписи к ним и даты публикаций. Мы не собираем и не храним личные данные, такие как пароли или переписки."
-  },
-  {
-    question: "Сколько времени занимает создание книги?",
-    answer: "Обычно процесс занимает от 1до 5 минут в зависимости от количества фотографий в вашем профиле и текущей нагрузки на сервер. Вы получите уведомление, когда ваша книга будет готова."
-  },
-  {
-    question: "Можно ли использовать закрытый (приватный) профиль?",
-    answer: "К сожалению, на данный момент мы можем анализировать только открытые профили Instagram. Пожалуйста, убедитесь, что ваш профиль является общедоступным на время создания книги."
-  }
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function HelpPage() {
+  const { t } = useLanguage();
+
+  const faqItems = [
+    {
+      question: t('help.faq.1.question'),
+      answer: t('help.faq.1.answer')
+    },
+    {
+      question: t('help.faq.2.question'),
+      answer: t('help.faq.2.answer')
+    },
+    {
+      question: t('help.faq.3.question'),
+      answer: t('help.faq.3.answer')
+    },
+    {
+      question: t('help.faq.4.question'),
+      answer: t('help.faq.4.answer')
+    }
+  ];
+
   return (
     <div className="container mx-auto max-w-4xl py-12 px-4 dark:text-gray-100">
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-50 tracking-tighter">Центр помощи</h1>
-        <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">Найдите ответы на свои вопросы или свяжитесь с нами.</p>
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-50 tracking-tighter">{t('help.title')}</h1>
+        <p className="mt-4 text-lg text-gray-500 dark:text-gray-400">{t('help.subtitle')}</p>
       </div>
 
       {/* FAQ Section */}
       <div className="mb-12">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50 mb-6 text-center">Часто задаваемые вопросы</h2>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50 mb-6 text-center">{t('help.faq.title')}</h2>
         <Accordion type="single" collapsible className="w-full">
           {faqItems.map((item, index) => (
             <AccordionItem value={`item-${index}`} key={index} className="border-b dark:border-gray-800">
@@ -59,17 +62,17 @@ export function HelpPage() {
 
       {/* Contact Section */}
       <div>
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50 mb-6 text-center">Остались вопросы?</h2>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-50 mb-6 text-center">{t('help.contact.title')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <a href="mailto:beknur_10@gmail.com" className="group">
             <Card className="h-full hover:shadow-lg transition-shadow bg-white dark:bg-gray-900 border dark:border-gray-800">
               <CardHeader className="flex flex-row items-center gap-4">
                 <Mail className="h-8 w-8 text-purple-600" />
-                <CardTitle className="dark:text-gray-100">Написать на почту</CardTitle>
+                <CardTitle className="dark:text-gray-100">{t('help.contact.email.title')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-500 dark:text-gray-400">
-                  Лучший способ для подробных вопросов. Мы отвечаем в течение 24 часов.
+                  {t('help.contact.email.description')}
                 </p>
                 <p className="text-purple-600 font-semibold mt-4 group-hover:underline">
                   ualihanulybeknur@gmail.com
@@ -81,11 +84,11 @@ export function HelpPage() {
             <Card className="h-full hover:shadow-lg transition-shadow bg-white dark:bg-gray-900 border dark:border-gray-800">
               <CardHeader className="flex flex-row items-center gap-4">
                 <Send className="h-8 w-8 text-purple-600" />
-                <CardTitle className="dark:text-gray-100">Написать в Telegram</CardTitle>
+                <CardTitle className="dark:text-gray-100">{t('help.contact.telegram.title')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-500 dark:text-gray-400">
-                  Идеально для быстрых вопросов и оперативной поддержки.
+                  {t('help.contact.telegram.description')}
                 </p>
                 <p className="text-purple-600 font-semibold mt-4 group-hover:underline">
                   @beknur_10

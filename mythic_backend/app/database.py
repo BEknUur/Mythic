@@ -97,7 +97,26 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
+async def get_optional_async_db() -> AsyncGenerator[AsyncSession | None, None]:
+    """Опциональная асинхронная сессия - возвращает None если база недоступна."""
+    try:
+        async with AsyncSessionLocal() as session:
+            try:
+                yield session
+            finally:
+                await session.close()
+    except Exception as e:
+        print(f"Database unavailable: {e}")
+        yield None
+
+
 # alias: import → Depends(get_db)
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async for s in get_async_db():
+        yield s
+
+
+# alias: import → Depends(get_optional_db)  
+async def get_optional_db() -> AsyncGenerator[AsyncSession | None, None]:
+    async for s in get_optional_async_db():
         yield s

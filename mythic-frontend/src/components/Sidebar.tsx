@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +40,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
   const { startTour } = useTour();
+  const { t } = useLanguage();
   const location = useLocation();
 
   // Функция для закрытия сайдбара на мобильных при клике на ссылку
@@ -75,9 +77,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
               <img src="/logo.png" alt="Mythic AI Logo" className="h-10 w-10" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-gray-50">
-                  Mythic AI
+                  {t('mythic.title')}
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Создаём истории</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('mythic.subtitle')}</p>
               </div>
             </Link>
           </div>
@@ -102,7 +104,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
           {/* Секция создания */}
           <div>
             <h3 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-              Создать
+              {t('nav.create')}
             </h3>
             <div className="space-y-2">
               <Link 
@@ -112,7 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
                 style={{ touchAction: 'manipulation' }}
               >
                 <BookOpen className="h-5 w-5 text-purple-500" />
-                <span className="ml-3 font-medium">Создать книгу</span>
+                <span className="ml-3 font-medium">{t('nav.create.book')}</span>
               </Link>
 
               <Link 
@@ -123,9 +125,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
               >
                 <Video className="h-5 w-5 text-red-500" />
                 <div className="flex items-center justify-between w-full ml-3">
-                  <span className="font-medium">Книга → TikTok</span>
+                  <span className="font-medium">{t('nav.create.tiktok')}</span>
                   <Badge variant="secondary" className="bg-red-100 text-red-700 text-xs px-2 py-1 dark:bg-red-900/50 dark:text-red-300">
-                    Новое
+                    {t('nav.new')}
                   </Badge>
                 </div>
               </Link>
@@ -135,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
           {/* Секция библиотеки */}
           <div>
             <h3 className="text-sm font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-              Библиотека
+              {t('nav.library')}
             </h3>
             <div className="space-y-2">
               <Link 
@@ -146,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
                 style={{ touchAction: 'manipulation' }}
               >
                 <Library className="h-5 w-5 text-amber-500" />
-                <span className="ml-3 font-medium">Мои книги</span>
+                <span className="ml-3 font-medium">{t('nav.library.books')}</span>
               </Link>
               
               <Link 
@@ -156,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
                 style={{ touchAction: 'manipulation' }}
               >
                 <DollarSign className="h-5 w-5 text-green-500" />
-                <span className="ml-3 font-medium">Тарифы</span>
+                <span className="ml-3 font-medium">{t('nav.pricing')}</span>
               </Link>
             </div>
           </div>
@@ -171,7 +173,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
                 style={{ touchAction: 'manipulation' }}
               >
                 <HelpCircle className="h-5 w-5 text-gray-500" />
-                <span className="ml-3 font-medium">Помощь</span>
+                <span className="ml-3 font-medium">{t('nav.help')}</span>
               </Link>
             </div>
           </div>
@@ -182,13 +184,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile }) => {
           <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 text-center">
             <div className="flex items-center justify-center mb-2">
               <Sparkles className="h-5 w-5 text-purple-500 mr-2" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mythic AI</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('mythic.title')}</span>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-              Превращаем мысли в истории
+              {t('footer.tagline')}
             </p>
             <div className="text-xs text-gray-400 dark:text-gray-500">
-              <p>Связь: t.me/beknur_10</p>
+              <p>{t('footer.contact')}</p>
             </div>
           </div>
         </div>

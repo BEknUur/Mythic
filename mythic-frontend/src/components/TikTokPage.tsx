@@ -1,11 +1,14 @@
 import React from 'react';
 import { ComingSoonPage } from './ComingSoonPage';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function TikTokPage() {
+  const { t } = useLanguage();
+  
   return (
     <ComingSoonPage 
-      title="Книга → TikTok"
-      description="Этот раздел находится в активной разработке. Совсем скоро вы сможете превращать ваши книги в захватывающие TikTok-видео!"
+      title={t('tiktok.title')}
+      description={t('tiktok.description')}
     />
   );
 } 

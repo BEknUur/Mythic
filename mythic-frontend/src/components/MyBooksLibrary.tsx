@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { api, type UserBook} from '@/lib/api';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MyBooksLibraryProps {
   onBack: () => void;
@@ -30,6 +31,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
   const [error, setError] = useState<string | null>(null);
   const { getToken } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const loadBooks = async () => {
     try {
@@ -37,7 +39,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
       setError(null);
       const token = await getToken();
       if (!token) {
-        throw new Error('Нужно войти в аккаунт');
+        throw new Error(t('library.toast.error.auth'));
       }
       
       const response = await api.getMyBooks(token);
@@ -60,8 +62,8 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
       window.open(`/reader/${book.run_id}`, '_blank');
     } catch (err) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось открыть книгу",
+        title: t('common.error'),
+        description: t('library.toast.error.open'),
         variant: "destructive",
       });
     }
@@ -77,8 +79,8 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
       const token = await getToken();
       if (!token) {
         toast({
-          title: "Ошибка", 
-          description: "Нужно войти в аккаунт",
+          title: t('common.error'), 
+          description: t('library.toast.error.auth'),
           variant: "destructive",
         });
         return;
@@ -86,20 +88,20 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
       
       await api.downloadSavedBook(book.id, 'book.pdf', token);
       toast({
-        title: "Готово",
-        description: "Книга скачана",
+        title: t('common.success'),
+        description: t('library.toast.downloaded'),
       });
     } catch (err) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось скачать книгу",
+        title: t('common.error'),
+        description: t('library.toast.error.download'),
         variant: "destructive",
       });
     }
   };
 
   const handleDeleteBook = async (book: UserBook) => {
-    if (!confirm('Вы уверены, что хотите удалить эту книгу?')) {
+    if (!confirm(t('library.delete_confirm'))) {
       return;
     }
 
@@ -107,8 +109,8 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
       const token = await getToken();
       if (!token) {
         toast({
-          title: "Ошибка",
-          description: "Нужно войти в аккаунт",
+          title: t('common.error'),
+          description: t('library.toast.error.auth'),
           variant: "destructive",
         });
         return;
@@ -117,13 +119,13 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
       await api.deleteBook(book.id, token);
       setBooks(prev => prev.filter(b => b.id !== book.id));
       toast({
-        title: "Готово",
-        description: "Книга удалена",
+        title: t('common.success'),
+        description: t('library.toast.deleted'),
       });
     } catch (err) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось удалить книгу",
+        title: t('common.error'),
+        description: t('library.toast.error.delete'),
         variant: "destructive",
       });
     }
@@ -142,7 +144,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center mobile-padding">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-600 dark:text-gray-400" />
-          <p className="text-gray-600 dark:text-gray-400">Загружаем ваши книги...</p>
+          <p className="text-gray-600 dark:text-gray-400">{t('library.loading')}</p>
         </div>
       </div>
     );
@@ -161,11 +163,11 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
               className="shrink-0 touch-target"
             >
               <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="sr-only">Назад</span>
+              <span className="sr-only">{t('library.back')}</span>
             </Button>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-black dark:text-white">Мои книги</h1>
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Все ваши созданные книги</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-black dark:text-white">{t('library.title')}</h1>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">{t('library.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -180,7 +182,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-black dark:text-white">{books.length}</p>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">книг</p>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t('library.stats.books')}</p>
                 </div>
               </div>
             </CardContent>
@@ -194,7 +196,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-black dark:text-white">{books.filter(b => b.has_pdf).length}</p>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">PDF файлов</p>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t('library.stats.pdfs')}</p>
                 </div>
               </div>
             </CardContent>
@@ -208,7 +210,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-black dark:text-white">{books.filter(b => b.has_html).length}</p>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">веб-версий</p>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t('library.stats.webs')}</p>
                 </div>
               </div>
             </CardContent>
@@ -231,15 +233,15 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
               <div className="mb-4">
                 <Book className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-gray-400" />
               </div>
-              <h3 className="text-base sm:text-lg font-medium text-black dark:text-white mb-2">Пока нет книг</h3>
+              <h3 className="text-base sm:text-lg font-medium text-black dark:text-white mb-2">{t('library.empty.title')}</h3>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
-                Создайте свою первую книгу, чтобы она появилась здесь
+                {t('library.empty.description')}
               </p>
               <Button 
                 onClick={onBack}
                 className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 touch-target"
               >
-                Создать книгу
+                {t('library.empty.button')}
               </Button>
             </CardContent>
           </Card>
@@ -267,12 +269,12 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
                     <div className="flex items-center gap-2 mb-4">
                       {book.has_html && (
                         <Badge variant="outline" className="border-blue-300 text-blue-600 dark:border-blue-700 dark:text-blue-400 text-xs">
-                          Веб-версия
+                          {t('library.badges.web')}
                         </Badge>
                       )}
                       {book.has_pdf && (
                         <Badge variant="outline" className="border-green-300 text-green-600 dark:border-green-700 dark:text-green-400 text-xs">
-                          PDF
+                          {t('library.badges.pdf')}
                         </Badge>
                       )}
                     </div>
@@ -288,7 +290,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
                         size="sm"
                       >
                         <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="text-xs sm:text-sm">Читать</span>
+                        <span className="text-xs sm:text-sm">{t('library.read')}</span>
                       </Button>
                       <Button
                         variant="outline"
@@ -296,7 +298,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
                         className="border-gray-300 dark:border-gray-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 flex-1 sm:flex-none touch-target"
                         size="sm"
                       >
-                        <span className="text-xs sm:text-sm">Flipbook</span>
+                        <span className="text-xs sm:text-sm">{t('library.flipbook')}</span>
                       </Button>
                     </div>
                     <div className="flex gap-2">
@@ -308,7 +310,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
                         size="sm"
                       >
                         <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="text-xs sm:text-sm">PDF</span>
+                        <span className="text-xs sm:text-sm">{t('library.download')}</span>
                       </Button>
                       <Button
                         variant="ghost"
@@ -317,7 +319,7 @@ export function MyBooksLibrary({ onBack, onOpenBook, onOpenFlip }: MyBooksLibrar
                         className="text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 touch-target"
                       >
                         <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                        <span className="sr-only">Удалить</span>
+                        <span className="sr-only">{t('library.delete')}</span>
                       </Button>
                     </div>
                   </div>
