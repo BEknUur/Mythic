@@ -31,7 +31,7 @@ services:
       retries: 3
     networks: [mythic]
 
-  # ---------- FastAPI backend --------
+  # ---------- FastAPI bacend --------
   backend:
     build: ./mythic_backend
     env_file: .env
