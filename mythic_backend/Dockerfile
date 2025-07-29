@@ -14,11 +14,11 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# ---- playwright setup after python deps are installed --------------
+RUN playwright install-deps chromium && playwright install chromium
+
 # ---- source code ----------------------------------------------------
 COPY . .
-
-# playwright (используется только если реально нужен браузер)
-RUN playwright install-deps chromium && playwright install chromium
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--timeout-keep-alive", "120", "--timeout-graceful-shutdown", "30"]
