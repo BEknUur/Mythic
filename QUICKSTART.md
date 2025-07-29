@@ -29,7 +29,7 @@ docker-compose up -d
 ```bash
 make help          # Показать все команды
 make up            # Запустить все
-make down          # Остановить все
+make down          # Остановит все
 make logs          # Посмотреть логи
 make status        # Статус контейнеров
 make clean         # Очистить кэш
