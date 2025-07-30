@@ -20,12 +20,13 @@ import { PaymentCancelPage } from '@/components/PaymentCancelPage';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import './App.css'
 
-// Компонент для роута /reader/:id
+// сomponent for book id 
+
 function BookViewerRoute() {
   const { id } = useParams<{ id: string }>();
   
   if (!id) {
-    return <Navigate to="/library" />;
+    return <Navigate to="/library"  />;
   }
 
   return <BookViewer bookId={id} />;
@@ -33,6 +34,7 @@ function BookViewerRoute() {
 
 function AppContent() {
   const navigate = useNavigate();
+  
   const [runId, setRunId] = useState<string | null>(null);
   const [bookToRead, setBookToRead] = useState<{ bookId?: string; runId?: string } | null>(null);
   const [flipBookToRead, setFlipBookToRead] = useState<{ bookId?: string; runId?: string } | null>(null);
@@ -50,11 +52,14 @@ function AppContent() {
           <div className="space-y-2">
             <h3 className="font-medium">Начните здесь!</h3>
             <p className="text-sm text-muted-foreground">
-              Нажмите эту кнопку, чтобы перейти на страницу создания вашей уникальной книги.
+              Нажмите эту кнопку, чтобы перейти на страницу создания вашей уникальной книги. 
+          
+
             </p>
           </div>
         ),
       },
+      
       {
         selectorId: TOUR_STEP_IDS.INSTAGRAM_INPUT,
         path: "/generate",
